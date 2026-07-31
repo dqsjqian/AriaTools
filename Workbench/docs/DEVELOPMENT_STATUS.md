@@ -21,32 +21,15 @@ Model 和 Service 是装配树中的作用域实例，不是静态全局 Singlet
 - Workbench 六模块骨架以及 Qt/macOS、UIKit/iOS 外壳。
 - 稳定基础设施接口：i18n、storage、settings、sync、secret、crypto。
 - Tools：Base64、随机字符串、JSON 格式化/压缩、Apple 原生文件加解密。
-- Tools 独立业务 harness：JSON 与加解密往返已通过。
+- Tools 已完成 `ToolsVm → ToolsModel → ToolsService` 分层调整；ToolsModule 持有模块作用域 Model/Service。
+- Tools CTest：Base64、随机字符串、JSON 与加解密往返 1/1 通过。
 - Mac 完整 App 构建通过。
 - iOS 在 Tools 真实业务接入后构建通过。
 - 模块独立构建产物统一放在 `build/<platform>/modules/<module>`。
 
 ## 正在进行
 
-### 1. Tools 分层调整
-
-把当前：
-
-```text
-ToolsVm → ToolsService
-```
-
-调整为：
-
-```text
-ToolsVm → ToolsModel → ToolsService
-```
-
-- ToolsModule 持有一份 ToolsService 和一份共享 ToolsModel。
-- ToolsVm 只调用/订阅 ToolsModel。
-- 保持现有功能行为不变。
-
-### 2. Notes 真实业务
+### Notes 真实业务
 
 目标结构：
 
@@ -72,14 +55,13 @@ modules/notes/
 
 ## 后续顺序
 
-1. 完成 ToolsModel 重构并运行 Tools tests。
-2. 新增 Notes 类型与 INotesService/MarkdownNotesService。
-3. 新增 NotesModel，并由 NotesModule 创建、持有和注入。
-4. NotesVm 改为只依赖 NotesModel。
-5. 补齐 Qt/iOS Notes View。
-6. 增加 Notes CRUD/持久化业务测试。
-7. 运行 Mac 完整构建、Tools/Notes 测试和 iOS 构建。
-8. 更新本文件与 `ARCHITECTURE.md` 的实现状态。
+1. 新增 Notes 类型与 INotesService/MarkdownNotesService。
+2. 新增 NotesModel，并由 NotesModule 创建、持有和注入。
+3. NotesVm 改为只依赖 NotesModel。
+4. 补齐 Qt/iOS Notes View。
+5. 增加 Notes CRUD/持久化业务测试。
+6. 运行 Mac 完整构建、Tools/Notes 测试和 iOS 构建。
+7. 更新本文件与 `ARCHITECTURE.md` 的实现状态。
 
 ## 验证命令
 
@@ -98,6 +80,6 @@ ctest --test-dir build/mac/modules/tools --output-on-failure
 
 ## 仓库注意事项
 
-- 仓库已建立 Git 管理；`third_party/aria` 以 submodule 固定版本，构建产物与工作流运行态不入库。
-- 不推送、不切换分支，除非用户明确要求。
+- 远程仓库已配置为 GitHub 私有仓库，`main` 跟踪 `origin/main`；新设备使用 `git clone --recurse-submodules`。
+- 代码与文档不得包含内部工作流、内部系统或公司身份信息。
 - 不照搬参考项目中的 Service Locator、全局 Singleton、弱类型 action/event；只吸收其共享 Model 心智模型。
