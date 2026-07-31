@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">Notes</string>
+    <string name="hint">Create, edit and delete rich-text notes. One note = one Markdown file with embedded images, git-merge friendly.</string>
+    <string name="add">New Note</string>
+    <string name="delete">Delete Last</string>
+    <string name="empty">No notes yet</string>
+    <string name="count_prefix"></string>
+    <string name="count_suffix"> note(s)</string>
+    <string name="new_title">New Note</string>
+</resources>

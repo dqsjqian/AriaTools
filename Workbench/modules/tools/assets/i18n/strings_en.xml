@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">Tools</string>
+    <string name="base64_group">Base64 Encode/Decode</string>
+    <string name="input">Input</string>
+    <string name="output">Output</string>
+    <string name="encode">Encode</string>
+    <string name="decode">Decode</string>
+    <string name="random_group">Random String</string>
+    <string name="length">Length</string>
+    <string name="generate">Generate</string>
+    <string name="json_group">JSON Tools</string>
+    <string name="format">Format</string>
+    <string name="minify">Minify</string>
+    <string name="json_valid">Valid JSON</string>
+    <string name="json_error">JSON parse failed</string>
+    <string name="file_group">File Encryption</string>
+    <string name="choose_file">Choose File</string>
+    <string name="passphrase">Passphrase</string>
+    <string name="encrypt_file">Encrypt File</string>
+    <string name="decrypt_file">Decrypt File</string>
+    <string name="encrypt_success">Encryption complete</string>
+    <string name="decrypt_success">Decryption complete</string>
+    <string name="file_error">File operation failed</string>
+</resources>

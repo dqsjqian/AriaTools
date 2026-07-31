@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">Calendar</string>
+    <string name="hint">Subscribe to third-party calendars via standard .ics links.</string>
+    <string name="url_placeholder">Paste an .ics subscription URL…</string>
+    <string name="subscribe">Subscribe</string>
+    <string name="empty">No subscriptions. Paste an .ics link to subscribe (Google / Outlook, etc.).</string>
+    <string name="added_prefix">Added </string>
+    <string name="added_suffix"> subscription(s)</string>
+</resources>

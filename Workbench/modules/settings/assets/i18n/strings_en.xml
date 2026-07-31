@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">Settings</string>
+    <string name="hint">The sync repository is your own private Gitee repo (independent per user, never hardcoded). The token is stored in the OS secure store, not in the plain settings file.</string>
+    <string name="data_dir">Data Directory</string>
+    <string name="remote">Remote Repo</string>
+    <string name="branch">Branch</string>
+    <string name="username">Username</string>
+    <string name="token">Access Token</string>
+    <string name="auto_sync">Enable auto-sync (timed + on-change)</string>
+    <string name="language">UI Language</string>
+    <string name="save">Save Settings</string>
+    <string name="saved">Settings saved</string>
+</resources>

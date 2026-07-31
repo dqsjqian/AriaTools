@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="welcome">Welcome to Workbench</string>
+    <string name="summary">Overview cards for todos, recent notes and calendar events will appear here.</string>
+</resources>

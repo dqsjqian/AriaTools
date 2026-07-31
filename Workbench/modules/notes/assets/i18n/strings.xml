@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">记事本</string>
+    <string name="hint">增删改查、图文正文。一条笔记 = 一个 Markdown 文件，图文用 markdown 内嵌图片，git 免冲突合并。</string>
+    <string name="add">新建笔记</string>
+    <string name="delete">删除末条</string>
+    <string name="empty">暂无笔记</string>
+    <string name="count_prefix">共 </string>
+    <string name="count_suffix"> 条笔记</string>
+    <string name="new_title">新笔记</string>
+</resources>
