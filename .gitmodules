@@ -1,0 +1,3 @@
+[submodule "third_party/aria"]
+	path = third_party/aria
+	url = https://github.com/dqsjqian/Aria.git

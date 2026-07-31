@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">设置</string>
+    <string name="hint">同步仓库信息为你个人的私有 Gitee 仓库（每个用户各自独立，不写死）。Token 保存在本机安全存储，不写入明文设置文件。</string>
+    <string name="data_dir">数据目录</string>
+    <string name="remote">远程仓库</string>
+    <string name="branch">分支</string>
+    <string name="username">用户名</string>
+    <string name="token">访问 Token</string>
+    <string name="auto_sync">启用全自动同步（定时 + 条件触发）</string>
+    <string name="language">界面语言</string>
+    <string name="save">保存设置</string>
+    <string name="saved">设置已保存</string>
+</resources>

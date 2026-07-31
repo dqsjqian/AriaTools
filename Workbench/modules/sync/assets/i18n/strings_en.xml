@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">Data Sync</string>
+    <string name="hint">Sync your local data directory as a git repository with your private Gitee repo.</string>
+    <string name="sync_now">Sync Now</string>
+    <string name="pull">Pull Only</string>
+    <string name="push">Push Only</string>
+    <string name="ready">Ready</string>
+</resources>

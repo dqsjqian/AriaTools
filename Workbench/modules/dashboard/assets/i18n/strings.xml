@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="welcome">欢迎使用 Workbench 工作台</string>
+    <string name="summary">这里将展示待办、最近笔记、日历事项等概览卡片。</string>
+</resources>

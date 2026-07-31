@@ -1,0 +1,25 @@
+# 构建产物
+/build/
+build/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+
+# IDE
+.vscode/
+.idea/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+
+# macOS
+.DS_Store
+
+# ── 注意：以下是「应用运行时数据目录」的忽略建议，仅当把 WorkbenchData
+#    放在仓库内时才需要。默认数据目录在 ~/WorkbenchData（独立 git 仓库）。
+#    日历订阅缓存、临时文件不纳入同步：
+# WorkbenchData/calendar/*.ics.cache
+# WorkbenchData/**/*.tmp

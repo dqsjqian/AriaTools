@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">小工具</string>
+    <string name="base64_group">Base64 编解码</string>
+    <string name="input">输入</string>
+    <string name="output">输出</string>
+    <string name="encode">编码</string>
+    <string name="decode">解码</string>
+    <string name="random_group">随机字符串</string>
+    <string name="length">长度</string>
+    <string name="generate">生成</string>
+    <string name="json_group">JSON 工具</string>
+    <string name="format">格式化</string>
+    <string name="minify">压缩</string>
+    <string name="json_valid">JSON 有效</string>
+    <string name="json_error">JSON 解析失败</string>
+    <string name="file_group">文件加解密</string>
+    <string name="choose_file">选择文件</string>
+    <string name="passphrase">加密口令</string>
+    <string name="encrypt_file">加密文件</string>
+    <string name="decrypt_file">解密文件</string>
+    <string name="encrypt_success">加密完成</string>
+    <string name="decrypt_success">解密完成</string>
+    <string name="file_error">文件处理失败</string>
+</resources>
