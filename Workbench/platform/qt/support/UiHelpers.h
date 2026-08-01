@@ -1,8 +1,8 @@
 #pragma once
 //
-// UiHelpers — Qt View 层共享的小工具（移植自 Aria showcase 的模式）。
-//   view_for(w)        把 QWidget* 包成 aria QtView（生命周期托管）
-//   subs_attached_to(w) 挂在 QObject 上的订阅袋，owner 析构即释放
+// UiHelpers — Small shared helpers for the Qt View layer (ported from the Aria showcase pattern).
+//   view_for(w)        Wraps a QWidget* into an aria QtView (lifetime managed).
+//   subs_attached_to(w) Subscription bag attached to a QObject; released when the owner is destroyed.
 //
 #include "aria/adapters/qt6/qt_view.hpp"
 #include "aria/binding/binding_engine.hpp"
@@ -25,9 +25,9 @@ QLabel* make_info(const QString& text, QWidget* parent = nullptr);
 aria::adapters::qt6::QtView& view_for(QObject* w);
 std::vector<aria::Subscription>& subs_attached_to(QObject* owner);
 
-/// 绑定「用户可编辑、VM 不反向推回」的文本输入框（如 base64/json 输入区）。
-/// 只做 View→VM + 一次初始同步，**不**订阅 VM→View，避免每次输入时
-/// setPlainText/setText 重置光标（光标跳到最前）。
+/// Bind a text input that is "user-editable, VM does not push back" (e.g. base64/json input area).
+/// Only does View->VM + one initial sync; does **not** subscribe to VM->View, to avoid on every input
+/// setPlainText/setText resetting the cursor (cursor jumps to the beginning).
 void bind_editable_text(aria::binding::BindingEngine& be,
                         aria::Property<std::string>& prop,
                         QObject* widget);

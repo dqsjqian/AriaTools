@@ -3,7 +3,7 @@
 namespace wb::i18n {
 
 namespace {
-wb::services::II18nService* g_backend = nullptr;  // ServiceHub 注入，进程存活期有效
+wb::services::II18nService* g_backend = nullptr;  // Injected by ServiceHub; valid for process lifetime
 }
 
 std::string_view lang_code(Lang lang) {
@@ -22,16 +22,16 @@ namespace detail {
 std::string resolve(std::string_view module, std::string_view key, Lang lang) {
     const std::string_view code = lang_code(lang);
     if (g_backend) {
-        // 1) 当前模块（推断得到，可能为空）
+        // 1) Current module (inferred; may be empty)
         if (!module.empty()) {
             if (auto v = g_backend->find_in(code, module, key)) return *v;
         }
-        // 2) 全局 common —— 绝不查其他业务模块
+        // 2) Global common — never queries other business modules
         if (module != kGlobalModule) {
             if (auto v = g_backend->find_in(code, kGlobalModule, key)) return *v;
         }
     }
-    // 3) 占位，便于定位缺失文案
+    // 3) Placeholder, helps locate missing text
     std::string tag(module.empty() ? kGlobalModule : module);
     return "[" + tag + "/" + std::string(key) + "]";
 }

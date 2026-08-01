@@ -1,7 +1,7 @@
 #pragma once
 //
-// IosShell — iOS 端外壳。持有 UIKitAdapter + BindingEngine，复用 wb::core::AppCore。
-// View 通过 UIViewFactory 按 moduleId 构建（与 Qt 对称）。
+// IosShell — iOS-side shell. Holds UIKitAdapter + BindingEngine, reuses wb::core::AppCore.
+// Views are built by UIViewFactory keyed by moduleId (symmetric with Qt).
 //
 #import <UIKit/UIKit.h>
 

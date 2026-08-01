@@ -15,13 +15,13 @@ XmlI18nService::XmlI18nService(std::string baseDir,
       defaultLang_(std::move(defaultLang)),
       language_(std::move(initialLang))
 {
-    // 不做全量预加载：模块按需懒加载。仅确保缓存桶存在。
+    // No eager full preload: modules are lazily loaded. Just ensure the cache bucket exists.
 }
 
-// ── 语种自适应：扫描各模块目录里的 strings[_xx].xml，推断可用语种 ──────────
+// ── Language-adaptive: scan each module directory's strings[_xx].xml to infer available languages ──
 std::vector<std::string> XmlI18nService::available_languages() const {
     std::unordered_set<std::string> langs;
-    langs.insert(defaultLang_);  // strings.xml 一定对应默认语种。
+    langs.insert(defaultLang_);  // strings.xml always corresponds to the default language.
 
     std::error_code ec;
     if (fs::exists(baseDir_, ec)) {
@@ -30,7 +30,7 @@ std::vector<std::string> XmlI18nService::available_languages() const {
             for (auto& f : fs::directory_iterator(moduleDir.path(), ec)) {
                 if (!f.is_regular_file()) continue;
                 const std::string name = f.path().filename().string();
-                // 匹配 strings_<lang>.xml
+                // Match strings_<lang>.xml
                 constexpr std::string_view pre = "strings_";
                 constexpr std::string_view suf = ".xml";
                 if (name.size() > pre.size() + suf.size() &&
@@ -47,7 +47,7 @@ std::vector<std::string> XmlI18nService::available_languages() const {
 
 void XmlI18nService::set_language(const std::string& lang) {
     if (lang == language_.get()) return;
-    language_.set(lang);  // 懒加载会在后续 tr() 时按需读入该语种。
+    language_.set(lang);  // Lazy loading will read the language on subsequent tr() calls.
 }
 
 std::string XmlI18nService::file_for_(const std::string& lang,
@@ -57,7 +57,7 @@ std::string XmlI18nService::file_for_(const std::string& lang,
     return (fs::path(baseDir_) / module / fname).string();
 }
 
-// ── 极简 XML 解析：只认 <string name="KEY">TEXT</string> ──────────────────
+// ── Minimal XML parser: only recognizes <string name="KEY">TEXT</string> ──
 namespace {
 
 std::string unescape_xml(const std::string& in) {
@@ -140,8 +140,8 @@ XmlI18nService::Table XmlI18nService::parse_file_(const std::string& path) {
 void XmlI18nService::ensure_module_loaded_(const std::string& lang,
                                            const std::string& module) const {
     auto& langBucket = cache_[lang];
-    if (langBucket.count(module)) return;               // 已加载
-    langBucket[module] = parse_file_(file_for_(lang, module));  // 缺文件→空表，不再重试
+    if (langBucket.count(module)) return;               // Already loaded
+    langBucket[module] = parse_file_(file_for_(lang, module));  // Missing file -> empty table, no retry
 }
 
 const std::string* XmlI18nService::lookup_(const std::string& lang,

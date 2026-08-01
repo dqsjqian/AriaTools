@@ -1,5 +1,5 @@
 //
-// HttpResponse 的与后端无关的辅助实现（stub / curl 实现共用）。
+// HttpResponse backend-agnostic helper implementation (shared by stub / curl implementations).
 //
 #include "infra/http/IHttpClient.h"
 

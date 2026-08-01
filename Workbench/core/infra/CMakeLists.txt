@@ -1,6 +1,6 @@
 # ============================================================================
-#  wb_infra — 稳定服务层（app 底层基础设施），独立静态库。
-#  零平台 UI 依赖。所有模块经此库 + wb_module_api 复用能力。
+#  wb_infra — stable service layer (low-level app infrastructure), standalone static library.
+#  Zero platform UI dependencies. All modules reuse capabilities through this library + wb_module_api.
 # ============================================================================
 add_library(wb_infra STATIC
     ServiceHub.cpp
@@ -16,7 +16,7 @@ add_library(wb_infra STATIC
     http/StubHttpClient.cpp
 )
 
-# core 根在上一级：include 形如 "infra/i18n/II18nService.h"
+# core root is one level up: include like "infra/i18n/II18nService.h"
 target_include_directories(wb_infra PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..
 )
@@ -29,8 +29,8 @@ target_link_libraries(wb_infra PUBLIC
     aria::core
 )
 
-# Apple 平台使用系统 CommonCrypto + Security，无第三方动态依赖，
-# Mac/iOS 统一真实加密实现；其他平台暂回退到同接口 stub。
+# Apple platforms use system CommonCrypto + Security, no third-party dynamic dependency.
+# Mac/iOS share a real crypto implementation; other platforms fall back to the same-interface stub for now.
 if(APPLE)
     target_sources(wb_infra PRIVATE crypto/AppleCryptoService.cpp)
     target_link_libraries(wb_infra PRIVATE
@@ -43,8 +43,8 @@ endif()
 
 target_compile_features(wb_infra PUBLIC cxx_std_20)
 
-# HTTP 后端：默认关闭（用 StubHttpClient）。vendored libcurl+mbedTLS 接入后，
-# 由上层在此打开 WB_HAVE_CURL_HTTP=1 并编入 http/CurlHttpClient.cpp、链接 curl。
+# HTTP backend: off by default (uses StubHttpClient). Once vendored libcurl+mbedTLS is integrated,
+# the upper layer enables WB_HAVE_CURL_HTTP=1 here, compiles in http/CurlHttpClient.cpp, and links curl.
 if(NOT DEFINED WB_HAVE_CURL_HTTP)
     target_compile_definitions(wb_infra PUBLIC WB_HAVE_CURL_HTTP=0)
 endif()

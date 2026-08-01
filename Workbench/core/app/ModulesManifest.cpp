@@ -1,6 +1,6 @@
 #include "app/ModulesManifest.h"
 
-// 各模块工厂声明（模块自导出）。加模块 = 这里加一行 include + 一行 add。
+// Each module's factory declaration (module self-exports). Add a module = add one include + one add line.
 #include "module/DashboardModule.h"
 #include "module/NotesModule.h"
 #include "module/CalendarModule.h"

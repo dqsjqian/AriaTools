@@ -7,7 +7,7 @@
 namespace wb::ios {
 
 namespace {
-// i18n 资源随 app bundle 分发：<Bundle>/i18n/。
+// i18n resources are distributed with the app bundle: <Bundle>/i18n/.
 std::string bundle_i18n_dir() {
     NSString* res = [[NSBundle mainBundle] resourcePath];
     if (!res) return "./i18n";
@@ -17,7 +17,7 @@ std::string bundle_i18n_dir() {
 
 IosShell::IosShell()
     : adapter_(std::make_shared<aria::adapters::uikit::UIKitAdapter>()),
-      // UIKit 回调本就在主线程，Direct 策略即可（无需 dispatcher）。
+      // UIKit callbacks are already on the main thread, so the Direct strategy suffices (no dispatcher needed).
       be_(adapter_),
       core_(bundle_i18n_dir(), "zh-CN")
 {

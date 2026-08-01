@@ -1,6 +1,6 @@
 #pragma once
 //
-// wb_utils/Base64 — 无状态纯函数（Base64 编解码）。零业务语义、零平台依赖。
+// wb_utils/Base64 — Stateless pure functions (Base64 encode/decode). Zero business semantics, zero platform dependencies.
 //
 #include <string>
 

@@ -1,7 +1,8 @@
 #pragma once
 //
-// AppCore — 平台无关应用核心。装配 ServiceHub(稳定服务) + 遍历模块注册表建 VM。
-// 不含任何 UI 适配器/BindingEngine（各端外壳持有）。
+// AppCore — Platform-independent application core. Assembles the ServiceHub
+// (stable services) and walks the module registry to build VMs.
+// Contains no UI adapters or BindingEngine (each platform shell holds those).
 //
 #include "infra/ServiceHub.h"
 #include "module_api/ModuleRegistry.h"
@@ -13,7 +14,7 @@
 
 namespace wb::core {
 
-/// 一个已装配的模块条目（id + 导航标题 key + VM 实例）。
+/// An assembled module entry (id + navigation title key + VM instance).
 struct ModuleEntry {
     std::string id;
     std::string navKey;
@@ -22,7 +23,7 @@ struct ModuleEntry {
 
 class AppCore {
 public:
-    /// i18nBaseDir：运行目录 i18n/ 路径（各模块文案汇聚于此的 <mod>/ 子目录）。
+    /// i18nBaseDir: runtime i18n/ directory path (a <mod>/ subdirectory per module's text).
     explicit AppCore(std::string i18nBaseDir, std::string initialLang = "zh-CN");
     ~AppCore();
 
@@ -33,7 +34,7 @@ public:
     [[nodiscard]] wb::infra::ServiceHub& services() { return hub_; }
     [[nodiscard]] wb::services::II18nService& i18n() { return hub_.i18n(); }
 
-    /// 取某模块导航标题（当前语言，来自 common 模块的 nav_ key）。
+    /// Get a module's navigation title (current language, from the common module's nav_ key).
     [[nodiscard]] std::string nav_title(const std::string& navKey);
 
 private:

@@ -51,23 +51,23 @@ std::string host_of(const std::string& url) {
     return url.substr(start, end == std::string::npos ? std::string::npos : end - start);
 }
 
-// RFC5545 行展开：以空格/制表符开头的续行拼接到上一行。返回逻辑行序列。
+// RFC5545 line unfolding: continuation lines starting with space/tab are appended to the previous line. Returns the sequence of logical lines.
 std::vector<std::string> unfold_lines(std::string_view text) {
     std::vector<std::string> lines;
     std::string cur;
     std::size_t i = 0;
     auto flush = [&] { if (!cur.empty()) { lines.push_back(cur); cur.clear(); } };
     while (i < text.size()) {
-        // 读一物理行（到 \r\n / \n）。
+        // Read one physical line (up to \r\n / \n).
         std::size_t j = i;
         while (j < text.size() && text[j] != '\n' && text[j] != '\r') ++j;
         std::string_view phys = text.substr(i, j - i);
-        // 跳过换行符
+        // Skip newline characters
         std::size_t next = j;
         if (next < text.size() && text[next] == '\r') ++next;
         if (next < text.size() && text[next] == '\n') ++next;
         if (!phys.empty() && (phys.front() == ' ' || phys.front() == '\t')) {
-            cur.append(phys.substr(1));  // 续行：去掉前导折叠空白
+            cur.append(phys.substr(1));  // Continuation: strip leading fold whitespace
         } else {
             flush();
             cur.assign(phys);
@@ -78,10 +78,10 @@ std::vector<std::string> unfold_lines(std::string_view text) {
     return lines;
 }
 
-// 把 "20260728" 或 "20260728T130000Z" 解析进 CalendarEvent 的日期/时间字段。
+// Parses "20260728" or "20260728T130000Z" into CalendarEvent's date/time fields.
 bool parse_dt(std::string_view value, int& y, int& mo, int& d,
               bool& allDay, std::string& hhmm) {
-    // 去掉可能的参数已在调用方处理，这里 value 是纯值。
+    // Possible parameters are stripped by the caller; here value is the pure value.
     if (value.size() < 8) return false;
     auto to_int = [](std::string_view s) {
         int n = 0;
@@ -108,7 +108,7 @@ bool parse_dt(std::string_view value, int& y, int& mo, int& d,
     return true;
 }
 
-// 拆 "KEY;PARAM=..:VALUE" → (name_without_params, value)。
+// Splits "KEY;PARAM=..:VALUE" into (name_without_params, value).
 void split_prop(const std::string& line, std::string& name, std::string& value) {
     const auto colon = line.find(':');
     if (colon == std::string::npos) { name = line; value.clear(); return; }
@@ -138,7 +138,7 @@ CalendarResult<EventList> CalendarService::parse_ics(std::string_view text,
         }
         if (name == "END" && value == "VEVENT") {
             if (inEvent && cur.startYear != 0) {
-                if (cur.endYear == 0) {  // 无 DTEND → 与起始同日
+                if (cur.endYear == 0) {  // No DTEND -> same day as start
                     cur.endYear = cur.startYear; cur.endMonth = cur.startMonth; cur.endDay = cur.startDay;
                 }
                 events.push_back(std::move(cur));
@@ -253,14 +253,14 @@ CalendarResult<EventList> CalendarService::refresh(const Subscription& sub) {
             resp.error.empty() ? ("http status " + std::to_string(resp.status)) : resp.error);
     }
 
-    // 写缓存（失败不致命，仍继续解析内存内容）。
+    // Write cache (failure is non-fatal; in-memory content is still parsed).
     storage_.ensure_dir(std::string(kCacheDir));
     storage_.write_text(std::string(kCacheDir) + "/" + sub.id + ".ics", resp.body);
 
     auto parsed = parse_ics(resp.body, sub.id);
     if (!parsed.ok()) return parsed;
 
-    // 更新 lastFetched。
+    // Update lastFetched.
     Subscription updated = sub;
     updated.lastFetched = now_seconds();
     (void)save_subscription_(updated);

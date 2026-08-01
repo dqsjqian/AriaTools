@@ -1,8 +1,8 @@
 //
-// StubHttpClient — 占位 HTTP 实现。
-// 在 vendored libcurl + mbedTLS 接入前先让 DI 装配完整、app 可构建。
-// send() 返回明确的"未配置网络后端"错误，不做任何真实网络访问。
-// 真实实现见 CurlHttpClient（task: vendoring curl+mbedTLS）。
+// StubHttpClient — Placeholder HTTP implementation.
+// Keeps DI wiring complete and the app buildable until vendored libcurl + mbedTLS are integrated.
+// send() returns a clear "network backend not configured" error and performs no real network access.
+// Real implementation: CurlHttpClient (task: vendoring curl+mbedTLS).
 //
 #include "infra/http/IHttpClient.h"
 #include "infra/log/Log.h"

@@ -15,7 +15,7 @@
 
 namespace wb::sync::qtview {
 
-// 表单行标签：绑定到 VM 文案（随语言更新）。
+// Form row labels: bound to VM text (updates on language change).
 static QLabel* row_label(aria::Property<std::string>& p,
                          std::vector<aria::Subscription>& subs) {
     auto* l = new QLabel(QString::fromStdString(p.get()));
@@ -37,7 +37,7 @@ static QWidget* build(wb::sync::SyncVm& vm, aria::binding::BindingEngine& be) {
     be.bind_text_oneway(vm.title, wb::ui::view_for(title));
     be.bind_text_oneway(vm.hint, wb::ui::view_for(hint));
 
-    // ── 远端仓库配置表单 ──
+    // ── Remote repository configuration form ──
     auto* form = new QFormLayout;
     form->setLabelAlignment(Qt::AlignRight | Qt::AlignVCenter);
     form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
@@ -78,7 +78,7 @@ static QWidget* build(wb::sync::SyncVm& vm, aria::binding::BindingEngine& be) {
     be.bind_text_oneway(vm.saveLabel, wb::ui::view_for(saveBtn));
     be.bind_command(vm.saveConfig, wb::ui::view_for(saveBtn));
 
-    // ── 同步动作 ──
+    // ── Sync actions ──
     auto* row = new QHBoxLayout;
     auto* syncBtn = new QPushButton;
     auto* pullBtn = new QPushButton;

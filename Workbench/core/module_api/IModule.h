@@ -1,7 +1,8 @@
 #pragma once
 //
-// IModule — 业务模块插件契约（编译期）。
-// 每个模块实现之，并导出 make_<mod>_module() 工厂。app 层 ModulesManifest 显式列举。
+// IModule — Business module plugin contract (compile-time).
+// Each module implements this and exports a make_<mod>_module() factory.
+// The app layer lists them explicitly in ModulesManifest.
 //
 #include "aria/binding/view_model.hpp"
 #include "module_api/ModuleContext.h"
@@ -15,16 +16,16 @@ class IModule {
 public:
     virtual ~IModule() = default;
 
-    /// 模块 id（= i18n 子目录名，如 "notes"）。
+    /// Module id (= i18n subdirectory name, e.g. "notes").
     [[nodiscard]] virtual std::string id() const = 0;
 
-    /// 导航文案 key（在 common 模块内，如 "nav_notes"）。
+    /// Navigation text key (in the common module, e.g. "nav_notes").
     [[nodiscard]] virtual std::string nav_key() const = 0;
 
-    /// 导航顺序（升序）。
+    /// Navigation order (ascending).
     [[nodiscard]] virtual int order() const = 0;
 
-    /// 创建本模块的 ViewModel（注入服务/事件总线）。
+    /// Create this module's ViewModel (injecting services / event bus).
     [[nodiscard]] virtual std::shared_ptr<aria::binding::ViewModel>
         create_view_model(ModuleContext& ctx) = 0;
 };

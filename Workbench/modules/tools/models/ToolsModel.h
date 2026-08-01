@@ -7,8 +7,8 @@
 
 namespace wb::tools {
 
-// ToolsModel — tools 模块共享的强类型业务入口。
-// VM 只维护页面状态；工具算法和数据访问统一经本 Model 调用。
+// ToolsModel — shared strongly-typed business entry point for the tools module.
+// The VM only maintains page state; tool algorithms and data access are uniformly invoked through this Model.
 class ToolsModel {
 public:
     explicit ToolsModel(std::shared_ptr<ToolsService> service)

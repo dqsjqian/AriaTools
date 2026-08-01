@@ -19,7 +19,7 @@ static UIViewController* build(SettingsVm& vm, aria::binding::BindingEngine& be)
     be.bind_text_oneway(vm.title, wb::ios::ui::view_for(title));
     be.bind_text_oneway(vm.hint, wb::ios::ui::view_for(hint));
     be.bind_text_oneway(vm.languageLabel, wb::ios::ui::view_for(langLbl));
-    // 语言切换：把语言码作为绑定参数传给命令。
+    // Language switch: pass the language code as a binding parameter to the command.
     be.bind_command(vm.switchLanguage, wb::ios::ui::view_for(zh), std::string("zh-CN"));
     be.bind_command(vm.switchLanguage, wb::ios::ui::view_for(en), std::string("en"));
     return vc;

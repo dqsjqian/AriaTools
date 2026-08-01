@@ -1,8 +1,8 @@
 # ============================================================================
-#  iOS 端：wb_ios_support（共享 UIKit 支撑）+ workbench app。
+#  iOS: wb_ios_support (shared UIKit support) + workbench app.
 # ============================================================================
 
-# ── wb_ios_support：UIViewFactory + IosUi，供 shell 与各模块 ios View 复用 ──
+# ── wb_ios_support: UIViewFactory + IosUi, reused by shell and module iOS views ──
 add_library(wb_ios_support STATIC
     support/UIViewFactory.mm
     support/IosUi.mm
@@ -31,8 +31,8 @@ target_link_libraries(workbench PRIVATE
     "-framework Foundation")
 target_compile_options(workbench PRIVATE -fobjc-arc)
 
-# Bundle ID：免费个人 Team 需全局唯一，故用带个人后缀的默认值，可用
-#   -DWB_IOS_BUNDLE_ID=... 覆盖。
+# Bundle ID: a free personal Team requires global uniqueness, so default to a value with a personal suffix;
+#   override with -DWB_IOS_BUNDLE_ID=... .
 set(WB_IOS_BUNDLE_ID "com.dqsjqian.workbench" CACHE STRING "iOS bundle identifier")
 
 set_target_properties(workbench PROPERTIES
@@ -43,9 +43,9 @@ set_target_properties(workbench PROPERTIES
     XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
 )
 
-# 签名：真机必须签名，模拟器可免签名。
-#   传入 -DWB_IOS_DEV_TEAM=<TeamID> → Xcode 自动签名（真机）。
-#   不传                              → 关闭签名（仅模拟器）。
+# Signing: device builds must be signed; simulator builds can skip signing.
+#   Pass -DWB_IOS_DEV_TEAM=<TeamID> → Xcode automatic signing (device).
+#   Omit                            → signing disabled (simulator only).
 if(WB_IOS_DEV_TEAM)
     set_target_properties(workbench PROPERTIES
         XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "YES"
@@ -57,15 +57,17 @@ else()
         XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO")
 endif()
 
-# 把运行期 i18n（及 assets）打进 iOS .app bundle，使 App 自包含。
-# IosShell::bundle_i18n_dir 会在 <Bundle>/i18n 查找文案；这些 xml 先由各
-# wb_i18n_* 目标汇聚到 ${WB_RUNTIME_I18N_DIR}（顶层已让 workbench 依赖它们），
-# 这里在链接后复制进 bundle。否则运行时找不到文案，界面显示 [module/key]。
+# Pack runtime i18n (and assets) into the iOS .app bundle so the app is self-contained.
+# IosShell::bundle_i18n_dir looks up strings under <Bundle>/i18n; these xml files are first
+# gathered by each wb_i18n_* target into ${WB_RUNTIME_I18N_DIR} (the top level already makes
+# workbench depend on them), then copied into the bundle after linking. Otherwise the runtime
+# cannot find strings and the UI displays [module/key].
 #
-# 用 Xcode POST_BUILD 环境变量 $TARGET_BUILD_DIR/$FULL_PRODUCT_NAME 定位 .app
-# （不能用 $<TARGET_BUNDLE_CONTENT_DIR>，在 Xcode 生成器下含未替换的
-# ${EFFECTIVE_PLATFORM_NAME}）。用 cmake -E copy_directory（幂等、跨平台），
-# 不加 VERBATIM，使 $TARGET_BUILD_DIR 等变量交由 Xcode 的 shell 展开。
+# Use the Xcode POST_BUILD environment variables $TARGET_BUILD_DIR/$FULL_PRODUCT_NAME to
+# locate the .app (cannot use $<TARGET_BUNDLE_CONTENT_DIR>: under the Xcode generator it
+# contains an unreplaced ${EFFECTIVE_PLATFORM_NAME}). Use cmake -E copy_directory
+# (idempotent, cross-platform) without VERBATIM, so $TARGET_BUILD_DIR etc. are expanded by
+# Xcode's shell.
 add_custom_command(TARGET workbench POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${WB_RUNTIME_I18N_DIR}"

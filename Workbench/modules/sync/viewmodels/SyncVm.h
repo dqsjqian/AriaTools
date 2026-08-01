@@ -1,8 +1,8 @@
 #pragma once
 //
-// SyncVm — 数据同步中心：既管远端仓库配置（数据目录/远程/分支/账号/Token/自动同步/
-// 加密范围），也提供同步/拉取/推送动作与状态日志。配置与动作同属「同步」功能，
-// 故合于一处。文案经 i18n 门面。
+// SyncVm — data sync center: manages remote repository configuration (data directory/remote/branch/account/Token/auto-sync/
+// encryption scope), and provides sync/pull/push actions plus a status log. Configuration and actions both belong to the "sync" feature,
+// so they are kept together. Text goes through the i18n facade.
 //
 #include "aria/aria.hpp"
 #include "module_api/BaseVm.h"
@@ -18,7 +18,7 @@ public:
            wb::services::ISettingsService& settings,
            wb::services::ISecretStore& secrets);
 
-    // ── 远端仓库配置（可编辑）──
+    // ── Remote repository configuration (editable) ──
     aria::Property<std::string> dataDir;
     aria::Property<std::string> remoteUrl;
     aria::Property<std::string> branch;
@@ -27,11 +27,11 @@ public:
     aria::Property<bool>        autoSync;
     aria::Property<int>         encryptScope;
 
-    // ── 运行状态 ──
+    // ── Runtime status ──
     aria::Property<std::string> status;
     aria::Property<std::string> log;
 
-    // ── 文案（随语言更新）──
+    // ── Text (updates on language change) ──
     aria::Property<std::string> title;
     aria::Property<std::string> hint;
     aria::Property<std::string> dataDirLabel;
@@ -45,7 +45,7 @@ public:
     aria::Property<std::string> pullLabel;
     aria::Property<std::string> pushLabel;
 
-    // ── 命令 ──
+    // ── Commands ──
     aria::Command<> saveConfig;
     aria::Command<> syncNow;
     aria::Command<> pushOnly;

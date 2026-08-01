@@ -1,6 +1,6 @@
 #include "App/QtViewManifest.h"
 
-// 各模块 View 注册函数（模块的 platforms/qt 源导出）。
+// Each module's View registration function (exported by the module's platforms/qt sources).
 namespace wb::dashboard { void register_dashboard_view(); }
 namespace wb::notes     { void register_notes_view(); }
 namespace wb::calendar  { void register_calendar_view(); }

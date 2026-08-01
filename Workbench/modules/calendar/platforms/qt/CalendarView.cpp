@@ -18,7 +18,7 @@
 
 namespace wb::calendar::qtview {
 
-// 一个日格：顶部日期数字 + 其下事件标题（最多显示若干条）。
+// One day cell: the day number on top, with event titles below (limited number shown).
 struct DayWidgets {
     QFrame* frame = nullptr;
     QLabel* dayLabel = nullptr;
@@ -59,7 +59,7 @@ static QWidget* build(wb::calendar::CalendarVm& vm, aria::binding::BindingEngine
     auto& subs = wb::ui::subs_attached_to(w);
     auto* root = new QVBoxLayout(w);
 
-    // 顶部：标题 + 提示
+    // Top: title + hint
     auto* title = wb::ui::make_title("");
     auto* hint = wb::ui::make_info("");
     root->addWidget(title);
@@ -67,7 +67,7 @@ static QWidget* build(wb::calendar::CalendarVm& vm, aria::binding::BindingEngine
     be.bind_text_oneway(vm.title, wb::ui::view_for(title));
     be.bind_text_oneway(vm.hint, wb::ui::view_for(hint));
 
-    // 导航行：上一月 | 月标题 | 下一月 | 今天 | 刷新
+    // Nav row: prev month | month title | next month | today | refresh
     auto* navRow = new QHBoxLayout;
     auto* prevBtn = new QPushButton;
     auto* monthLbl = new QLabel;
@@ -92,7 +92,7 @@ static QWidget* build(wb::calendar::CalendarVm& vm, aria::binding::BindingEngine
     be.bind_command(vm.today, wb::ui::view_for(todayBtn));
     be.bind_command(vm.refresh, wb::ui::view_for(refreshBtn));
 
-    // 月历网格：第 0 行是周表头，第 1..6 行是 6 周 × 7 天。
+    // Month grid: row 0 is the weekday header; rows 1..6 are 6 weeks x 7 days.
     auto* grid = new QGridLayout;
     grid->setSpacing(3);
     root->addLayout(grid, 1);
@@ -107,7 +107,7 @@ static QWidget* build(wb::calendar::CalendarVm& vm, aria::binding::BindingEngine
         be.bind_text_oneway(*wds[static_cast<std::size_t>(col)], wb::ui::view_for(h));
     }
 
-    // 42 个格子控件（固定），rebuild 时只更新内容不重建控件。
+    // 42 cell widgets (fixed); on rebuild only contents are updated, widgets are not recreated.
     auto cells = std::make_shared<std::array<DayWidgets, 42>>();
     for (int i = 0; i < 42; ++i) {
         const int row = i / 7 + 1;
@@ -134,7 +134,7 @@ static QWidget* build(wb::calendar::CalendarVm& vm, aria::binding::BindingEngine
     repaint();
     subs.push_back(vm.days.on_any_change([repaint]() { repaint(); }));
 
-    // 订阅行：输入 + 订阅按钮
+    // Subscription row: input + subscribe button
     auto* subRow = new QHBoxLayout;
     auto* urlEdit = new QLineEdit;
     auto* subBtn = new QPushButton;
@@ -149,7 +149,7 @@ static QWidget* build(wb::calendar::CalendarVm& vm, aria::binding::BindingEngine
     wb::ui::bind_editable_text(be, vm.subscribeUrl, urlEdit);
     be.bind_command(vm.addSubscription, wb::ui::view_for(subBtn));
 
-    // 订阅列表（双击删除）
+    // Subscription list (double-click to remove)
     auto* subList = new QListWidget;
     subList->setMaximumHeight(90);
     root->addWidget(subList);
@@ -174,7 +174,7 @@ static QWidget* build(wb::calendar::CalendarVm& vm, aria::binding::BindingEngine
                              item->data(Qt::UserRole + 1).toString().toStdString());
                      });
 
-    // 状态
+    // Status
     auto* statusLbl = new QLabel;
     root->addWidget(statusLbl);
     be.bind_text_oneway(vm.status, wb::ui::view_for(statusLbl));

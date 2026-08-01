@@ -13,7 +13,7 @@ std::string QtAppShell::resolve_i18n_dir() {
     const QStringList candidates = {
         appDir + "/i18n",
         appDir + "/../Resources/i18n",           // macOS .app bundle
-        appDir + "/../../../../Workbench/i18n",   // 开发期：build/mac/platform/qt → 源码树
+        appDir + "/../../../../Workbench/i18n",   // Development: build/mac/platform/qt -> source tree
         appDir + "/../../../Workbench/i18n",
     };
     for (const auto& c : candidates) {
@@ -30,7 +30,7 @@ QtAppShell::QtAppShell(QObject* qt_ctx)
           aria::binding::BindingEngine::DispatchPolicy::SmartMarshal),
       core_(resolve_i18n_dir(), "zh-CN")
 {
-    register_all_views();  // 登记各模块 Qt View 构建器
+    register_all_views();  // Register each module's Qt View builder.
 }
 
 QtAppShell::~QtAppShell() = default;

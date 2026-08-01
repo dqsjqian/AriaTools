@@ -1,42 +1,42 @@
 #!/usr/bin/env bash
 # ============================================================================
-#  gen-mac.sh — 一键生成并构建 Mac (Qt6) 工程
+#  gen-mac.sh — One-shot generate and build Mac (Qt6) project
 #
-#  用法：
-#    bash Workbench/scripts/gen-mac.sh           # 配置 + 构建 (Release)
+#  Usage:
+#    bash Workbench/scripts/gen-mac.sh           # configure + build (Release)
 #    bash Workbench/scripts/gen-mac.sh debug      # Debug
-#    bash Workbench/scripts/gen-mac.sh clean      # 清理 build/mac
-#    bash Workbench/scripts/gen-mac.sh run        # 构建后直接运行
+#    bash Workbench/scripts/gen-mac.sh clean      # clean build/mac
+#    bash Workbench/scripts/gen-mac.sh run        # run after build
 # ============================================================================
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WB_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"      # Workbench/
-REPO_ROOT="$(cd "$WB_ROOT/.." && pwd)"       # 仓库根
+REPO_ROOT="$(cd "$WB_ROOT/.." && pwd)"       # repository root
 BUILD_DIR="$REPO_ROOT/build/mac"
 
 MODE="${1:-release}"
 
 case "$MODE" in
   clean)
-    echo "[gen-mac] 清理 $BUILD_DIR"
+    echo "[gen-mac] Cleaning $BUILD_DIR"
     rm -rf "$BUILD_DIR"
     exit 0
     ;;
 esac
 
-# ── 定位 Homebrew Qt6 ───────────────────────────────────────────────────────
+# ── Locate Homebrew Qt6 ─────────────────────────────────────────────────────
 QT_PREFIX="$(brew --prefix qt 2>/dev/null || true)"
 if [[ -z "$QT_PREFIX" || ! -d "$QT_PREFIX" ]]; then
-  echo "[gen-mac] 错误：未找到 Homebrew Qt6。请先运行: brew install qt" >&2
+  echo "[gen-mac] Error: Homebrew Qt6 not found. Run: brew install qt" >&2
   exit 1
 fi
-echo "[gen-mac] Qt6 前缀: $QT_PREFIX"
+echo "[gen-mac] Qt6 prefix: $QT_PREFIX"
 
 BUILD_TYPE="Release"
 [[ "$MODE" == "debug" ]] && BUILD_TYPE="Debug"
 
-# ── 配置 ────────────────────────────────────────────────────────────────────
+# ── Configure ───────────────────────────────────────────────────────────────
 GEN_ARGS=()
 if command -v ninja >/dev/null 2>&1; then
   GEN_ARGS+=(-G Ninja)
@@ -48,14 +48,14 @@ cmake -S "$WB_ROOT" -B "$BUILD_DIR" \
   -DWORKBENCH_TARGET_QT=ON \
   -DCMAKE_PREFIX_PATH="$QT_PREFIX"
 
-# ── 构建 ────────────────────────────────────────────────────────────────────
+# ── Build ───────────────────────────────────────────────────────────────────
 cmake --build "$BUILD_DIR" -j "$(sysctl -n hw.ncpu)"
 
 APP_PATH="$BUILD_DIR/platform/qt/workbench.app"
 echo ""
-echo "[gen-mac] ✅ 构建完成: $APP_PATH"
+echo "[gen-mac] ✅ Build complete: $APP_PATH"
 
 if [[ "$MODE" == "run" ]]; then
-  echo "[gen-mac] 启动应用..."
+  echo "[gen-mac] Launching app..."
   open "$APP_PATH"
 fi

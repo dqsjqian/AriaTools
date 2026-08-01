@@ -1,7 +1,7 @@
 #pragma once
 //
-// ToolsService — tools 模块私有业务服务。
-// 负责 JSON 转换与文件加解密流程；VM 只维护 UI 状态并调用本服务。
+// ToolsService — tools module private business service.
+// Handles JSON conversion and file encryption/decryption flows; the VM only maintains UI state and calls this service.
 //
 #include "infra/crypto/ICryptoService.h"
 #include "infra/storage/IStorageService.h"
@@ -25,10 +25,10 @@ public:
     [[nodiscard]] ToolResult format_json(const std::string& input) const;
     [[nodiscard]] ToolResult minify_json(const std::string& input) const;
 
-    /// 加密到 <dataDir>/vault/<原文件名>.wbenc。
+    /// Encrypts to <dataDir>/vault/<original file name>.wbenc.
     [[nodiscard]] ToolResult encrypt_file(const std::string& inputPath,
                                           const std::string& passphrase);
-    /// 解密到 <dataDir>/vault/<原文件名>.decrypted。
+    /// Decrypts to <dataDir>/vault/<original file name>.decrypted.
     [[nodiscard]] ToolResult decrypt_file(const std::string& inputPath,
                                           const std::string& passphrase);
 

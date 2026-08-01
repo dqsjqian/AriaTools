@@ -1,4 +1,4 @@
-# wb_core_app — 应用装配层（AppCore 遍历模块 + ModulesManifest）。无平台 UI 依赖。
+# wb_core_app — application assembly layer (AppCore walks modules + ModulesManifest). No platform UI dependency.
 add_library(wb_core_app STATIC
     AppCore.cpp
     ModulesManifest.cpp

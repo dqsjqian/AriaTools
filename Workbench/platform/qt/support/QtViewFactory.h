@@ -1,8 +1,8 @@
 #pragma once
 //
-// QtViewFactory — Qt 端「moduleId → 构建 View」登记表。
-// 每个模块的 platforms/qt 源里调用 register()，把自己的 build 函数登记进来；
-// 平台外壳按 moduleId 取用。模块 View 在此按需 static_cast 基类 VM 到具体类型。
+// QtViewFactory — Qt-side "moduleId -> build View" registry.
+// Each module's platforms/qt sources call register() to register its build function;
+// the platform shell looks them up by moduleId. Module Views static_cast the base VM to the concrete type here as needed.
 //
 #include "aria/binding/view_model.hpp"
 #include "aria/binding/binding_engine.hpp"

@@ -1,4 +1,4 @@
-# tools 模块独立测试工程。
+# tools module standalone test project.
 cmake_minimum_required(VERSION 3.20)
 project(wb_module_tools_tests LANGUAGES CXX)
 

@@ -1,26 +1,33 @@
 #pragma once
 //
-// BaseVm — 所有业务 ViewModel 的基类。集中承载「对每个业务 VM 都普适」的底层能力。
-// 目前只做一件横切的事：语种切换时自动刷新界面文案。
+// BaseVm — Base class for all business ViewModels. Centralizes the low-level
+// capabilities that are universally applicable to every business VM.
+// Currently handles a single cross-cutting concern: auto-refreshing UI text
+// on language change.
 //
-// 设计原则：只有极其公共、与具体业务无关的能力才放这里（如：语种变更）。
-// 主题色变更等「纯表现层」能力不放 VM——那属于 View 层（各平台原生换肤），
-// 应由独立的 View 侧机制/基类承载，避免把表现细节泄漏进跨平台逻辑。
+// Design principle: only extremely common, business-agnostic capabilities
+// belong here (e.g. language change). Pure presentation-layer capabilities
+// such as theme color changes do NOT belong in the VM — that is the View
+// layer's job (each platform's native skinning), handled by a separate
+// View-side mechanism/base class to avoid leaking presentation details into
+// cross-platform logic.
 //
-// i18n 用法（随心所欲地在 VM 里写，均自动随语言刷新）：
+// i18n usage (write freely in VMs; all auto-refresh on language change):
 //
-//   // 静态文案：一行搞定，模块自动推断，切语言自动更新。
+//   // Static text: one line; module is inferred automatically and updates on language switch.
 //   text(title, "title");
 //   text(addLabel, "add");
 //
-//   // 动态文案：注册一段重算闭包，切语言自动重跑；其它触发点也可手动再调。
+//   // Dynamic text: register a recompute closure; re-runs on language change;
+//   // other trigger points may also call it manually.
 //   localize([this]{
 //       status.set(wb::i18n::str("count_prefix") + std::to_string(n) +
 //                  wb::i18n::str("count_suffix"));
 //   });
 //
-// 两者都会「立即执行一次」设初值，之后语言变化时由基类自动重跑。无需 track、
-// 无需写 module id、无需集中到某个 relocalize 方法。
+// Both execute once immediately to set the initial value, then the base class
+// re-runs them automatically on language change. No track() needed, no module
+// id needed, no central relocalize method needed.
 //
 #include "aria/binding/view_model.hpp"
 #include "aria/property.hpp"
@@ -38,24 +45,29 @@ namespace wb::core {
 class BaseVm : public aria::binding::ViewModel {
 public:
     BaseVm() {
-        // 语言切换 → 重跑所有本地化闭包。
-        // 注意：此订阅必须存活整个 VM 生命周期，不能放进 track()/bag()——
-        // bag 会在 on_deactivate() 的 bag().clear() 时被清空（tab 切走即失效），
-        // 导致切走再回来后文案不再随语言刷新。故用独立成员，随 VM 析构释放。
+        // Language change -> re-run all localization closures.
+        // Note: this subscription must live for the entire VM lifetime; it must NOT
+        // go into track()/bag() — bag() is cleared during on_deactivate()'s
+        // bag().clear() (e.g. when a tab is switched away), which would stop text
+        // from refreshing on language change after returning. So use a standalone
+        // member, released on VM destruction.
         lang_sub_ = wb::i18n::on_language_changed(
             [this](const std::string&) { relocalize_all_(); });
     }
 
 protected:
-    /// 注册一段本地化闭包：立即执行一次设初值，语言切换时自动重跑。
-    /// 用于动态文案（含变量拼接）或任意需要随语言刷新的逻辑。
+    /// Register a localization closure: runs once immediately to set the
+    /// initial value, and re-runs automatically on language change.
+    /// Used for dynamic text (with variable interpolation) or any logic
+    /// that must refresh on language change.
     void localize(std::function<void()> fn) {
         fn();
         localizers_.push_back(std::move(fn));
     }
 
-    /// 便捷：把某文案 Property 绑定到某 key。模块由调用点源文件自动推断。
-    /// 等价于 localize([&]{ prop.set(wb::i18n::str_in(module, key)); })。
+    /// Convenience: bind a text Property to a key. Module is auto-inferred
+    /// from the call site's source file.
+    /// Equivalent to localize([&]{ prop.set(wb::i18n::str_in(module, key)); }).
     void text(aria::Property<std::string>& prop, std::string key,
               std::source_location loc = std::source_location::current()) {
         std::string module{wb::i18n::detail::module_of(loc.file_name())};
@@ -70,7 +82,7 @@ private:
     }
 
     std::vector<std::function<void()>> localizers_;
-    aria::Subscription lang_sub_;  ///< 语言订阅，随 VM 生命周期（非 bag）
+    aria::Subscription lang_sub_;  ///< Language subscription, lives with the VM (not in bag)
 };
 
 }  // namespace wb::core

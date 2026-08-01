@@ -1,6 +1,6 @@
-# Workbench 项目编译配置
+# Workbench build commands
 
-## 编译命令
+## Compile
 
 ### Mac
 <!-- cwd: . -->
@@ -17,5 +17,9 @@ bash Workbench/scripts/gen-ios.sh build
 ### Android
 
 ### Win
+<!-- cwd: . -->
+```powershell
+powershell -File Workbench/scripts/gen-win.ps1
+```
 
 ### Linux

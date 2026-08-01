@@ -33,6 +33,8 @@ Model 和 Service 是装配树中的作用域实例，不是静态全局 Singlet
 - Calendar：月视图网格 + .ics 订阅（CalendarModel/Service，事件解析），CTest 覆盖解析/排布/抓取。
 - 远端仓库配置从 Settings 迁入 Sync（同步中心自包含）；Settings 保留应用级偏好（当前：界面语言）。
 - Aria 适配器补齐按钮文案：qt6(QAbstractButton/QComboBox)、uikit(UIButton)、appkit(NSButton/NSPopUpButton)。
+- Windows 桌面端构建跑通（Qt6 + MSVC，默认 Ninja 并行编译，绕开 MSBuild MSB4166）；gen-win.ps1 自动探测 VS/SDK/Qt6 并补齐 rc.exe/mt.exe 的 PATH。
+- 源码英文化重构：Workbench 下 .h/.cpp/.mm 注释与字符串、CMakeLists.txt、构建脚本全部改为英文（语言选择器里的语言本名字面量如"简体中文"保留）。
 
 ## 正在进行
 
@@ -80,6 +82,11 @@ bash Workbench/scripts/gen-ios.sh build
 cmake -S Workbench/modules/tools/tests -B build/mac/modules/tools
 cmake --build build/mac/modules/tools
 ctest --test-dir build/mac/modules/tools --output-on-failure
+```
+
+```powershell
+# Windows 完整 App
+powershell -File Workbench/scripts/gen-win.ps1
 ```
 
 ## 仓库注意事项

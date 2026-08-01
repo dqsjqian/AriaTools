@@ -10,15 +10,15 @@ namespace wb::infra {
 ServiceHub::ServiceHub(std::string i18nBaseDir, std::string initialLang) {
     using namespace wb::services;
 
-    // 资源根 = i18n 目录的上一级；CA bundle 约定在 <resources>/ca/cacert.pem。
+    // Resource root = parent of the i18n directory; CA bundle is expected at <resources>/ca/cacert.pem.
     const std::string caBundle =
         (std::filesystem::path(i18nBaseDir).parent_path() / "ca" / "cacert.pem").string();
 
-    // i18n（文案资源目录由各模块汇聚而来）。
+    // i18n (text resource directory aggregates per-module subdirectories).
     std::shared_ptr<II18nService> i18n{
         make_xml_i18n_service(std::move(i18nBaseDir), std::move(initialLang))};
 
-    // 设置服务（先建，dataDir 供 storage 使用）。
+    // Settings service (create first; dataDir is used by storage).
     std::shared_ptr<ISettingsService> settings{make_in_memory_settings_service()};
     settings->load();
 
@@ -32,8 +32,9 @@ ServiceHub::ServiceHub(std::string i18nBaseDir, std::string initialLang) {
 #endif
     std::shared_ptr<ISyncService> sync{make_stub_sync_service()};
 
-    // HTTP 抓取服务：curl+mbedTLS 接入后用真实实现（CA bundle 随资源打包），
-    // 未接入前先用 stub 保证 DI 装配完整、app 可构建。
+    // HTTP fetch service: use real implementation once curl+mbedTLS is integrated
+    // (CA bundle bundled with resources); until then use a stub to keep DI
+    // wiring complete and the app buildable.
 #if WB_HAVE_CURL_HTTP
     std::shared_ptr<IHttpClient> http{make_curl_http_client(caBundle)};
 #else
@@ -41,7 +42,7 @@ ServiceHub::ServiceHub(std::string i18nBaseDir, std::string initialLang) {
     std::shared_ptr<IHttpClient> http{make_stub_http_client()};
 #endif
 
-    // 注册进 DI Container（单例实例）。
+    // Register into the DI Container (singleton instances).
     container_.register_instance<II18nService>(i18n);
     container_.register_instance<ISettingsService>(settings);
     container_.register_instance<IStorageService>(storage);
@@ -50,7 +51,8 @@ ServiceHub::ServiceHub(std::string i18nBaseDir, std::string initialLang) {
     container_.register_instance<ISyncService>(sync);
     container_.register_instance<IHttpClient>(http);
 
-    // 把 i18n 后端注入全局门面，使 wb::i18n::str/bind 无需逐 VM 注入即可用。
+    // Inject the i18n backend into the global facade so wb::i18n::str/bind
+    // work without per-VM injection.
     wb::i18n::set_backend(i18n.get());
 }
 
