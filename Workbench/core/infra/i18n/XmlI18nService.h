@@ -12,6 +12,7 @@
 #include "infra/i18n/II18nService.h"
 
 #include <mutex>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -29,6 +30,10 @@ public:
     std::vector<std::string> available_languages() const override;
     void set_language(const std::string& lang) override;
     std::string tr(std::string_view module, std::string_view key) const override;
+    std::string tr_in(std::string_view lang, std::string_view module,
+                      std::string_view key) const override;
+    std::optional<std::string> find_in(std::string_view lang, std::string_view module,
+                                       std::string_view key) const override;
 
 private:
     using Table        = std::unordered_map<std::string, std::string>;  // key→text

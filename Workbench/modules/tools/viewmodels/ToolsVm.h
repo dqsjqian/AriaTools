@@ -4,17 +4,16 @@
 // JSON/文件业务委托给 ToolsService；View 只绑定 VM。
 //
 #include "aria/aria.hpp"
-#include "module_api/LocalizedVm.h"
+#include "module_api/BaseVm.h"
 #include "models/ToolsModel.h"
 
 #include <memory>
 
 namespace wb::tools {
 
-class ToolsVm final : public wb::core::LocalizedVm {
+class ToolsVm final : public wb::core::BaseVm {
 public:
-    ToolsVm(wb::services::II18nService& i18n,
-            std::shared_ptr<ToolsModel> model);
+    explicit ToolsVm(std::shared_ptr<ToolsModel> model);
 
     // Base64
     aria::Property<std::string> base64Input;

@@ -4,31 +4,24 @@
 
 #include "aria/binding/binding_engine.hpp"
 
+#include <string>
+
 namespace wb::settings::iosview {
 static UIViewController* build(SettingsVm& vm, aria::binding::BindingEngine& be) {
-    UILabel*     title   = wb::ios::ui::make_title(@"");
-    UILabel*     hint    = wb::ios::ui::make_label(@"");
-    UITextField* dataDir = wb::ios::ui::make_field(@"");
-    UITextField* remote  = wb::ios::ui::make_field(@"");
-    UITextField* branch  = wb::ios::ui::make_field(@"");
-    UITextField* user    = wb::ios::ui::make_field(@"");
-    UITextField* token   = wb::ios::ui::make_field(@""); token.secureTextEntry = YES;
-    UISwitch*    autoSw  = [[UISwitch alloc] init];
-    UIButton*    save    = wb::ios::ui::make_button(@"");
-    UILabel*     status  = wb::ios::ui::make_label(@"");
-    auto* vc = wb::ios::ui::make_stack_vc(@[title, hint, dataDir, remote, branch,
-                                            user, token, autoSw, save, status]);
+    UILabel*  title   = wb::ios::ui::make_title(@"");
+    UILabel*  hint    = wb::ios::ui::make_label(@"");
+    UILabel*  langLbl = wb::ios::ui::make_label(@"");
+    UIButton* zh      = wb::ios::ui::make_button(@"简体中文");
+    UIButton* en      = wb::ios::ui::make_button(@"English");
+
+    auto* vc = wb::ios::ui::make_stack_vc(@[title, hint, langLbl, zh, en]);
+
     be.bind_text_oneway(vm.title, wb::ios::ui::view_for(title));
     be.bind_text_oneway(vm.hint, wb::ios::ui::view_for(hint));
-    be.bind_text_oneway(vm.saveLabel, wb::ios::ui::view_for(save));
-    be.bind_text(vm.dataDir, wb::ios::ui::view_for(dataDir));
-    be.bind_text(vm.remoteUrl, wb::ios::ui::view_for(remote));
-    be.bind_text(vm.branch, wb::ios::ui::view_for(branch));
-    be.bind_text(vm.username, wb::ios::ui::view_for(user));
-    be.bind_text(vm.token, wb::ios::ui::view_for(token));
-    be.bind_bool(vm.autoSync, wb::ios::ui::view_for(autoSw));
-    be.bind_command(vm.save, wb::ios::ui::view_for(save));
-    be.bind_text_oneway(vm.status, wb::ios::ui::view_for(status));
+    be.bind_text_oneway(vm.languageLabel, wb::ios::ui::view_for(langLbl));
+    // 语言切换：把语言码作为绑定参数传给命令。
+    be.bind_command(vm.switchLanguage, wb::ios::ui::view_for(zh), std::string("zh-CN"));
+    be.bind_command(vm.switchLanguage, wb::ios::ui::view_for(en), std::string("en"));
     return vc;
 }
 }  // namespace wb::settings::iosview

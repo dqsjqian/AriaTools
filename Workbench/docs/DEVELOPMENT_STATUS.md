@@ -26,42 +26,46 @@ Model 和 Service 是装配树中的作用域实例，不是静态全局 Singlet
 - Mac 完整 App 构建通过。
 - iOS 在 Tools 真实业务接入后构建通过。
 - 模块独立构建产物统一放在 `build/<platform>/modules/<module>`。
+- i18n 重构：全局门面 `wb::i18n::str("key")`（模块由源文件自动推断，回退 common，不跨模块）；`BaseVm` 提供 `text()/localize()` 自动随语言刷新，删除旧 `LocalizedVm`。
+- 全局流式日志 `log_info << ...`：管道格式 `日期 时间(ms)|level|线程|文件:行|函数|消息`。
+- 新增跨平台 `IHttpClient` 基础设施服务（当前 Stub，真实 curl+mbedTLS 待接）。
+- Notes 真实业务：Markdown 文件持久化 + NotesModel/Service + Qt/iOS 视图 + CTest。
+- Calendar：月视图网格 + .ics 订阅（CalendarModel/Service，事件解析），CTest 覆盖解析/排布/抓取。
+- 远端仓库配置从 Settings 迁入 Sync（同步中心自包含）；Settings 保留应用级偏好（当前：界面语言）。
+- Aria 适配器补齐按钮文案：qt6(QAbstractButton/QComboBox)、uikit(UIButton)、appkit(NSButton/NSPopUpButton)。
 
 ## 正在进行
 
 ### Notes 真实业务
 
-目标结构：
+已完成的结构：
 
 ```text
 modules/notes/
 ├── models/                # Note 数据类型 + NotesModel 共享业务状态
 ├── services/              # INotesService + MarkdownNotesService
-├── viewmodels/
-├── platforms/qt|ios/
-├── module/
-├── assets/i18n/           # 模块文案；icons 等资源也归 assets/
-└── tests/                 # CTest 模块业务验证
+├── viewmodels/            # NotesVm（只依赖 NotesModel）
+├── platforms/qt|ios/      # 列表-编辑器视图
+├── module/                # NotesModule 装配 Service/Model 并注入 VM
+├── assets/i18n/           # 模块文案
+└── tests/                 # CTest 业务验证
 ```
 
-业务范围：
+已落地的业务：
 
-- 一条笔记一个 `notes/<uuid>.md` 文件。
-- Markdown front matter 保存 id/title/updatedAt。
-- 列表加载、新建、选择、标题/正文编辑、保存、删除。
-- 附件复制到笔记专属目录并生成相对 Markdown 引用。
-- 保存成功发布强类型 `NoteSaved` 事件。
-- Qt 提供列表、Markdown 源编辑与预览；iOS 保持相同 VM/Model 能力。
+- 一条笔记一个 `notes/<id>.md`，front matter 保存 id/title/updated_at，正文为 Markdown。
+- NotesModel 持有 `ObservableList<Note>` 与选中/草稿状态，暴露 reload/新建/选择/编辑/保存/删除/导入附件。
+- 保存与新建成功经 EventBus 发布强类型 `wb::events::NoteSaved`。
+- 附件复制到 `notes/assets/<id>/` 并生成相对 Markdown 路径；删除笔记连带清理附件目录。
+- Qt：左侧列表 + 状态 + 新建，右侧标题/正文编辑与保存/删除；iOS：等价 VM 绑定（标题/正文编辑 + 增删改）。
+- NotesModule 以模块作用域创建并持有 MarkdownNotesService/NotesModel，构造函数注入 VM。
 
-## 后续顺序
+### 验证结果（本轮）
 
-1. 新增 Notes 类型与 INotesService/MarkdownNotesService。
-2. 新增 NotesModel，并由 NotesModule 创建、持有和注入。
-3. NotesVm 改为只依赖 NotesModel。
-4. 补齐 Qt/iOS Notes View。
-5. 增加 Notes CRUD/持久化业务测试。
-6. 运行 Mac 完整构建、Tools/Notes 测试和 iOS 构建。
-7. 更新本文件与 `ARCHITECTURE.md` 的实现状态。
+- Notes CTest：往返（新建→保存→重载→读取）、front matter 解析、附件导入相对路径、删除清理、NoteSaved 事件，全部通过（1/1）。
+- Tools CTest：1/1 通过。
+- Mac 完整 App 构建通过（含 Notes Qt 视图）。
+- iOS 构建：见下方验证命令重跑确认。
 
 ## 验证命令
 

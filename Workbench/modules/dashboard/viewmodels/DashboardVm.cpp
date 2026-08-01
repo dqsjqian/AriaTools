@@ -1,12 +1,13 @@
 #include "viewmodels/DashboardVm.h"
 
+#include "infra/i18n/I18n.h"
+
 namespace wb::dashboard {
 
-DashboardVm::DashboardVm(wb::services::II18nService& i18n)
-    : wb::core::LocalizedVm(i18n, "dashboard")
+DashboardVm::DashboardVm()
 {
-    bind_text(welcome, "welcome");
-    bind_text(summary, "summary");
+    text(welcome, "welcome");
+    text(summary, "summary");
 }
 
 void DashboardVm::on_activate() {}

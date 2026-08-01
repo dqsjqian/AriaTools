@@ -4,47 +4,181 @@
 
 #include "aria/binding/binding_engine.hpp"
 
+#include <QFrame>
+#include <QGridLayout>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
+#include <QListWidget>
 #include <QPushButton>
 #include <QVBoxLayout>
 
+#include <array>
+#include <string>
+
 namespace wb::calendar::qtview {
+
+// 一个日格：顶部日期数字 + 其下事件标题（最多显示若干条）。
+struct DayWidgets {
+    QFrame* frame = nullptr;
+    QLabel* dayLabel = nullptr;
+    QLabel* events = nullptr;
+};
+
+static QString join_events(const DayCell& c) {
+    QString s;
+    int shown = 0;
+    for (const auto& t : c.eventTitles) {
+        if (shown >= 3) { s += QStringLiteral("…"); break; }
+        if (!s.isEmpty()) s += QStringLiteral("\n");
+        s += QString::fromStdString(t);
+        ++shown;
+    }
+    return s;
+}
+
+static void paint_cell(DayWidgets& w, const DayCell& c) {
+    w.dayLabel->setText(QString::fromStdString(c.label));
+    w.events->setText(join_events(c));
+
+    QString bg = c.inCurrentMonth ? "#ffffff" : "#f5f5f5";
+    QString fg = c.inCurrentMonth ? "#212121" : "#bdbdbd";
+    QString border = "#e0e0e0";
+    if (c.isToday) { bg = "#e8eaf6"; border = "#3f51b5"; }
+    w.frame->setStyleSheet(
+        QString("QFrame { background:%1; border:1px solid %2; border-radius:4px; }")
+            .arg(bg, border));
+    w.dayLabel->setStyleSheet(
+        QString("QLabel { color:%1; font-weight:%2; border:none; }")
+            .arg(fg, c.isToday ? "bold" : "normal"));
+    w.events->setStyleSheet("QLabel { color:#455a64; font-size:10px; border:none; }");
+}
 
 static QWidget* build(wb::calendar::CalendarVm& vm, aria::binding::BindingEngine& be) {
     auto* w = new QWidget;
-    auto* lay = new QVBoxLayout(w);
+    auto& subs = wb::ui::subs_attached_to(w);
+    auto* root = new QVBoxLayout(w);
 
+    // 顶部：标题 + 提示
     auto* title = wb::ui::make_title("");
-    auto* hint  = wb::ui::make_info("");
-    lay->addWidget(title);
-    lay->addWidget(hint);
-
-    auto* row = new QHBoxLayout;
-    auto* urlEdit = new QLineEdit;
-    auto* addBtn = new QPushButton;
-    row->addWidget(urlEdit, 1);
-    row->addWidget(addBtn);
-    lay->addLayout(row);
-
-    auto* statusLbl = new QLabel;
-    statusLbl->setWordWrap(true);
-    lay->addWidget(statusLbl);
-    lay->addStretch();
-
+    auto* hint = wb::ui::make_info("");
+    root->addWidget(title);
+    root->addWidget(hint);
     be.bind_text_oneway(vm.title, wb::ui::view_for(title));
     be.bind_text_oneway(vm.hint, wb::ui::view_for(hint));
-    // QLineEdit 的 placeholder 用 VM 文案（随语言）。
+
+    // 导航行：上一月 | 月标题 | 下一月 | 今天 | 刷新
+    auto* navRow = new QHBoxLayout;
+    auto* prevBtn = new QPushButton;
+    auto* monthLbl = new QLabel;
+    auto* nextBtn = new QPushButton;
+    auto* todayBtn = new QPushButton;
+    auto* refreshBtn = new QPushButton;
+    monthLbl->setAlignment(Qt::AlignCenter);
+    monthLbl->setStyleSheet("QLabel { font-size:16px; font-weight:bold; }");
+    navRow->addWidget(prevBtn);
+    navRow->addWidget(monthLbl, 1);
+    navRow->addWidget(nextBtn);
+    navRow->addWidget(todayBtn);
+    navRow->addWidget(refreshBtn);
+    root->addLayout(navRow);
+    be.bind_text_oneway(vm.prevLabel, wb::ui::view_for(prevBtn));
+    be.bind_text_oneway(vm.nextLabel, wb::ui::view_for(nextBtn));
+    be.bind_text_oneway(vm.todayLabel, wb::ui::view_for(todayBtn));
+    be.bind_text_oneway(vm.refreshLabel, wb::ui::view_for(refreshBtn));
+    be.bind_text_oneway(vm.monthTitle, wb::ui::view_for(monthLbl));
+    be.bind_command(vm.prevMonth, wb::ui::view_for(prevBtn));
+    be.bind_command(vm.nextMonth, wb::ui::view_for(nextBtn));
+    be.bind_command(vm.today, wb::ui::view_for(todayBtn));
+    be.bind_command(vm.refresh, wb::ui::view_for(refreshBtn));
+
+    // 月历网格：第 0 行是周表头，第 1..6 行是 6 周 × 7 天。
+    auto* grid = new QGridLayout;
+    grid->setSpacing(3);
+    root->addLayout(grid, 1);
+
+    std::array<aria::Property<std::string>*, 7> wds{
+        &vm.wd1, &vm.wd2, &vm.wd3, &vm.wd4, &vm.wd5, &vm.wd6, &vm.wd7};
+    for (int col = 0; col < 7; ++col) {
+        auto* h = new QLabel;
+        h->setAlignment(Qt::AlignCenter);
+        h->setStyleSheet("QLabel { color:#616161; font-weight:bold; }");
+        grid->addWidget(h, 0, col);
+        be.bind_text_oneway(*wds[static_cast<std::size_t>(col)], wb::ui::view_for(h));
+    }
+
+    // 42 个格子控件（固定），rebuild 时只更新内容不重建控件。
+    auto cells = std::make_shared<std::array<DayWidgets, 42>>();
+    for (int i = 0; i < 42; ++i) {
+        const int row = i / 7 + 1;
+        const int col = i % 7;
+        auto& dw = (*cells)[static_cast<std::size_t>(i)];
+        dw.frame = new QFrame;
+        dw.frame->setMinimumSize(64, 56);
+        auto* cellLay = new QVBoxLayout(dw.frame);
+        cellLay->setContentsMargins(4, 2, 4, 2);
+        cellLay->setSpacing(1);
+        dw.dayLabel = new QLabel;
+        dw.events = new QLabel;
+        dw.events->setWordWrap(true);
+        cellLay->addWidget(dw.dayLabel);
+        cellLay->addWidget(dw.events, 1);
+        grid->addWidget(dw.frame, row, col);
+    }
+
+    auto repaint = [cells, &vm]() {
+        for (std::size_t i = 0; i < 42 && i < vm.days.size(); ++i) {
+            if (auto c = vm.days.at(i)) paint_cell((*cells)[i], *c);
+        }
+    };
+    repaint();
+    subs.push_back(vm.days.on_any_change([repaint]() { repaint(); }));
+
+    // 订阅行：输入 + 订阅按钮
+    auto* subRow = new QHBoxLayout;
+    auto* urlEdit = new QLineEdit;
+    auto* subBtn = new QPushButton;
+    subRow->addWidget(urlEdit, 1);
+    subRow->addWidget(subBtn);
+    root->addLayout(subRow);
     urlEdit->setPlaceholderText(QString::fromStdString(vm.urlPlaceholder.get()));
-    wb::ui::subs_attached_to(w).push_back(
-        vm.urlPlaceholder.on_changed([urlEdit](const std::string& s) {
-            urlEdit->setPlaceholderText(QString::fromStdString(s));
-        }));
-    be.bind_text_oneway(vm.subscribeLabel, wb::ui::view_for(addBtn));
-    be.bind_text(vm.subscribeUrl, wb::ui::view_for(urlEdit));
-    be.bind_command(vm.addSubscription, wb::ui::view_for(addBtn));
+    subs.push_back(vm.urlPlaceholder.on_changed([urlEdit](const std::string& s) {
+        urlEdit->setPlaceholderText(QString::fromStdString(s));
+    }));
+    be.bind_text_oneway(vm.subscribeLabel, wb::ui::view_for(subBtn));
+    wb::ui::bind_editable_text(be, vm.subscribeUrl, urlEdit);
+    be.bind_command(vm.addSubscription, wb::ui::view_for(subBtn));
+
+    // 订阅列表（双击删除）
+    auto* subList = new QListWidget;
+    subList->setMaximumHeight(90);
+    root->addWidget(subList);
+    auto rebuildSubs = [subList, &vm]() {
+        subList->clear();
+        for (std::size_t i = 0; i < vm.subscriptions.size(); ++i) {
+            if (auto s = vm.subscriptions.at(i)) {
+                auto* item = new QListWidgetItem(
+                    QString::fromStdString(s->name.empty() ? s->url : s->name));
+                item->setData(Qt::UserRole + 1, QString::fromStdString(s->id));
+                item->setToolTip(QString::fromStdString(s->url));
+                subList->addItem(item);
+            }
+        }
+    };
+    rebuildSubs();
+    subs.push_back(vm.subscriptions.on_any_change([rebuildSubs]() { rebuildSubs(); }));
+    QObject::connect(subList, &QListWidget::itemDoubleClicked,
+                     [&vm](QListWidgetItem* item) {
+                         if (!item) return;
+                         vm.removeSubscription.execute(
+                             item->data(Qt::UserRole + 1).toString().toStdString());
+                     });
+
+    // 状态
+    auto* statusLbl = new QLabel;
+    root->addWidget(statusLbl);
     be.bind_text_oneway(vm.status, wb::ui::view_for(statusLbl));
+
     return w;
 }
 

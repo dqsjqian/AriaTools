@@ -6,11 +6,14 @@ add_library(wb_infra STATIC
     ServiceHub.cpp
     log/Log.cpp
     i18n/XmlI18nService.cpp
+    i18n/I18n.cpp
     storage/LocalFileStorageService.cpp
     secret/StubSecretStore.cpp
     crypto/StubCryptoService.cpp
     settings/InMemorySettingsService.cpp
     sync/StubSyncService.cpp
+    http/HttpResponse.cpp
+    http/StubHttpClient.cpp
 )
 
 # core 根在上一级：include 形如 "infra/i18n/II18nService.h"
@@ -39,3 +42,9 @@ else()
 endif()
 
 target_compile_features(wb_infra PUBLIC cxx_std_20)
+
+# HTTP 后端：默认关闭（用 StubHttpClient）。vendored libcurl+mbedTLS 接入后，
+# 由上层在此打开 WB_HAVE_CURL_HTTP=1 并编入 http/CurlHttpClient.cpp、链接 curl。
+if(NOT DEFINED WB_HAVE_CURL_HTTP)
+    target_compile_definitions(wb_infra PUBLIC WB_HAVE_CURL_HTTP=0)
+endif()

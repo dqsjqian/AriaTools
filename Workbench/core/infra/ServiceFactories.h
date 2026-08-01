@@ -9,6 +9,7 @@
 #include "infra/crypto/ICryptoService.h"
 #include "infra/settings/ISettingsService.h"
 #include "infra/sync/ISyncService.h"
+#include "infra/http/IHttpClient.h"
 
 #include <string>
 
@@ -19,6 +20,10 @@ IStorageService*  make_local_file_storage_service(std::string dataDir);
 ISyncService*     make_stub_sync_service();
 ISecretStore*     make_stub_secret_store();
 ICryptoService*   make_stub_crypto_service();
+IHttpClient*      make_stub_http_client();
+#if WB_HAVE_CURL_HTTP
+IHttpClient*      make_curl_http_client(std::string caBundlePath);
+#endif
 #if WB_HAVE_APPLE_CRYPTO
 ICryptoService*   make_apple_crypto_service();
 #endif

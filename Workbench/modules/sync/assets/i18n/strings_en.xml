@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
     <string name="title">Data Sync</string>
-    <string name="hint">Sync your local data directory as a git repository with your private Gitee repo.</string>
+    <string name="hint">Sync your local data directory as a git repository with your private Gitee repo. Repo info is your own private config; the token is kept in the OS secure store, never in plaintext.</string>
+    <string name="data_dir">Data Directory</string>
+    <string name="remote">Remote Repository</string>
+    <string name="branch">Branch</string>
+    <string name="username">Username</string>
+    <string name="token">Access Token</string>
+    <string name="auto_sync">Enable automatic sync (scheduled + triggered)</string>
+    <string name="save_config">Save Config</string>
+    <string name="config_saved">Configuration saved</string>
     <string name="sync_now">Sync Now</string>
     <string name="pull">Pull Only</string>
     <string name="push">Push Only</string>

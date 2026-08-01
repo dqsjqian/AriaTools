@@ -34,3 +34,19 @@ set_target_properties(workbench PROPERTIES
     MACOSX_BUNDLE_BUNDLE_VERSION     "0.1.0"
     MACOSX_BUNDLE_SHORT_VERSION_STRING "0.1.0"
 )
+
+# ── 把运行期 i18n / assets 复制进 .app 包内 Resources，使 App 自包含 ────────
+# 说明见顶层 CMakeLists 的同名注释；此处只做 POST_BUILD 复制（须与 workbench
+# 目标同目录）。i18n 内容由顶层对 workbench 追加的 wb_i18n_* 依赖保证已就绪。
+if(APPLE)
+    set(_bundle_res "$<TARGET_BUNDLE_CONTENT_DIR:workbench>/Resources")
+    add_custom_command(TARGET workbench POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${WB_RUNTIME_I18N_DIR}" "${_bundle_res}/i18n"
+        VERBATIM)
+    add_custom_command(TARGET workbench POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${WB_RUNTIME_ASSETS_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${WB_RUNTIME_ASSETS_DIR}" "${_bundle_res}/assets"
+        VERBATIM)
+endif()

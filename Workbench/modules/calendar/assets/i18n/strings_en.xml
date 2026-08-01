@@ -1,10 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
     <string name="title">Calendar</string>
-    <string name="hint">Subscribe to third-party calendars via standard .ics links.</string>
+    <string name="hint">Subscribe to third-party calendars via standard .ics links. Events appear on their dates.</string>
     <string name="url_placeholder">Paste an .ics subscription URL…</string>
     <string name="subscribe">Subscribe</string>
-    <string name="empty">No subscriptions. Paste an .ics link to subscribe (Google / Outlook, etc.).</string>
-    <string name="added_prefix">Added </string>
-    <string name="added_suffix"> subscription(s)</string>
+    <string name="prev">Prev</string>
+    <string name="next">Next</string>
+    <string name="today">Today</string>
+    <string name="refresh">Refresh</string>
+    <string name="wd_mon">Mon</string>
+    <string name="wd_tue">Tue</string>
+    <string name="wd_wed">Wed</string>
+    <string name="wd_thu">Thu</string>
+    <string name="wd_fri">Fri</string>
+    <string name="wd_sat">Sat</string>
+    <string name="wd_sun">Sun</string>
+    <string name="remove">Remove</string>
 </resources>

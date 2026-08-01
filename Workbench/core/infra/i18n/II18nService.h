@@ -11,6 +11,7 @@
 //
 #include "aria/property.hpp"
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -33,6 +34,17 @@ public:
     /// 取模块内某 key 的文案。缺失回退默认语言，再缺返回 "[module/key]"。
     [[nodiscard]] virtual std::string tr(std::string_view module,
                                          std::string_view key) const = 0;
+
+    /// 取「指定语种」的文案（不改变当前语种设置）。lang 为空串时等价于 tr()。
+    /// 缺失回退默认语言，再缺返回 "[module/key]"。
+    [[nodiscard]] virtual std::string tr_in(std::string_view lang,
+                                            std::string_view module,
+                                            std::string_view key) const = 0;
+
+    /// 精确查找：命中返回文案，未命中返回 nullopt（不回退、不产生占位串）。
+    /// 供上层做「模块→全局」等自定义回退策略。lang 空串=当前语种。
+    [[nodiscard]] virtual std::optional<std::string> find_in(
+        std::string_view lang, std::string_view module, std::string_view key) const = 0;
 };
 
 }  // namespace wb::services
