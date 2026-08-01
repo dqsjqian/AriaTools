@@ -16,4 +16,5 @@
     <string name="wd_sat">六</string>
     <string name="wd_sun">日</string>
     <string name="remove">删除</string>
+    <string name="events_suffix">个事件</string>
 </resources>

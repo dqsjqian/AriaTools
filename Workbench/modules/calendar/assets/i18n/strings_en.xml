@@ -16,4 +16,5 @@
     <string name="wd_sat">Sat</string>
     <string name="wd_sun">Sun</string>
     <string name="remove">Remove</string>
+    <string name="events_suffix">event(s)</string>
 </resources>

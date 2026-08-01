@@ -20,7 +20,7 @@ public:
     aria::ObservableList<DayCell>&      days;
     aria::ObservableList<Subscription>& subscriptions;
     aria::Property<std::string>         monthTitle;   ///< "2026-07"（动态）
-    aria::Property<std::string>&        status;
+    aria::Property<std::string>         status{""};   ///< 本地化后的当月事件数文案
 
     // 订阅输入
     aria::Property<std::string> subscribeUrl;

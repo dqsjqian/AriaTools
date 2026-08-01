@@ -24,6 +24,7 @@
 //
 #include "aria/binding/view_model.hpp"
 #include "aria/property.hpp"
+#include "aria/subscription.hpp"
 #include "infra/i18n/I18n.h"
 
 #include <functional>
@@ -37,9 +38,12 @@ namespace wb::core {
 class BaseVm : public aria::binding::ViewModel {
 public:
     BaseVm() {
-        // 语言切换 → 重跑所有本地化闭包。订阅随本 VM 生命周期。
-        track(wb::i18n::on_language_changed(
-            [this](const std::string&) { relocalize_all_(); }));
+        // 语言切换 → 重跑所有本地化闭包。
+        // 注意：此订阅必须存活整个 VM 生命周期，不能放进 track()/bag()——
+        // bag 会在 on_deactivate() 的 bag().clear() 时被清空（tab 切走即失效），
+        // 导致切走再回来后文案不再随语言刷新。故用独立成员，随 VM 析构释放。
+        lang_sub_ = wb::i18n::on_language_changed(
+            [this](const std::string&) { relocalize_all_(); });
     }
 
 protected:
@@ -66,6 +70,7 @@ private:
     }
 
     std::vector<std::function<void()>> localizers_;
+    aria::Subscription lang_sub_;  ///< 语言订阅，随 VM 生命周期（非 bag）
 };
 
 }  // namespace wb::core

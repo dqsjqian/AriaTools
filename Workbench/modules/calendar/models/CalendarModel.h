@@ -28,7 +28,7 @@ public:
     aria::ObservableList<DayCell>      days;      ///< 固定 42 格
     aria::Property<int>                year{0};
     aria::Property<int>                month{0};   ///< 1..12
-    aria::Property<std::string>        status{""};
+    aria::Property<int>                monthEventCount{0};  ///< 当月事件数（文案由 VM 本地化）
     aria::Property<std::string>        lastError{""};
 
     // 初始化：定位到今天所在月，加载订阅与缓存事件并排布。

@@ -176,7 +176,7 @@ void CalendarModel::rebuild_days_() {
     int shown = 0;
     for (const auto& e : events_)
         if (e.startYear == y && e.startMonth == m) ++shown;
-    status.set(std::to_string(shown) + " events");
+    monthEventCount.set(shown);
     log_info << "rebuilt " << y << "-" << m << " grid, " << shown << " events this month";
 }
 
