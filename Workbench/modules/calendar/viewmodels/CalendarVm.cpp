@@ -10,7 +10,6 @@ CalendarVm::CalendarVm(std::shared_ptr<CalendarModel> model)
     : days(model->days),
       subscriptions(model->subscriptions),
       monthTitle(""),
-      status(model->status),
       subscribeUrl(""),
       prevMonth([this] { model_->prev_month(); refresh_month_title_(); }),
       nextMonth([this] { model_->next_month(); refresh_month_title_(); }),
@@ -44,6 +43,15 @@ CalendarVm::CalendarVm(std::shared_ptr<CalendarModel> model)
     text(wd5, "wd_fri");
     text(wd6, "wd_sat");
     text(wd7, "wd_sun");
+
+    // 当月事件数文案：随语言切换刷新（localize），也随数量变化刷新。
+    localize([this] {
+        status.set(std::to_string(model_->monthEventCount.get()) + " " +
+                   wb::i18n::str("events_suffix"));
+    });
+    track(model_->monthEventCount.on_changed([this](int n) {
+        status.set(std::to_string(n) + " " + wb::i18n::str("events_suffix"));
+    }));
 
     track(model_->year.on_changed([this](int) { refresh_month_title_(); }));
     track(model_->month.on_changed([this](int) { refresh_month_title_(); }));
