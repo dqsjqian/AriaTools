@@ -100,7 +100,8 @@ add_custom_target(wb_i18n_common ALL
 # `open workbench.app` 启动（工作目录为 /），旧逻辑找不到文案，界面会显示
 # [module/key] 而非具体文本。实际的 POST_BUILD 复制放在 platform/qt（与
 # workbench 目标同目录，CMake 要求）；这里只补依赖，确保内容已就绪再复制。
-if(APPLE AND WORKBENCH_TARGET_QT AND TARGET workbench)
+# Qt 与 iOS 都需要（iOS 端 POST_BUILD 复制在 platform/ios/CMakeLists.txt）。
+if(TARGET workbench)
     add_dependencies(workbench wb_i18n_common)
     foreach(_m ${WB_MODULES})
         if(TARGET wb_i18n_${_m})
