@@ -93,6 +93,22 @@ add_custom_target(wb_i18n_common ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_common_i18n} "${WB_RUNTIME_I18N_DIR}/common"
     VERBATIM)
 
+# ── 把运行期 i18n / assets 打进 macOS .app 包，使 App 自包含 ────────────────
+# 现象背景：QtAppShell::resolve_i18n_dir 会先找可执行文件旁的 i18n/，其次
+# <bundle>/Contents/Resources/i18n。运行期文案先由各 wb_i18n_* 目标汇聚到
+# ${WB_RUNTIME_I18N_DIR}（= build/<plat>/i18n），但它在 .app 包外；若用户用
+# `open workbench.app` 启动（工作目录为 /），旧逻辑找不到文案，界面会显示
+# [module/key] 而非具体文本。实际的 POST_BUILD 复制放在 platform/qt（与
+# workbench 目标同目录，CMake 要求）；这里只补依赖，确保内容已就绪再复制。
+if(APPLE AND WORKBENCH_TARGET_QT AND TARGET workbench)
+    add_dependencies(workbench wb_i18n_common)
+    foreach(_m ${WB_MODULES})
+        if(TARGET wb_i18n_${_m})
+            add_dependencies(workbench wb_i18n_${_m})
+        endif()
+    endforeach()
+endif()
+
 # ── 修补 vendored UIKit 适配器的头文件搜索路径（裸 #import 问题）──────────────
 if(WORKBENCH_TARGET_IOS AND TARGET aria_adapters_uikit)
     target_include_directories(aria_adapters_uikit PRIVATE

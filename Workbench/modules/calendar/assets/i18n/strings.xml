@@ -1,10 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
     <string name="title">日历</string>
-    <string name="hint">支持订阅第三方日历（标准 .ics 链接）。</string>
+    <string name="hint">支持订阅第三方日历（标准 .ics 链接）。事件将显示在对应日期。</string>
     <string name="url_placeholder">粘贴 .ics 订阅链接…</string>
     <string name="subscribe">订阅</string>
-    <string name="empty">暂无订阅。可粘贴 .ics 链接订阅第三方日历（Google / Outlook 等）。</string>
-    <string name="added_prefix">已添加 </string>
-    <string name="added_suffix"> 个订阅源</string>
+    <string name="prev">上一月</string>
+    <string name="next">下一月</string>
+    <string name="today">今天</string>
+    <string name="refresh">刷新</string>
+    <string name="wd_mon">一</string>
+    <string name="wd_tue">二</string>
+    <string name="wd_wed">三</string>
+    <string name="wd_thu">四</string>
+    <string name="wd_fri">五</string>
+    <string name="wd_sat">六</string>
+    <string name="wd_sun">日</string>
+    <string name="remove">删除</string>
 </resources>

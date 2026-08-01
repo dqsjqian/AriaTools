@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
     <string name="title">数据同步</string>
-    <string name="hint">把本地数据目录作为一个 git 仓库与你的私有 Gitee 仓库同步。</string>
+    <string name="hint">把本地数据目录作为一个 git 仓库与你的私有 Gitee 仓库同步。仓库信息为你个人私有配置，Token 保存在本机安全存储，不写入明文。</string>
+    <string name="data_dir">数据目录</string>
+    <string name="remote">远程仓库</string>
+    <string name="branch">分支</string>
+    <string name="username">用户名</string>
+    <string name="token">访问 Token</string>
+    <string name="auto_sync">启用全自动同步（定时 + 条件触发）</string>
+    <string name="save_config">保存配置</string>
+    <string name="config_saved">配置已保存</string>
     <string name="sync_now">立即同步</string>
     <string name="pull">仅拉取</string>
     <string name="push">仅推送</string>

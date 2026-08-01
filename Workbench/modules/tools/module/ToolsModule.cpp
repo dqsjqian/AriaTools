@@ -16,7 +16,7 @@ void ToolsModule::ensure_initialized_(wb::module_api::ModuleContext& ctx) {
 std::shared_ptr<aria::binding::ViewModel>
 ToolsModule::create_view_model(wb::module_api::ModuleContext& ctx) {
     ensure_initialized_(ctx);
-    return std::make_shared<ToolsVm>(ctx.services().i18n(), model_);
+    return std::make_shared<ToolsVm>(model_);
 }
 
 std::shared_ptr<wb::module_api::IModule> make_tools_module() {

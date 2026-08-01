@@ -159,13 +159,24 @@ const std::string* XmlI18nService::lookup_(const std::string& lang,
 }
 
 std::string XmlI18nService::tr(std::string_view module, std::string_view key) const {
+    return tr_in(std::string_view{}, module, key);
+}
+
+std::string XmlI18nService::tr_in(std::string_view lang, std::string_view module,
+                                  std::string_view key) const {
+    if (auto v = find_in(lang, module, key)) return *v;
+    return "[" + std::string(module) + "/" + std::string(key) + "]";
+}
+
+std::optional<std::string> XmlI18nService::find_in(
+    std::string_view lang, std::string_view module, std::string_view key) const {
     std::lock_guard<std::mutex> lk(mutex_);
-    const std::string cur = language_.get();
-    if (auto* v = lookup_(cur, module, key)) return *v;
-    if (cur != defaultLang_) {
+    const std::string primary = lang.empty() ? language_.get() : std::string(lang);
+    if (auto* v = lookup_(primary, module, key)) return *v;
+    if (primary != defaultLang_) {
         if (auto* v = lookup_(defaultLang_, module, key)) return *v;
     }
-    return "[" + std::string(module) + "/" + std::string(key) + "]";
+    return std::nullopt;
 }
 
 II18nService* make_xml_i18n_service(std::string baseDir, std::string initialLang) {

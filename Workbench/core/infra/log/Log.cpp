@@ -3,6 +3,7 @@
 #include "utils/Platform.h"
 
 #include <cstdio>
+#include <mutex>
 
 #if WB_OS_ANDROID
 #  include <android/log.h>
@@ -11,39 +12,40 @@
 namespace wb::log {
 
 namespace {
-const char* level_tag(Level lv) {
-    switch (lv) {
-        case Level::Trace: return "T";
-        case Level::Debug: return "D";
-        case Level::Info:  return "I";
-        case Level::Warn:  return "W";
-        case Level::Error: return "E";
-        case Level::Fatal: return "F";
-    }
-    return "?";
-}
+std::mutex g_mutex;
+OutputFn   g_output;  // 未设置时不输出
 }  // namespace
 
+void set_output(OutputFn fn) {
+    std::lock_guard<std::mutex> lk(g_mutex);
+    g_output = std::move(fn);
+}
+
+namespace detail {
+void emit(Level lv, std::string_view line) {
+    std::lock_guard<std::mutex> lk(g_mutex);
+    if (g_output) g_output(lv, line);
+}
+}  // namespace detail
+
 void init_default_sink() {
-    aria::runtime::Logger::instance().set_sink(
-        [](Level lv, std::string_view tag, std::string_view msg) {
+    set_output([](Level lv, std::string_view line) {
 #if WB_OS_ANDROID
-            int prio = ANDROID_LOG_INFO;
-            switch (lv) {
-                case Level::Trace: case Level::Debug: prio = ANDROID_LOG_DEBUG; break;
-                case Level::Info:  prio = ANDROID_LOG_INFO;  break;
-                case Level::Warn:  prio = ANDROID_LOG_WARN;  break;
-                case Level::Error: case Level::Fatal: prio = ANDROID_LOG_ERROR; break;
-            }
-            __android_log_print(prio, std::string(tag).c_str(), "%.*s",
-                                static_cast<int>(msg.size()), msg.data());
+        int prio = ANDROID_LOG_INFO;
+        switch (lv) {
+            case Level::Trace: case Level::Debug: prio = ANDROID_LOG_DEBUG; break;
+            case Level::Info:  prio = ANDROID_LOG_INFO;  break;
+            case Level::Warn:  prio = ANDROID_LOG_WARN;  break;
+            case Level::Error: case Level::Fatal: prio = ANDROID_LOG_ERROR; break;
+        }
+        __android_log_print(prio, "workbench", "%.*s",
+                            static_cast<int>(line.size()), line.data());
 #else
-            std::fprintf(stderr, "[%s][%.*s] %.*s\n",
-                         level_tag(lv),
-                         static_cast<int>(tag.size()), tag.data(),
-                         static_cast<int>(msg.size()), msg.data());
+        (void)lv;
+        std::fprintf(stderr, "%.*s\n",
+                     static_cast<int>(line.size()), line.data());
 #endif
-        });
+    });
 }
 
 }  // namespace wb::log

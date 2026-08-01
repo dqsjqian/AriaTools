@@ -16,6 +16,7 @@
 #include "infra/crypto/ICryptoService.h"
 #include "infra/settings/ISettingsService.h"
 #include "infra/sync/ISyncService.h"
+#include "infra/http/IHttpClient.h"
 
 #include "aria/runtime/container.hpp"
 #include "aria/runtime/event_bus.hpp"
@@ -49,6 +50,7 @@ public:
     [[nodiscard]] services::ICryptoService&   crypto()   { return service<services::ICryptoService>(); }
     [[nodiscard]] services::ISettingsService& settings() { return service<services::ISettingsService>(); }
     [[nodiscard]] services::ISyncService&     sync()     { return service<services::ISyncService>(); }
+    [[nodiscard]] services::IHttpClient&      http()     { return service<services::IHttpClient>(); }
 
 private:
     aria::runtime::Container container_;
