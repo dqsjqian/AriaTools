@@ -1,6 +1,6 @@
 #pragma once
 //
-// DashboardVm — 首页概览。文案由 VM 经 i18n 派发（View 零字面量）。
+// DashboardVm — home overview. Text is dispatched by the VM via i18n (View has zero string literals).
 //
 #include "aria/aria.hpp"
 #include "module_api/BaseVm.h"
@@ -11,8 +11,8 @@ class DashboardVm final : public wb::core::BaseVm {
 public:
     DashboardVm();
 
-    aria::Property<std::string> welcome;   ///< 欢迎语（随语言更新）
-    aria::Property<std::string> summary;   ///< 概览文本（随语言更新）
+    aria::Property<std::string> welcome;   ///< Welcome text (updates on language change)
+    aria::Property<std::string> summary;   ///< Summary text (updates on language change)
 
     void on_activate() override;
     void on_deactivate() override;

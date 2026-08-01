@@ -1,13 +1,13 @@
 # ============================================================================
-#  wb_module_api — 模块契约库。模块唯一的横向依赖（除 wb_platform + aria）。
-#  含：IModule / ModuleContext / ModuleRegistry / AppEvents / LocalizedVm。
+#  wb_module_api — module contract library. The only cross-cutting dependency for modules (besides wb_platform + aria).
+#  Contains: IModule / ModuleContext / ModuleRegistry / AppEvents / LocalizedVm.
 # ============================================================================
 add_library(wb_module_api STATIC
     ModuleRegistry.cpp
 )
 
 target_include_directories(wb_module_api PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/..   # include 形如 "module_api/IModule.h"
+    ${CMAKE_CURRENT_SOURCE_DIR}/..   # include like "module_api/IModule.h"
 )
 
 target_link_libraries(wb_module_api PUBLIC

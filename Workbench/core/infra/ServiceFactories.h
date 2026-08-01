@@ -1,7 +1,9 @@
 #pragma once
 //
-// 稳定服务工厂声明（platform 内部使用）。ServiceHub 用它们构造具体实现，
-// 再 register_instance 进 DI Container。业务阶段把 stub 换成 real 只改这里 + ServiceHub。
+// Stable service factory declarations (used internally by the platform layer).
+// ServiceHub uses these to construct concrete implementations, then
+// register_instance them into the DI Container. To swap stubs for real
+// implementations in the production phase, change only here + ServiceHub.
 //
 #include "infra/i18n/II18nService.h"
 #include "infra/storage/IStorageService.h"

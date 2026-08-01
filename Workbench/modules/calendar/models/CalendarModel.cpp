@@ -34,13 +34,13 @@ int CalendarModel::days_in_month_(int y, int m) {
     return base[static_cast<std::size_t>(m - 1)];
 }
 
-// 基姆拉尔森公式变体：返回 0=周一 .. 6=周日。
+// Variant of the Kim Larsen formula: returns 0=Monday .. 6=Sunday.
 int CalendarModel::weekday_of_(int y, int m, int d) {
     if (m < 3) { m += 12; y -= 1; }
     const int k = y % 100, j = y / 100;
     // Zeller: 0=Saturday..6=Friday
     int h = (d + (13 * (m + 1)) / 5 + k + k / 4 + j / 4 + 5 * j) % 7;
-    // 转为 0=Monday..6=Sunday
+    // Convert to 0=Monday..6=Sunday
     int iso = (h + 5) % 7;
     return iso;
 }
@@ -55,7 +55,7 @@ void CalendarModel::initialize() {
     if (subs.ok()) {
         for (auto& s : subs.value) subscriptions.push_back(std::make_shared<Subscription>(s));
     }
-    // 载入各订阅缓存事件（离线可见），联网刷新由 refresh_all 触发。
+    // Load each subscription's cached events (visible offline); online refresh is triggered by refresh_all.
     events_.clear();
     for (auto& s : subscriptions.snapshot()) {
         if (auto cached = service_->load_cached(s->id); cached.ok()) {
@@ -100,7 +100,7 @@ bool CalendarModel::remove_subscription(const SubId& id) {
         auto s = subscriptions.at(i);
         if (s && s->id == id) { subscriptions.remove_at(i); break; }
     }
-    // 移除该订阅的事件并重排。
+    // Remove this subscription's events and re-layout.
     EventList kept;
     for (auto& e : events_) if (e.source != id) kept.push_back(std::move(e));
     events_.swap(kept);
@@ -117,11 +117,11 @@ bool CalendarModel::refresh_all() {
         auto r = service_->refresh(*s);
         if (r.ok()) {
             for (auto& e : r.value) events_.push_back(std::move(e));
-            s->lastFetched = 1;  // 标记已抓取（展示用，精确值以磁盘为准）
+            s->lastFetched = 1;  // Mark as fetched (display only; authoritative value is on disk)
         } else {
             anyFail = true;
             if (firstErr.empty()) firstErr = r.message;
-            // 回退到缓存，避免刷新失败清空显示。
+            // Fall back to cache so a refresh failure does not wipe the display.
             if (auto cached = service_->load_cached(s->id); cached.ok()) {
                 for (auto& e : cached.value) events_.push_back(std::move(e));
             }
@@ -137,7 +137,7 @@ void CalendarModel::rebuild_days_() {
     const int y = year.get(), m = month.get();
     int ty, tm, td; local_today(ty, tm, td);
 
-    const int firstWd = weekday_of_(y, m, 1);          // 0=周一
+    const int firstWd = weekday_of_(y, m, 1);          // 0=Monday
     const int dim = days_in_month_(y, m);
     int pm = m - 1, py = y; if (pm < 1) { pm = 12; --py; }
     const int dimPrev = days_in_month_(py, pm);
@@ -146,13 +146,13 @@ void CalendarModel::rebuild_days_() {
     for (int cell = 0; cell < 42; ++cell) {
         DayCell c;
         int dayNum, cy, cm; bool inMonth;
-        if (cell < firstWd) {                           // 前月补齐
+        if (cell < firstWd) {                           // Prev-month padding
             dayNum = dimPrev - firstWd + 1 + cell;
             cy = py; cm = pm; inMonth = false;
-        } else if (cell < firstWd + dim) {              // 当月
+        } else if (cell < firstWd + dim) {              // Current month
             dayNum = cell - firstWd + 1;
             cy = y; cm = m; inMonth = true;
-        } else {                                        // 次月补齐
+        } else {                                        // Next-month padding
             dayNum = cell - firstWd - dim + 1;
             cm = m + 1; cy = y; if (cm > 12) { cm = 1; ++cy; }
             inMonth = false;
@@ -161,7 +161,7 @@ void CalendarModel::rebuild_days_() {
         c.inCurrentMonth = inMonth;
         c.isToday = (cy == ty && cm == tm && dayNum == td);
         c.label = std::to_string(dayNum);
-        // 归类事件（按起始日；仅当月格子展示，减少视觉噪声）。
+        // Classify events (by start date; only shown in current-month cells to reduce visual noise).
         if (inMonth) {
             for (const auto& e : events_) {
                 if (e.startYear == cy && e.startMonth == cm && e.startDay == dayNum) {

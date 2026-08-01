@@ -1,9 +1,9 @@
 // ────────────────────────────────────────────────────────────────────────────
-//  Workbench — 跨平台工作台（Qt6 桌面端）
+//  Workbench — Cross-platform workbench (Qt6 desktop).
 //
-//  布局：左侧导航列表 + 右侧堆叠内容区。切换导航项时对应 VM 走 activate/deactivate。
-//  所有业务逻辑在模块库（纯 C++，无 Qt）；本文件只做装配 + 壳。
-//  文案全部来自 i18n（VM 派发 / core.nav_title），View 零硬编码。
+//  Layout: left nav list + right stacked content area. Switching nav items activates/deactivates the corresponding VM.
+//  All business logic lives in module libraries (pure C++, no Qt); this file only does assembly + shell.
+//  All text comes from i18n (VM dispatch / core.nav_title), zero hard-coded text in View.
 // ────────────────────────────────────────────────────────────────────────────
 #include "App/QtAppShell.h"
 #include "infra/log/Log.h"
@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     auto& core = shell.core();
 
     QMainWindow win;
-    // 窗口标题来自 i18n common/app_name。
+    // Window title from i18n common/app_name.
     win.setWindowTitle(QString::fromStdString(core.i18n().tr("common", "app_name")));
     win.resize(960, 680);
 
@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
     root->addWidget(stack, 1);
     win.setCentralWidget(central);
 
-    // 导航文案随语言即时刷新。订阅存为静态，随进程存活。
+    // Nav text refreshes instantly on language change. Subscription is static, lives with the process.
     static aria::Subscription s_langSub =
         core.i18n().language().on_changed(
             [&core, nav, &win](const std::string&) {
@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
                 win.setWindowTitle(QString::fromStdString(core.i18n().tr("common", "app_name")));
             });
 
-    // VM 生命周期跟随当前导航项。
+    // VM lifetime follows the current nav item.
     auto vm_at = [&core](int i) -> std::shared_ptr<aria::binding::ViewModel> {
         const auto& ms = core.modules();
         if (i < 0 || i >= static_cast<int>(ms.size())) return nullptr;

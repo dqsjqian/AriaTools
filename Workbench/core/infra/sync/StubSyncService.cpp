@@ -1,7 +1,8 @@
 //
-// StubSyncService — 骨架期同步桩实现。
-// 不真正操作 git：根据配置是否完整，返回"未配置" / "模拟成功"。
-// 业务阶段替换为 libgit2 实现。
+// StubSyncService — Skeleton-stage sync stub implementation.
+// Does not actually operate on git: based on whether config is complete,
+// returns "not configured" / "simulated success".
+// Replace with a libgit2 implementation in the production phase.
 //
 #include "infra/sync/ISyncService.h"
 
@@ -12,23 +13,23 @@ public:
     SyncResult ensure_repo(const SyncSettings& s, const ProgressFn& log) override {
         if (log) log("[stub] ensure_repo: " + s.dataDir);
         if (s.remoteUrl.empty())
-            return {false, "尚未配置远程仓库地址（请在设置中填写 Gitee 私有仓库）"};
-        if (log) log("[stub] 仓库已就绪（模拟）");
-        return {true, "仓库已就绪（模拟）"};
+            return {false, "Remote repository URL not configured (set a private Gitee repo in settings)"};
+        if (log) log("[stub] repository ready (simulated)");
+        return {true, "Repository ready (simulated)"};
     }
 
     SyncResult push(const SyncSettings& s, const std::string& token,
                     const ProgressFn& log) override {
         if (auto r = precheck_(s, token); !r.ok) return r;
-        if (log) log("[stub] add -> commit -> push（模拟）");
-        return {true, "推送成功（模拟）"};
+        if (log) log("[stub] add -> commit -> push (simulated)");
+        return {true, "Push succeeded (simulated)"};
     }
 
     SyncResult pull(const SyncSettings& s, const std::string& token,
                     const ProgressFn& log) override {
         if (auto r = precheck_(s, token); !r.ok) return r;
-        if (log) log("[stub] pull（模拟）");
-        return {true, "拉取成功（模拟）"};
+        if (log) log("[stub] pull (simulated)");
+        return {true, "Pull succeeded (simulated)"};
     }
 
     SyncResult sync(const SyncSettings& s, const std::string& token,
@@ -40,9 +41,9 @@ public:
 private:
     static SyncResult precheck_(const SyncSettings& s, const std::string& token) {
         if (s.remoteUrl.empty())
-            return {false, "尚未配置远程仓库地址"};
+            return {false, "Remote repository URL not configured"};
         if (token.empty())
-            return {false, "尚未配置访问 Token（请在设置中填写）"};
+            return {false, "Access token not configured (set it in settings)"};
         return {true, ""};
     }
 };

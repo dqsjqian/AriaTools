@@ -1,8 +1,8 @@
 #pragma once
 //
-// QtAppShell — Qt 端外壳：持有平台相关的 dispatcher/adapter/BindingEngine，
-// 复用平台无关的 wb::core::AppCore（infra 服务 + 各模块 VM）。
-// View 通过 QtViewFactory 按 moduleId 构建。
+// QtAppShell — Qt-side shell: holds platform-specific dispatcher/adapter/BindingEngine,
+// reuses the platform-agnostic wb::core::AppCore (infra services + each module's VM).
+// Views are built by QtViewFactory keyed by moduleId.
 //
 #include "aria/adapters/qt6/qt_adapter.hpp"
 #include "aria/adapters/qt6/qt_dispatcher.hpp"
@@ -28,10 +28,10 @@ public:
 
     [[nodiscard]] wb::core::AppCore& core() { return core_; }
 
-    /// 用 QtViewFactory 为第 index 个模块构建 View。
+    /// Build a View for the index-th module using QtViewFactory.
     QWidget* build_page(int index);
 
-    /// i18n 运行目录：可执行文件旁 i18n/；开发期回退源码树。
+    /// i18n runtime directory: i18n/ next to the executable; falls back to the source tree during development.
     static std::string resolve_i18n_dir();
 
 private:

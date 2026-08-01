@@ -17,7 +17,7 @@
 
 namespace wb::notes::qtview {
 
-// 用列表项的 UserRole 存 note id，避免依赖行号。
+// Store the note id in the list item's UserRole to avoid depending on row numbers.
 static constexpr int kNoteIdRole = Qt::UserRole + 1;
 
 static QString display_title(const Note& note) {
@@ -40,7 +40,7 @@ static QWidget* build(wb::notes::NotesVm& vm, aria::binding::BindingEngine& be) 
     auto* body = new QHBoxLayout;
     root->addLayout(body, 1);
 
-    // 左侧：列表 + 状态 + 新建按钮。
+    // Left column: list + status + create button.
     auto* leftCol = new QVBoxLayout;
     auto* list = new QListWidget;
     auto* statusLbl = new QLabel;
@@ -53,7 +53,7 @@ static QWidget* build(wb::notes::NotesVm& vm, aria::binding::BindingEngine& be) 
     be.bind_text_oneway(vm.addLabel, wb::ui::view_for(addBtn));
     be.bind_command(vm.addNote, wb::ui::view_for(addBtn));
 
-    // 右侧：标题编辑 + 正文编辑 + 保存/删除。
+    // Right column: title editor + body editor + save/delete.
     auto* rightCol = new QVBoxLayout;
     auto* titleEdit = new QLineEdit;
     auto* bodyEdit = new QPlainTextEdit;
@@ -68,7 +68,7 @@ static QWidget* build(wb::notes::NotesVm& vm, aria::binding::BindingEngine& be) 
     rightCol->addLayout(actionRow);
     body->addLayout(rightCol, 2);
 
-    // 占位文案随语言更新。
+    // Placeholder text updates on language change.
     auto applyPlaceholders = [titleEdit, bodyEdit, &vm]() {
         titleEdit->setPlaceholderText(QString::fromStdString(vm.titlePlaceholder.get()));
         bodyEdit->setPlaceholderText(QString::fromStdString(vm.bodyPlaceholder.get()));
@@ -79,7 +79,7 @@ static QWidget* build(wb::notes::NotesVm& vm, aria::binding::BindingEngine& be) 
     subs.push_back(vm.bodyPlaceholder.on_changed(
         [applyPlaceholders](const std::string&) { applyPlaceholders(); }));
 
-    // 用户输入 → VM（bind_editable_text 只做 View→VM，避免打字时光标重置）。
+    // User input -> VM (bind_editable_text only does View->VM, to avoid cursor reset while typing).
     wb::ui::bind_editable_text(be, vm.editTitle, titleEdit);
     wb::ui::bind_editable_text(be, vm.editBody, bodyEdit);
     be.bind_text_oneway(vm.saveLabel, wb::ui::view_for(saveBtn));
@@ -87,7 +87,7 @@ static QWidget* build(wb::notes::NotesVm& vm, aria::binding::BindingEngine& be) 
     be.bind_command(vm.saveNote, wb::ui::view_for(saveBtn));
     be.bind_command(vm.deleteSelected, wb::ui::view_for(delBtn));
 
-    // 编辑器仅在有选中时可用。
+    // Editors are only enabled when there is a selection.
     auto applyEnabled = [titleEdit, bodyEdit, saveBtn, delBtn, &vm]() {
         const bool on = vm.hasSelection.get();
         titleEdit->setEnabled(on);
@@ -99,11 +99,13 @@ static QWidget* build(wb::notes::NotesVm& vm, aria::binding::BindingEngine& be) 
     subs.push_back(vm.hasSelection.on_changed(
         [applyEnabled](bool) { applyEnabled(); }));
 
-    // VM → View：把 VM 编辑器 Property 灌入 widget。仅当内容确有差异时才
-    // setText，避免用户打字时（widget 已等于新值）触发光标复位。
-    // 关键：订阅 editTitle/editBody 的变化而非 selectedId——VM 在 model.select
-    // 之后才更新这两个 Property，此时读到的才是目标笔记内容；若改订阅 selectedId，
-    // 回调会在 VM 尚未刷新编辑器 Property 时触发，读到上一条笔记的陈旧文本。
+    // VM -> View: push the VM editor Properties into the widgets. Only call setText when the
+    // content actually differs, to avoid triggering a cursor reset while the user is typing
+    // (when the widget already equals the new value).
+    // Key point: subscribe to editTitle/editBody changes rather than selectedId — the VM only
+    // updates these two Properties after model.select, so reading them here yields the target
+    // note's content; if we subscribed to selectedId instead, the callback would fire before
+    // the VM has refreshed the editor Properties and read stale text from the previous note.
     auto pushTitle = [titleEdit, &vm]() {
         const QString v = QString::fromStdString(vm.editTitle.get());
         if (titleEdit->text() == v) return;
@@ -121,7 +123,7 @@ static QWidget* build(wb::notes::NotesVm& vm, aria::binding::BindingEngine& be) 
     subs.push_back(vm.editTitle.on_changed([pushTitle](const std::string&) { pushTitle(); }));
     subs.push_back(vm.editBody.on_changed([pushBody](const std::string&) { pushBody(); }));
 
-    // 列表重建：Model 列表变更时刷新并保持选中高亮。
+    // List rebuild: refresh on Model list change and keep the selection highlight.
     auto rebuild = [list, &vm]() {
         const QSignalBlocker blocker(list);
         list->clear();
@@ -140,7 +142,7 @@ static QWidget* build(wb::notes::NotesVm& vm, aria::binding::BindingEngine& be) 
     subs.push_back(vm.selectedId.on_changed(
         [rebuild](const std::string&) { rebuild(); }));
 
-    // 列表点击 → 通知 VM 选中。
+    // List click -> notify the VM of the selection.
     QObject::connect(list, &QListWidget::currentItemChanged,
                      [&vm](QListWidgetItem* current, QListWidgetItem*) {
                          if (!current) return;

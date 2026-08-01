@@ -1,7 +1,7 @@
 //
-// InMemorySettingsService — 骨架期设置桩实现。
-// 默认 dataDir = ~/WorkbenchData。save()/load() 仅打日志占位，
-// 业务阶段替换为 config/settings.json 读写。
+// InMemorySettingsService — Skeleton-stage settings stub implementation.
+// Default dataDir = ~/WorkbenchData. save()/load() are log-only placeholders;
+// replace with config/settings.json read/write in the production phase.
 //
 #include "infra/settings/ISettingsService.h"
 
@@ -24,8 +24,8 @@ public:
         sync_.dataDir = default_data_dir();
     }
 
-    void load() override { /* 骨架期：无持久化 */ }
-    void save() override { /* 骨架期：无持久化 */ }
+    void load() override { /* Skeleton stage: no persistence */ }
+    void save() override { /* Skeleton stage: no persistence */ }
 
     SyncSettings& sync() override { return sync_; }
     const SyncSettings& sync() const override { return sync_; }
@@ -41,7 +41,7 @@ private:
     std::string  language_ = "zh-CN";
 };
 
-// 工厂（供装配根使用，避免暴露具体类型）。
+// Factory (used by the assembly root, to avoid exposing the concrete type).
 ISettingsService* make_in_memory_settings_service() {
     return new InMemorySettingsService();
 }

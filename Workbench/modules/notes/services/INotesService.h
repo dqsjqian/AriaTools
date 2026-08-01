@@ -15,7 +15,7 @@ public:
     [[nodiscard]] virtual NotesResult<void> save(const Note& note) = 0;
     [[nodiscard]] virtual NotesResult<void> remove(const NoteId& id) = 0;
 
-    // 把 sourcePath 复制到 notes/assets/<noteId>/，返回相对 Markdown 路径。
+    // Copy sourcePath into notes/assets/<noteId>/ and return a relative Markdown path.
     [[nodiscard]] virtual NotesResult<std::string>
         import_attachment(const NoteId& noteId, const std::string& sourcePath) = 0;
 };

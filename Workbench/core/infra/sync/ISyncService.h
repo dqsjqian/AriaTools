@@ -1,8 +1,8 @@
 #pragma once
 //
-// ISyncService — 把数据目录作为 git 仓库与远端同步。
-// 骨架期：桩实现（返回"未配置/模拟成功"）。
-// 业务阶段：用 libgit2 实现 init/add/commit/pull/push + 冲突副本策略 + LFS。
+// ISyncService — Sync the data directory as a git repository with a remote.
+// Skeleton stage: stub implementation (returns "not configured / simulated success").
+// Production stage: implement with libgit2 for init/add/commit/pull/push + conflict-copy strategy + LFS.
 //
 #include "infra/settings/SyncTypes.h"
 #include <functional>
@@ -14,21 +14,21 @@ class ISyncService {
 public:
     virtual ~ISyncService() = default;
 
-    /// 进度 / 日志回调（可用于 UI 展示）。
+    /// Progress / log callback (may be used for UI display).
     using ProgressFn = std::function<void(const std::string& line)>;
 
-    /// 确保 dataDir 是一个 git 仓库（不存在则 init + 关联 remote）。
+    /// Ensure dataDir is a git repository (init + link remote if absent).
     virtual SyncResult ensure_repo(const SyncSettings& s, const ProgressFn& log) = 0;
 
-    /// 推送：add -> commit -> push。
+    /// Push: add -> commit -> push.
     virtual SyncResult push(const SyncSettings& s, const std::string& token,
                             const ProgressFn& log) = 0;
 
-    /// 拉取：pull（冲突用副本策略，不抛 git 冲突标记给用户）。
+    /// Pull: pull (conflicts handled via copy strategy; no git conflict markers exposed to the user).
     virtual SyncResult pull(const SyncSettings& s, const std::string& token,
                             const ProgressFn& log) = 0;
 
-    /// 一次完整同步（pull 再 push），供"同步"按钮 / 定时任务调用。
+    /// Full sync (pull then push), for the "sync" button / scheduled tasks.
     virtual SyncResult sync(const SyncSettings& s, const std::string& token,
                             const ProgressFn& log) = 0;
 };

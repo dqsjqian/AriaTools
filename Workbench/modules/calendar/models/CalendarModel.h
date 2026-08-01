@@ -1,13 +1,13 @@
 #pragma once
 //
-// CalendarModel — 日历模块的模块级共享业务状态中心（非单个 View 的 VM）。
+// CalendarModel — Module-level shared business state hub for the calendar module (not a per-View VM).
 //
-// 职责：
-//   * 持有订阅列表、当前年月、当月 42 格 DayCell（含前后月补齐、今天高亮）、事件；
-//   * 经 CalendarService 抓取/解析 .ics 并按日期归类到格子；
-//   * 上/下月、回今天、增删订阅、刷新。
+// Responsibilities:
+//   * Holds subscription list, current year/month, the 42 DayCells of the current month (with prev/next-month padding and today highlight), and events;
+//   * Fetches/parses .ics via CalendarService and classifies events into cells by date;
+//   * Prev/next month, go to today, add/remove subscription, refresh.
 //
-// 日期换算（当月首日星期、补齐、今天判定、事件归类）全在此完成，View 只渲染。
+// All date arithmetic (first weekday of month, padding, today detection, event classification) is done here; the View only renders.
 //
 #include "models/CalendarTypes.h"
 #include "services/CalendarService.h"
@@ -23,37 +23,37 @@ class CalendarModel {
 public:
     explicit CalendarModel(std::shared_ptr<CalendarService> service);
 
-    // 响应式状态：VM 直接绑定。
+    // Reactive state: bound directly by the VM.
     aria::ObservableList<Subscription> subscriptions;
-    aria::ObservableList<DayCell>      days;      ///< 固定 42 格
+    aria::ObservableList<DayCell>      days;      ///< Fixed 42 cells
     aria::Property<int>                year{0};
     aria::Property<int>                month{0};   ///< 1..12
-    aria::Property<int>                monthEventCount{0};  ///< 当月事件数（文案由 VM 本地化）
+    aria::Property<int>                monthEventCount{0};  ///< Current-month event count (text is localized by the VM)
     aria::Property<std::string>        lastError{""};
 
-    // 初始化：定位到今天所在月，加载订阅与缓存事件并排布。
+    // Initialize: locate the month containing today, load subscriptions and cached events, and lay out the grid.
     void initialize();
 
-    // 导航
+    // Navigation
     void prev_month();
     void next_month();
     void go_today();
 
-    // 订阅
+    // Subscriptions
     bool add_subscription(const std::string& url, const std::string& name);
     bool remove_subscription(const SubId& id);
 
-    // 抓取所有订阅（联网）→ 汇总事件 → 重排当月。
+    // Fetch all subscriptions (online) -> aggregate events -> re-layout current month.
     bool refresh_all();
 
 private:
-    void rebuild_days_();                 ///< 依据 year/month + events_ 生成 42 格
+    void rebuild_days_();                 ///< Builds the 42 cells from year/month + events_
     void set_error_(CalendarError e, std::string msg);
-    static int weekday_of_(int y, int m, int d);   ///< 0=周一 .. 6=周日
+    static int weekday_of_(int y, int m, int d);   ///< 0=Monday .. 6=Sunday
     static int days_in_month_(int y, int m);
 
     std::shared_ptr<CalendarService> service_;
-    EventList events_;                    ///< 所有订阅汇总的事件（全量，rebuild 时按当月过滤）
+    EventList events_;                    ///< Aggregated events from all subscriptions (full set; filtered to current month on rebuild)
 };
 
 }  // namespace wb::calendar

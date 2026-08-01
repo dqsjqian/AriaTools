@@ -37,7 +37,7 @@ static QWidget* build(wb::settings::SettingsVm& vm, aria::binding::BindingEngine
     form->setHorizontalSpacing(12);
     form->setVerticalSpacing(10);
 
-    // 语言选择器：切换即时刷新（走 VM switchLanguage 命令）。
+    // Language selector: switching refreshes immediately (via the VM's switchLanguage command).
     auto* langBox = new QComboBox;
     langBox->addItem("简体中文", "zh-CN");
     langBox->addItem("English", "en");

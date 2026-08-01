@@ -27,7 +27,7 @@ CalendarVm::CalendarVm(std::shared_ptr<CalendarModel> model)
       }),
       model_(std::move(model))
 {
-    // 文案：随心写在这里，text() 会立即设初值并在语言切换时自动刷新。
+    // Text: write freely here; text() sets the initial value immediately and auto-refreshes on language switch.
     text(title,          "title");
     text(hint,           "hint");
     text(urlPlaceholder, "url_placeholder");
@@ -44,7 +44,7 @@ CalendarVm::CalendarVm(std::shared_ptr<CalendarModel> model)
     text(wd6, "wd_sat");
     text(wd7, "wd_sun");
 
-    // 当月事件数文案：随语言切换刷新（localize），也随数量变化刷新。
+    // Current-month event count text: refreshes on language switch (localize) and on count change.
     localize([this] {
         status.set(std::to_string(model_->monthEventCount.get()) + " " +
                    wb::i18n::str("events_suffix"));

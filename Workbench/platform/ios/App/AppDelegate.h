@@ -1,5 +1,5 @@
 #import <UIKit/UIKit.h>
 
-// 应用级生命周期。UI 由 SceneDelegate 拥有（iOS 13+ Scene 架构）。
+// App-level lifecycle. UI is owned by SceneDelegate (iOS 13+ Scene architecture).
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 @end

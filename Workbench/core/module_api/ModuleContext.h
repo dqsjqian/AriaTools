@@ -1,7 +1,8 @@
 #pragma once
 //
-// ModuleContext — 注入给每个模块的上下文。
-// 模块经此拿到稳定服务（ServiceHub）与事件总线，不自行 new、不认识具体实现。
+// ModuleContext — Context injected into each module.
+// Modules obtain stable services (ServiceHub) and the event bus through this;
+// they never new services themselves and don't know concrete implementations.
 //
 #include "infra/ServiceHub.h"
 #include "aria/runtime/event_bus.hpp"
@@ -15,7 +16,7 @@ public:
     [[nodiscard]] wb::infra::ServiceHub& services() { return hub_; }
     [[nodiscard]] aria::runtime::EventBus& bus() { return hub_.bus(); }
 
-    /// 直取某稳定服务接口。
+    /// Fetch a stable service interface directly.
     template <typename I>
     [[nodiscard]] I& service() { return hub_.service<I>(); }
 

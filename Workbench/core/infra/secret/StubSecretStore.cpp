@@ -1,6 +1,6 @@
 //
-// StubSecretStore — 骨架期 Token 安全存储桩（内存 map）。
-// 业务阶段替换为各平台安全存储（Keychain / Credential Manager / Keystore）。
+// StubSecretStore — Skeleton-stage token secure storage stub (in-memory map).
+// Replace with platform secure storage in the production phase (Keychain / Credential Manager / Keystore).
 //
 #include "infra/secret/ISecretStore.h"
 

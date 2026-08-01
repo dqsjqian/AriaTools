@@ -1,17 +1,18 @@
 #pragma once
 //
-// Platform.h — 平台/编译器识别宏与通用宏。跨端代码统一用这里，
-// 不在业务代码里散落 #ifdef __APPLE__ 等。属 wb_utils（纯头、零依赖）。
+// Platform.h — Platform/compiler detection macros and common utilities.
+// Cross-platform code should use these instead of scattering #ifdef __APPLE__
+// in business code. Part of wb_utils (header-only, zero dependencies).
 //
-// 提供：
-//   操作系统：WB_OS_MACOS / WB_OS_IOS / WB_OS_WINDOWS / WB_OS_LINUX / WB_OS_ANDROID
-//   家族：    WB_OS_APPLE / WB_OS_POSIX
-//   编译器：  WB_COMPILER_CLANG / WB_COMPILER_GCC / WB_COMPILER_MSVC
-//   通用：    WB_UNUSED(x) / WB_LIKELY / WB_UNLIKELY / WB_FORCE_INLINE / WB_NODISCARD
-//   平台名：  wb::platform_name()
+// Provides:
+//   OS:       WB_OS_MACOS / WB_OS_IOS / WB_OS_WINDOWS / WB_OS_LINUX / WB_OS_ANDROID
+//   Family:   WB_OS_APPLE / WB_OS_POSIX
+//   Compiler: WB_COMPILER_CLANG / WB_COMPILER_GCC / WB_COMPILER_MSVC
+//   Common:   WB_UNUSED(x) / WB_LIKELY / WB_UNLIKELY / WB_FORCE_INLINE / WB_NODISCARD
+//   Name:     wb::platform_name()
 //
 
-// ── 操作系统 ────────────────────────────────────────────────────────────
+// ── Operating system ────────────────────────────────────────────────────
 #if defined(__APPLE__)
     #include <TargetConditionals.h>
     #define WB_OS_APPLE 1
@@ -39,7 +40,7 @@
     #define WB_OS_POSIX 1
 #endif
 
-// 未定义的置 0，便于统一用 #if。
+// Undefined values default to 0, so #if works uniformly.
 #ifndef WB_OS_MACOS
     #define WB_OS_MACOS 0
 #endif
@@ -62,7 +63,7 @@
     #define WB_OS_POSIX 0
 #endif
 
-// ── 编译器 ──────────────────────────────────────────────────────────────
+// ── Compiler ────────────────────────────────────────────────────────────
 #if defined(__clang__)
     #define WB_COMPILER_CLANG 1
 #elif defined(__GNUC__)
@@ -71,7 +72,7 @@
     #define WB_COMPILER_MSVC 1
 #endif
 
-// ── 通用宏 ──────────────────────────────────────────────────────────────
+// ── Common macros ───────────────────────────────────────────────────────
 #define WB_UNUSED(x) ((void)(x))
 
 #if defined(WB_COMPILER_CLANG) || defined(WB_COMPILER_GCC)
@@ -85,6 +86,6 @@
 #endif
 
 namespace wb {
-/// 运行时可取的平台名（与 WB_PLATFORM_NAME 一致）。
+/// Runtime platform name (matches WB_PLATFORM_NAME).
 inline const char* platform_name() { return WB_PLATFORM_NAME; }
 }  // namespace wb

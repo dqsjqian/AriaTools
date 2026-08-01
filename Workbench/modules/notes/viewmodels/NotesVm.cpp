@@ -33,11 +33,11 @@ NotesVm::NotesVm(std::shared_ptr<NotesModel> model)
       }),
       model_(std::move(model))
 {
-    // 编辑器 → Model 草稿（保存前不落盘，仅标记 dirty）。
+    // Editor -> Model draft (not persisted until save, only marks dirty).
     track(editTitle.on_changed([this](const std::string& v) { model_->set_title(v); }));
     track(editBody.on_changed([this](const std::string& v) { model_->set_body(v); }));
 
-    // 静态文案：就近书写，切语言自动刷新。
+    // Static text: written near the use site, auto-refreshed on language switch.
     text(title,            "title");
     text(hint,             "hint");
     text(addLabel,         "add");
@@ -46,7 +46,7 @@ NotesVm::NotesVm(std::shared_ptr<NotesModel> model)
     text(titlePlaceholder, "title_placeholder");
     text(bodyPlaceholder,  "body_placeholder");
 
-    // 动态状态：既随列表数量变化，也随语言变化刷新。
+    // Dynamic status: refreshes both on list-size change and on language change.
     localize([this] { refresh_status_(); });
     track(notes.on_any_change([this]() { refresh_status_(); }));
 
@@ -62,7 +62,7 @@ void NotesVm::on_activate() {
 void NotesVm::on_deactivate() { bag().clear(); }
 
 void NotesVm::load_selection_into_editor_() {
-    // 从 Model 草稿同步到编辑器 Property；此处仅镜像，不回写 Model。
+    // Sync from the Model draft to the editor Properties; this only mirrors, it does not write back to the Model.
     editTitle.set(model_->draftTitle.get());
     editBody.set(model_->draftBody.get());
 }

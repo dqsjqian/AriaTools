@@ -8,7 +8,7 @@
 
 ## Overview
 
-**Workbench** is a cross-platform personal workbench. The core principle is **one C++ core (Model + ViewModel + Service), multiple platform View shells**. macOS (Qt6) and iOS (UIKit) are currently implemented; Android (JNI) and Windows (Qt) are planned for later phases.
+**Workbench** is a cross-platform personal workbench. The core principle is **one C++ core (Model + ViewModel + Service), multiple platform View shells**. macOS (Qt6), iOS (UIKit), and Windows (Qt6) are currently implemented; Android (JNI) is planned for a later phase.
 
 ### Key Features
 
@@ -144,6 +144,18 @@ bash Workbench/scripts/gen-ios.sh open
 bash Workbench/scripts/gen-ios.sh build
 ```
 
+### Build Windows Desktop App
+
+```powershell
+# Configure + build (Release); uses Ninja by default for fast parallel builds
+powershell -File Workbench/scripts/gen-win.ps1
+
+# Or run after build
+powershell -File Workbench/scripts/gen-win.ps1 run
+```
+
+Requires Visual Studio 2022/2026 (C++ workload) and Qt6 (msvc2022_64). The script auto-detects VS, the Windows SDK, and Qt6. Ninja is preferred over the VS generator (parallel by default, and sidesteps the MSBuild v18 MSB4166 child-node crash); set `$env:ARIA_VS_GENERATOR` to force the VS multi-config generator.
+
 ### Run Module Tests
 
 ```bash
@@ -156,9 +168,6 @@ ctest --test-dir build/mac/modules/tools --output-on-failure
 ### Future Platforms (Planned)
 
 ```bash
-# Windows (Qt6) — placeholder
-Workbench/scripts/gen-win.ps1
-
 # Android (JNI) — placeholder
 bash Workbench/scripts/gen-android.sh
 
@@ -193,8 +202,10 @@ cmake -S Workbench -B build/ios \
 - Stable infrastructure interfaces: i18n / storage / settings / sync / secret / crypto
 - Tools: Base64, random string, JSON format/compress, Apple native file encryption
 - Notes: Full CRUD (Markdown front matter + attachment management + EventBus)
-- macOS full app build passing, iOS build passing
+- macOS, iOS, and Windows full app builds passing
+- Windows build uses Ninja by default (parallel; sidesteps the MSBuild MSB4166 crash)
 - Tools & Notes CTest all passing
+- Source files fully English-only (comments + strings), including CMake and build scripts
 
 ### In Progress
 
@@ -203,7 +214,7 @@ cmake -S Workbench -B build/ios \
 
 ### Roadmap
 
-1. Complete platforms: Android (JNI) / Windows (Qt) / Web (HTTP), all reusing `core/`
+1. Complete platforms: Android (JNI) / Web (HTTP), all reusing `core/`
 2. Git LFS support
 3. Optional end-to-end encryption
 

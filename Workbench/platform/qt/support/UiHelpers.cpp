@@ -6,7 +6,7 @@ namespace wb::ui {
 
 QLabel* make_title(const QString& text, QWidget* parent) {
     auto* l = new QLabel(text, parent);
-    // 不写死颜色：跟随系统主题（浅色→黑字，深色→白字），避免黑底看不清。
+    // Don't hard-code colors: follow the system theme (light -> black text, dark -> white text), to avoid invisible text on a black background.
     l->setStyleSheet("QLabel { font-size:20px; font-weight:bold; }");
     return l;
 }
@@ -27,7 +27,7 @@ std::vector<std::shared_ptr<aria::adapters::qt6::QtView>>& view_keepalive() {
     return v;
 }
 
-/// 订阅袋作为 owner 的子 QObject：owner 析构 → 袋析构 → 订阅解除。
+/// Subscription bag as a child QObject of the owner: owner destroyed -> bag destroyed -> subscriptions released.
 class QtSubBag : public QObject {
 public:
     explicit QtSubBag(QObject* parent) : QObject(parent) {}
@@ -53,15 +53,15 @@ void bind_editable_text(aria::binding::BindingEngine& be,
     auto& adapter = be.adapter();
     auto& v = view_for(widget);
 
-    // 1) 初始同步 VM→View 一次（此时无输入，不影响光标）。
+    // 1) Initial sync VM->View once (no input at this point, doesn't affect cursor).
     adapter.set_text(v, prop.get());
 
-    // 2) 仅 View→VM：用户输入写回 Property。不订阅 prop.on_changed，
-    //    因此 VM 变化不会回推 setPlainText/setText → 光标不被重置。
+    // 2) View->VM only: user input writes back to the Property. Does not subscribe to prop.on_changed,
+    //    so VM changes don't push back setPlainText/setText -> cursor is not reset.
     auto sub = adapter.on_text_changed(v, [&prop](std::string_view sv) {
         prop.set(std::string(sv));
     });
-    // 订阅生命周期挂到 widget，widget 析构即解除。
+    // Subscription lifetime is attached to the widget; released when the widget is destroyed.
     subs_attached_to(widget).push_back(std::move(sub));
 }
 

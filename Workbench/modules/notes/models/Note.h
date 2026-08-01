@@ -1,7 +1,7 @@
 #pragma once
 //
-// Note — 一条笔记的纯业务数据。它不是 MVVM Model；NotesModel 才是模块级共享状态中心。
-// 一条笔记对应 notes/<id>.md，正文中的图片使用相对路径，便于 Git 同步。
+// Note — Pure business data of a single note. This is not the MVVM Model; NotesModel is the module-level shared state center.
+// Each note maps to notes/<id>.md; images in the body use relative paths for easy Git sync.
 //
 #include <cstdint>
 #include <string>
@@ -13,9 +13,9 @@ namespace wb::notes {
 using NoteId = std::string;
 
 struct Note {
-    NoteId id;                 ///< UUID（= 文件名）
+    NoteId id;                 ///< UUID (also the filename)
     std::string title;
-    std::string body;          ///< Markdown 正文（图文）
+    std::string body;          ///< Markdown body (text + images)
     std::int64_t updatedAt = 0;
 };
 

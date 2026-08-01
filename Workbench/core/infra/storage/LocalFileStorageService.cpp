@@ -1,6 +1,6 @@
 //
-// LocalFileStorageService — 骨架期存储桩实现（读写本地文件系统）。
-// 使用 std::filesystem。业务阶段可直接沿用，或加缓存 / 索引。
+// LocalFileStorageService — Skeleton-stage storage stub implementation (reads/writes the local filesystem).
+// Uses std::filesystem. Can be used directly in the production phase, or enhanced with caching / indexing.
 //
 #include "infra/storage/IStorageService.h"
 

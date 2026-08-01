@@ -23,7 +23,7 @@
 }
 
 - (void)sceneDidDisconnect:(UIScene*)scene {
-    // 释放 window → RootVC → IosShell（含 AppCore / VM）依次析构。
+    // Releases window -> RootVC -> IosShell (including AppCore / VM) in destruction order.
     _shell.reset();
     self.window = nil;
 }

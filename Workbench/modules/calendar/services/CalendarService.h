@@ -1,15 +1,16 @@
 #pragma once
 //
-// CalendarService — 日历模块私有业务服务（纯 C++，跨平台）。
+// CalendarService — Private business service of the calendar module (pure C++, cross-platform).
 //
-// 职责：
-//   * ICS 文本解析：VEVENT / SUMMARY / DTSTART / DTEND（RFC5545 折行、
-//     DATE 与 DATE-TIME、UTC 'Z'），MVP 不展开 RRULE。
-//   * 订阅持久化：一订阅一文件 calendar/subs/<id>.ini，抓取缓存
-//     calendar/cache/<id>.ics（均经 IStorageService）。
-//   * refresh：经 IHttpClient 抓取远程 .ics → 写缓存 → 解析。
+// Responsibilities:
+//   * ICS text parsing: VEVENT / SUMMARY / DTSTART / DTEND (RFC5545 line folding,
+//     DATE and DATE-TIME, UTC 'Z'); MVP does not expand RRULE.
+//   * Subscription persistence: one file per subscription calendar/subs/<id>.ini;
+//     fetch cache calendar/cache/<id>.ics (both via IStorageService).
+//   * refresh: fetch remote .ics via IHttpClient -> write cache -> parse.
 //
-// 网络与存储都经注入接口，本服务与平台无关；VM/Model 只依赖本服务。
+// Both network and storage go through injected interfaces, so this service is
+// platform-agnostic; VM/Model depend only on this service.
 //
 #include "models/CalendarTypes.h"
 
@@ -26,19 +27,19 @@ public:
                     wb::services::IHttpClient& http)
         : storage_(storage), http_(http) {}
 
-    // 订阅持久化
+    // Subscription persistence
     [[nodiscard]] CalendarResult<SubscriptionList> load_subscriptions();
     [[nodiscard]] CalendarResult<Subscription> add_subscription(const std::string& url,
                                                                 const std::string& name);
     [[nodiscard]] CalendarResult<void> remove_subscription(const SubId& id);
 
-    // 抓取 + 解析：返回该订阅的事件列表，并更新缓存与 lastFetched。
+    // Fetch + parse: returns the event list for this subscription and updates cache and lastFetched.
     [[nodiscard]] CalendarResult<EventList> refresh(const Subscription& sub);
 
-    // 读缓存（离线）：解析已缓存的 .ics，不联网。
+    // Read cache (offline): parses the cached .ics without network access.
     [[nodiscard]] CalendarResult<EventList> load_cached(const SubId& id);
 
-    // 纯解析（供测试直接调用，不碰 IO）。
+    // Pure parse (called directly by tests, no IO).
     [[nodiscard]] static CalendarResult<EventList> parse_ics(std::string_view text,
                                                              const SubId& source);
 

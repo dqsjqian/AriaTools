@@ -1,13 +1,15 @@
 #pragma once
 //
-// IHttpClient — 跨平台 HTTP(S) 客户端服务（infra 稳定服务层，零 UI / 零平台依赖）。
+// IHttpClient — Cross-platform HTTP(S) client service (infra stable service layer, zero UI / zero platform deps).
 //
-// 定位：与 IStorageService / ICryptoService / ISyncService 同构——网络 I/O 属于
-// 基础设施，业务（如日历订阅拉取、未来的 API 调用）只依赖本接口，绝不在
-// View/平台层写网络代码。
+// Position: sibling to IStorageService / ICryptoService / ISyncService — network
+// I/O is infrastructure; business code (e.g. calendar subscription fetch, future
+// API calls) depends only on this interface and never writes network code in
+// the View/platform layer.
 //
-// 实现策略：app 内自闭环。用 vendored libcurl + mbedTLS 静态编译，所有平台
-// （macOS/iOS/Win/Android/Linux）走同一实现与同一份 CA bundle，用户无需安装任何库。
+// Implementation strategy: self-contained within the app. Vendored libcurl +
+// mbedTLS statically compiled, all platforms (macOS/iOS/Win/Android/Linux)
+// share one implementation and one CA bundle; users need not install any library.
 //
 #include <string>
 #include <string_view>
@@ -18,27 +20,27 @@ namespace wb::services {
 
 enum class HttpMethod { Get, Post, Put, Delete, Patch, Head };
 
-/// 请求头：一组 (name, value)。用 vector 而非 map，保留顺序、允许重复头。
+/// Request headers: a list of (name, value). Uses vector instead of map to preserve order and allow duplicate headers.
 using HttpHeaders = std::vector<std::pair<std::string, std::string>>;
 
 struct HttpRequest {
     HttpMethod method = HttpMethod::Get;
     std::string url;
-    HttpHeaders headers;      ///< 额外请求头（如 Authorization、Content-Type）
-    std::string body;         ///< 请求体（POST/PUT/PATCH 用；字节以字符串承载）
-    int timeoutSec = 30;      ///< 整体超时（秒），<=0 用默认
+    HttpHeaders headers;      ///< Extra request headers (e.g. Authorization, Content-Type)
+    std::string body;         ///< Request body (for POST/PUT/PATCH; bytes carried as string)
+    int timeoutSec = 30;      ///< Overall timeout (seconds); <=0 uses default
     bool followRedirects = true;
 };
 
 struct HttpResponse {
-    bool ok = false;          ///< 传输成功且 status 属于 2xx
-    long status = 0;          ///< HTTP 状态码
-    HttpHeaders headers;      ///< 响应头
-    std::string body;         ///< 响应体（字节以字符串承载）
-    std::string contentType;  ///< Content-Type（便捷提取，等价于 headers 中同名项）
-    std::string error;        ///< 失败时的可读错误信息
+    bool ok = false;          ///< Transport succeeded and status is 2xx
+    long status = 0;          ///< HTTP status code
+    HttpHeaders headers;      ///< Response headers
+    std::string body;         ///< Response body (bytes carried as string)
+    std::string contentType;  ///< Content-Type (convenience extraction; equivalent to the same-named entry in headers)
+    std::string error;        ///< Human-readable error message on failure
 
-    /// 便捷：取某响应头（大小写不敏感），无则返回空串。
+    /// Convenience: get a response header (case-insensitive); returns empty string if absent.
     [[nodiscard]] std::string header(std::string_view name) const;
 };
 
@@ -46,10 +48,10 @@ class IHttpClient {
 public:
     virtual ~IHttpClient() = default;
 
-    /// 通用请求入口。TLS 证书用打包的 CA bundle 校验。
+    /// Generic request entry point. TLS certificates verified against the bundled CA bundle.
     [[nodiscard]] virtual HttpResponse send(const HttpRequest& request) = 0;
 
-    // ── 便捷方法（默认基于 send 实现，实现类无需重写）───────────────────────
+    // ── Convenience methods (default implementations based on send; subclasses need not override) ──
     [[nodiscard]] HttpResponse get(const std::string& url,
                                    HttpHeaders headers = {}) {
         return send({HttpMethod::Get, url, std::move(headers), {}, 30, true});

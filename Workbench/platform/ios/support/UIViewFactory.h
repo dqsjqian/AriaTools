@@ -1,7 +1,7 @@
 #pragma once
 //
-// UIViewFactory — iOS 端「moduleId → 构建 UIViewController」登记表。
-// 与 Qt 的 QtViewFactory 对称。各模块 platforms/ios 源调用 register()。
+// UIViewFactory — iOS-side "moduleId -> build UIViewController" registry.
+// Symmetric with Qt's QtViewFactory. Each module's platforms/ios sources call register().
 //
 #import <UIKit/UIKit.h>
 

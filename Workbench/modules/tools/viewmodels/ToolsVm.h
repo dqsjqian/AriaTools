@@ -1,7 +1,7 @@
 #pragma once
 //
-// ToolsVm — tools 模块 ViewModel。只维护响应式 UI 状态与 Command，
-// JSON/文件业务委托给 ToolsService；View 只绑定 VM。
+// ToolsVm — tools module view model. Only maintains reactive UI state and Commands;
+// JSON/file business is delegated to ToolsService; the View only binds to the VM.
 //
 #include "aria/aria.hpp"
 #include "module_api/BaseVm.h"
@@ -21,7 +21,7 @@ public:
     aria::Command<> base64Encode;
     aria::Command<> base64Decode;
 
-    // 随机字符串
+    // Random string
     aria::Property<int>         randomLength;
     aria::Property<std::string> randomOutput;
     aria::Command<> genRandom;
@@ -33,14 +33,14 @@ public:
     aria::Command<> jsonFormat;
     aria::Command<> jsonMinify;
 
-    // 文件加解密
+    // File encryption/decryption
     aria::Property<std::string> filePath;
     aria::Property<std::string> passphrase;
     aria::Property<std::string> fileStatus;
     aria::Command<> encryptFile;
     aria::Command<> decryptFile;
 
-    // 界面文案（随语言更新）
+    // UI text (updates on language change)
     aria::Property<std::string> title;
     aria::Property<std::string> base64Group;
     aria::Property<std::string> inputLabel;

@@ -15,7 +15,7 @@ std::int64_t now_seconds() {
     return duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
 }
 
-// 生成文件系统安全的唯一 id：时间戳(36 进制) + 随机后缀，仅含 [0-9a-z]。
+// Generate a filesystem-safe unique id: timestamp (base 36) + random suffix, containing only [0-9a-z].
 NoteId make_note_id() {
     static constexpr char kAlphabet[] = "0123456789abcdefghijklmnopqrstuvwxyz";
     auto to_base36 = [](std::uint64_t value) {
@@ -105,7 +105,7 @@ bool NotesModel::create_note() {
     }
     set_error_(NotesError::None, {});
 
-    // 新笔记更新时间最大，插到列表头，成为选中项。
+    // The new note has the largest updatedAt; insert at the head of the list and make it the selected item.
     auto shared = std::make_shared<Note>(note);
     notes.insert(0, shared);
     apply_selection_(shared.get());
@@ -153,9 +153,9 @@ bool NotesModel::save_current() {
     }
     set_error_(NotesError::None, {});
 
-    // 用 replace_at 就地替换列表项：Note 是纯数据结构、没有自身变更信号，
-    // 直接写 *existing 不会触发 ObservableList 通知，列表标题不会刷新。
-    // replace_at 会发出 Replace 事件，驱动 View 重建列表显示最新标题。
+    // Use replace_at to update the list item in place: Note is a plain data struct with no self-change signal,
+    // so writing *existing directly would not trigger an ObservableList notification and the list title would not refresh.
+    // replace_at emits a Replace event, driving the View to rebuild the list and show the latest title.
     for (std::size_t i = 0; i < notes.size(); ++i) {
         if (auto item = notes.at(i); item && item->id == id) {
             notes.replace_at(i, std::make_shared<Note>(updated));

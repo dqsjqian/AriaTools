@@ -1,5 +1,5 @@
-// notes 模块业务测试：直接驱动 MarkdownNotesService + NotesModel，
-// 用临时目录做真实文件持久化，不依赖主 app / 其它业务模块。
+// Notes module business tests: directly drives MarkdownNotesService + NotesModel,
+// using a temp directory for real file persistence, with no dependency on the main app or other business modules.
 #include "models/NotesModel.h"
 #include "services/MarkdownNotesService.h"
 #include "module_api/AppEvents.h"
@@ -18,7 +18,7 @@
 namespace fs = std::filesystem;
 
 namespace wb::services {
-// 存储桩工厂（LocalFileStorageService.cpp 提供）。
+// Storage stub factory (provided by LocalFileStorageService.cpp).
 IStorageService* make_local_file_storage_service(std::string dataDir);
 }
 
@@ -52,7 +52,7 @@ fs::path make_temp_dir() {
 int main() {
     using namespace wb::notes;
 
-    wb::log::init_default_sink();  // 让 NotesModel 的流式日志在测试输出里可见
+    wb::log::init_default_sink();  // Make NotesModel's stream logs visible in test output
 
     const fs::path dataDir = make_temp_dir();
     std::unique_ptr<wb::services::IStorageService> storage(
@@ -61,7 +61,7 @@ int main() {
     auto service = std::make_shared<MarkdownNotesService>(*storage);
     aria::runtime::EventBus bus;
 
-    // 订阅 NoteSaved，验证保存事件确实发布。
+    // Subscribe to NoteSaved to verify the save event is actually published.
     int savedEvents = 0;
     std::string lastSavedId;
     auto sub = bus.subscribe<wb::events::NoteSaved>(
@@ -69,12 +69,12 @@ int main() {
 
     NotesModel model(service, bus);
 
-    // 1) 初始为空。
+    // 1) Initially empty.
     check(model.reload(), "reload empty");
     check(model.notes.size() == 0, "empty list after reload");
     check(!model.hasSelection.get(), "no selection initially");
 
-    // 2) 新建 → 落盘 + 选中 + 发布事件。
+    // 2) Create -> persisted + selected + event published.
     check(model.create_note(), "create note");
     check(model.notes.size() == 1, "one note after create");
     check(model.hasSelection.get(), "selected after create");
@@ -82,16 +82,16 @@ int main() {
     const std::string id = model.selectedId.get();
     check(!id.empty(), "created note has id");
 
-    // 3) 编辑草稿 + 保存 → 文件内容更新 + 再次发布事件。
+    // 3) Edit draft + save -> file content updated + event published again.
     model.set_title("Hello");
-    model.set_body("# Body\n正文图文");
+    model.set_body("# Body\nbody text with images");
     check(model.dirty.get(), "dirty after edit");
     check(model.save_current(), "save current");
     check(!model.dirty.get(), "clean after save");
     check(savedEvents == 2, "NoteSaved published on save");
     check(lastSavedId == id, "saved event carries correct id");
 
-    // 文件真的存在且含标题。
+    // The file actually exists and contains the title.
     const fs::path notePath = dataDir / "notes" / (id + ".md");
     check(fs::exists(notePath), "note file exists on disk");
     {
@@ -104,15 +104,15 @@ int main() {
               "body persisted");
     }
 
-    // 4) 重新加载后内容一致（往返）。
+    // 4) After reload, content is consistent (round-trip).
     check(model.reload(), "reload after save");
     check(model.notes.size() == 1, "one note after reload");
     model.select(id);
     check(model.hasSelection.get(), "reselect after reload");
     check(model.draftTitle.get() == "Hello", "title round-trips");
-    check(model.draftBody.get() == "# Body\n正文图文", "body round-trips");
+    check(model.draftBody.get() == "# Body\nbody text with images", "body round-trips");
 
-    // 5) 附件导入 → 生成相对路径并复制文件。
+    // 5) Attachment import -> generates a relative path and copies the file.
     const fs::path srcFile = dataDir / "src.png";
     { std::ofstream(srcFile) << "PNGDATA"; }
     std::string rel;
@@ -121,7 +121,7 @@ int main() {
     check(fs::exists(dataDir / "notes" / "assets" / id / "src.png"),
           "attachment copied to disk");
 
-    // 6) 删除 → 文件与附件目录被清除 + 取消选中。
+    // 6) Delete -> note file and attachment directory removed + selection cleared.
     model.select(id);
     check(model.delete_current(), "delete current");
     check(model.notes.size() == 0, "empty after delete");

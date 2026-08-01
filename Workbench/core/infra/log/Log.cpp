@@ -13,7 +13,7 @@ namespace wb::log {
 
 namespace {
 std::mutex g_mutex;
-OutputFn   g_output;  // 未设置时不输出
+OutputFn   g_output;  // No output when not set
 }  // namespace
 
 void set_output(OutputFn fn) {

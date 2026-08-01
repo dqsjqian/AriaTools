@@ -1,10 +1,11 @@
 //
-// AppleCryptoService — Apple 平台原生加密实现（Mac/iOS）。
+// AppleCryptoService — Native Apple platform crypto implementation (macOS/iOS).
 //
-// 算法：PBKDF2-HMAC-SHA256 派生 64B（32B AES + 32B MAC），
-// AES-256-CBC(PKCS7) 加密后再 HMAC-SHA256（Encrypt-then-MAC）。
-// 格式："WBCR2" + salt(16) + iv(16) + ciphertext + mac(32)。
-// 依赖系统 CommonCrypto + Security，无第三方动态库，适合 App 分发。
+// Algorithm: PBKDF2-HMAC-SHA256 derives 64B (32B AES + 32B MAC);
+// AES-256-CBC(PKCS7) encryption followed by HMAC-SHA256 (Encrypt-then-MAC).
+// Format: "WBCR2" + salt(16) + iv(16) + ciphertext + mac(32).
+// Depends only on system CommonCrypto + Security, no third-party dynamic
+// libraries, suitable for App distribution.
 //
 #include "infra/crypto/ICryptoService.h"
 

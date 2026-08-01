@@ -1,4 +1,4 @@
-# calendar 模块独立测试工程。
+# calendar module standalone test project.
 #   cmake -S Workbench/modules/calendar/tests -B build/mac/modules/calendar
 #   cmake --build build/mac/modules/calendar
 #   ctest --test-dir build/mac/modules/calendar --output-on-failure

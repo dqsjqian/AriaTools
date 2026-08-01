@@ -8,7 +8,7 @@
 
 ## 项目简介
 
-**Workbench** 是一个跨平台个人工作台，核心理念是 **一份 C++ 核心（Model + ViewModel + Service），多套平台 View 壳**。当前已实现 macOS（Qt6）和 iOS（UIKit）两端，Android（JNI）和 Windows（Qt）为后续阶段规划。
+**Workbench** 是一个跨平台个人工作台，核心理念是 **一份 C++ 核心（Model + ViewModel + Service），多套平台 View 壳**。当前已实现 macOS（Qt6）、iOS（UIKit）和 Windows（Qt6）三端，Android（JNI）为后续阶段规划。
 
 ### 核心特性
 
@@ -144,6 +144,18 @@ bash Workbench/scripts/gen-ios.sh open
 bash Workbench/scripts/gen-ios.sh build
 ```
 
+### 构建 Windows 桌面应用
+
+```powershell
+# 配置 + 构建（Release）；默认用 Ninja 做并行编译
+powershell -File Workbench/scripts/gen-win.ps1
+
+# 或构建后直接运行
+powershell -File Workbench/scripts/gen-win.ps1 run
+```
+
+需要 Visual Studio 2022/2026（C++ 工作负载）和 Qt6（msvc2022_64）。脚本会自动探测 VS、Windows SDK 和 Qt6。默认用 Ninja 生成器（默认并行、且绕开 MSBuild v18 的 MSB4166 子节点崩溃 bug）；设置 `$env:ARIA_VS_GENERATOR` 可强制使用 VS 多配置生成器。
+
 ### 运行模块测试
 
 ```bash
@@ -156,9 +168,6 @@ ctest --test-dir build/mac/modules/tools --output-on-failure
 ### 后续平台（规划中）
 
 ```bash
-# Windows (Qt6) — 预留
-Workbench/scripts/gen-win.ps1
-
 # Android (JNI) — 预留
 bash Workbench/scripts/gen-android.sh
 
@@ -193,8 +202,10 @@ cmake -S Workbench -B build/ios \
 - 稳定基础设施接口：i18n / storage / settings / sync / secret / crypto
 - Tools：Base64、随机字符串、JSON 格式化/压缩、Apple 原生文件加解密
 - Notes：完整 CRUD（Markdown front matter + 附件管理 + EventBus 通知）
-- Mac 完整 App 构建通过，iOS 构建通过
+- Mac、iOS、Windows 完整 App 构建通过
+- Windows 构建默认用 Ninja（默认并行；绕开 MSBuild MSB4166 崩溃 bug）
 - Tools & Notes CTest 全部通过
+- 源码文件完全英文化（注释 + 字符串），含 CMake 与构建脚本
 
 ### 进行中
 
@@ -203,7 +214,7 @@ cmake -S Workbench -B build/ios \
 
 ### 后续规划
 
-1. 补齐平台：Android (JNI) / Windows (Qt) / Web (HTTP)，均复用 `core/`
+1. 补齐平台：Android (JNI) / Web (HTTP)，均复用 `core/`
 2. Git LFS 支持
 3. 可选端到端加密
 

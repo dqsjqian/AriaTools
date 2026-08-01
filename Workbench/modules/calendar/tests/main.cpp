@@ -1,5 +1,5 @@
-// calendar 模块业务测试：ICS 解析、月历排布、订阅持久化、以及用 fake
-// IHttpClient 的 refresh 流程（不依赖真实网络）。
+// Calendar module business tests: ICS parsing, month-grid layout, subscription persistence, and the refresh flow using a fake
+// IHttpClient (no real network involved).
 #include "models/CalendarModel.h"
 #include "services/CalendarService.h"
 
@@ -34,7 +34,7 @@ fs::path make_temp_dir() {
     return base;
 }
 
-// 返回预置 .ics 的 fake http client。
+// A fake http client that returns a preset .ics.
 class FakeHttp final : public wb::services::IHttpClient {
 public:
     explicit FakeHttp(std::string body) : body_(std::move(body)) {}
@@ -76,7 +76,7 @@ int main() {
     using namespace wb::calendar;
     wb::log::init_default_sink();
 
-    // ── 1) 纯 ICS 解析 ────────────────────────────────────────────────────
+    // ── 1) Pure ICS parsing ────────────────────────────────────────────────────
     {
         auto r = CalendarService::parse_ics(kIcs, "sub-x");
         check(r.ok(), "parse ok");
@@ -90,7 +90,7 @@ int main() {
         }
     }
 
-    // ── 2) 订阅持久化 + refresh（fake http）────────────────────────────────
+    // ── 2) Subscription persistence + refresh (fake http)────────────────────────────────
     const fs::path dataDir = make_temp_dir();
     std::unique_ptr<wb::services::IStorageService> storage(
         wb::services::make_local_file_storage_service(dataDir.string()));
@@ -112,35 +112,35 @@ int main() {
     check(refreshed.value.size() == 2, "refresh parsed 2 events");
     check(fs::exists(dataDir / "calendar" / "cache" / (id + ".ics")), "ics cached to disk");
 
-    // 离线读缓存
+    // Read cache offline
     auto cached = service->load_cached(id);
     check(cached.ok() && cached.value.size() == 2, "load cached events");
 
-    // 抓取失败 → 返回错误
+    // Fetch failure -> returns an error
     http.set_ok(false);
     auto failed = service->refresh(added.value);
     check(!failed.ok() && failed.error == CalendarError::FetchFailed, "fetch failure surfaced");
     http.set_ok(true);
 
-    // ── 3) 月历排布（CalendarModel）────────────────────────────────────────
+    // ── 3) Month grid layout (CalendarModel)────────────────────────────────────────
     {
         auto model = std::make_shared<CalendarModel>(service);
-        model->initialize();          // 定位今天所在月，载入缓存事件
+        model->initialize();          // Locate the month containing today; load cached events
         check(model->days.size() == 42, "42 day cells");
 
-        // 计数今天格子
+        // Count today cells
         int todayCells = 0;
         for (auto& c : model->days.snapshot()) if (c->isToday) ++todayCells;
         check(todayCells == 1, "exactly one today cell");
 
-        // 导航到 2026-07 验证事件出现在 7/15，且首格星期正确
-        // 2026-07-01 是周三 → ISO 0=周一，周三=2，所以前面有 2 个占位格。
+        // Navigate to 2026-07 to verify events land on 7/15 and the first cell's weekday is correct
+        // 2026-07-01 is a Wednesday -> ISO 0=Monday, Wednesday=2, so there are 2 padding cells before it.
         while (!(model->year.get() == 2026 && model->month.get() == 7)) {
             if (model->year.get() > 2026 ||
                 (model->year.get() == 2026 && model->month.get() > 7)) model->prev_month();
             else model->next_month();
         }
-        // 刷新拉取事件到当月
+        // Refresh to pull events into the current month
         (void)model->refresh_all();
 
         bool found = false;
@@ -149,7 +149,7 @@ int main() {
         }
         check(found, "events land on 2026-07-15");
 
-        // 首格（cell 0）应是 6 月末的占位（非当月），因为 7/1 是周三。
+        // First cell (cell 0) should be a late-June padding cell (not current month), since 7/1 is a Wednesday.
         auto first = model->days.at(0);
         check(first && !first->inCurrentMonth, "first cell is prev-month filler (Jul 1 is Wed)");
     }

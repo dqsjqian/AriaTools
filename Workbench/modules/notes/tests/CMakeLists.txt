@@ -1,4 +1,4 @@
-# notes 模块独立测试工程。
+# notes module standalone test project.
 #   cmake -S Workbench/modules/notes/tests -B build/mac/modules/notes
 #   cmake --build build/mac/modules/notes
 #   ctest --test-dir build/mac/modules/notes --output-on-failure

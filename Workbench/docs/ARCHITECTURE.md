@@ -16,12 +16,11 @@ Workbench/
 ├── platform/                  各端 View 壳，结构对称，各自持有平台适配器
 │   ├── qt/                    Qt6 桌面（Win/Mac/Linux 共用）：入口 + AppShell + Views
 │   ├── ios/                   iOS UIKit：入口 + IosShell + Views（.mm）
-│   ├── android/               预留（JNI，见 README）
-│   └── win/                   预留（复用 qt/，仅打包脚本）
+│   └── android/               预留（JNI，见 README）
 ├── scripts/                   各平台一键生成/构建脚本
 │   ├── gen-mac.sh             Mac (Qt6)      ✅ 可用
 │   ├── gen-ios.sh             iOS (UIKit)    ✅ 可用（Xcode 工程）
-│   ├── gen-win.ps1            Windows        预留
+│   ├── gen-win.ps1            Windows (Qt6)  ✅ 可用（Ninja 默认）
 │   ├── gen-android.sh         Android        预留
 │   └── gen-web.sh             Web (HTTP)     预留
 └── third_party/aria           vendored 框架（add_subdirectory）
@@ -125,6 +124,11 @@ bash Workbench/scripts/gen-mac.sh run
 bash Workbench/scripts/gen-ios.sh open   # 生成并打开 Xcode
 ```
 
+```powershell
+# Windows 桌面（Qt6 + MSVC，默认 Ninja 并行编译）
+powershell -File Workbench/scripts/gen-win.ps1
+```
+
 ## 后续阶段
 1. 业务实现：Tools → Notes → Calendar → Settings/Sync（Apple 加密使用 CommonCrypto，同步接 libgit2）。
-2. 补齐平台：Android(JNI) / Windows(Qt) / Web(HTTP)，均复用 `core/`。
+2. 补齐平台：Android(JNI) / Web(HTTP)，均复用 `core/`。
