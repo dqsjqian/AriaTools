@@ -36,6 +36,15 @@ DashboardView::DashboardView(DashboardVm& vm, aria::binding::BindingEngine& be)
 
     UIViewController* host = [[UIViewController alloc] init];
     host.view.backgroundColor = [UIColor systemBackgroundColor];
+    // An empty UIView has zero intrinsic height, which collapses the embedded
+    // host inside the vertical stack — pushed pages would get a 0x0 frame and
+    // look "dead" (tap appears to do nothing). Let the host stretch to fill
+    // the remaining stack space instead.
+    [host.view setTranslatesAutoresizingMaskIntoConstraints:NO];
+    [host.view setContentHuggingPriority:UILayoutPriorityDefaultLow
+                                 forAxis:UILayoutConstraintAxisVertical];
+    [host.view setContentCompressionResistancePriority:UILayoutPriorityDefaultHigh
+                                              forAxis:UILayoutConstraintAxisVertical];
     pageHost_ = host;
 
     vc_ = wb::ios::ui::make_stack_vc(

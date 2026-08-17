@@ -66,6 +66,23 @@ UIViewController* IosShell::build_root() {
     tab.viewControllers = vcs;
 
     if (!mods.empty() && mods.front().vm) mods.front().vm->activate();
+
+    // Refresh every tab's title when the language changes (app-level switch
+    // via the settings module). Without this, titles are set once at launch
+    // and stay in the old language — mirroring Qt main.cpp's langSub.
+    lang_sub_ = core_.i18n().language().on_changed(
+        [tab, this](const std::string&) {
+            const auto& ms = core_.modules();
+            NSArray<UIViewController*>* tabs = tab.viewControllers;
+            for (NSUInteger i = 0; i < tabs.count && i < ms.size(); ++i) {
+                NSString* t =
+                    [NSString stringWithUTF8String:core_.nav_title(ms[i].navKey).c_str()];
+                UIViewController* vc = tabs[i];
+                vc.title = t;
+                vc.tabBarItem.title = t;
+            }
+        });
+
     return tab;
 }
 

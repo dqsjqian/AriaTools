@@ -8,6 +8,7 @@
 #include "app/AppCore.h"
 #include "aria/adapters/uikit/UIKitAdapter.hpp"
 #include "aria/binding/binding_engine.hpp"
+#include "aria/subscription.hpp"
 
 #include "support/IosExecutors.h"
 
@@ -31,6 +32,7 @@ private:
     MainQueueExec                                        ui_exec_;
     MainQueueDelay                                       delay_;
     wb::core::AppCore                                    core_;
+    aria::Subscription                                   lang_sub_;
 };
 
 }  // namespace wb::ios
