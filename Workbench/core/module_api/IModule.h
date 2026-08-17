@@ -6,6 +6,7 @@
 //
 #include "aria/binding/view_model.hpp"
 #include "module_api/ModuleContext.h"
+#include "module_api/MountRegistry.h"
 #include "module_api/NavigatorHost.h"
 
 #include <memory>
@@ -35,6 +36,12 @@ public:
     /// `nav.Register<ICartPage>("cart", [&ctx]{ return create_view_model(ctx); })`).
     /// Called once by AppCore during load_modules; default is no targets.
     virtual void register_navigation(NavigatorHost& nav) { (void)nav; }
+
+    /// Cross-module extension points. A module overrides this to provide UI
+    /// for host slots (e.g. `mounts.Provide("dashboard.content", id(),
+    /// [&ctx]{ return create_view_model(ctx); })`). Called once by AppCore
+    /// during load_modules (after register_navigation); default is no slots.
+    virtual void register_mounts(MountRegistry& mounts) { (void)mounts; }
 };
 
 }  // namespace wb::module_api

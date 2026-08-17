@@ -16,6 +16,7 @@
 #include "aria/aria.hpp"
 #include "module_api/BaseVm.h"
 #include "module_api/ModuleContext.h"
+#include "module_api/MountRegistry.h"
 #include "module_api/NavigatorHost.h"
 #include "module_api/capabilities/cart/ICartPage.h"
 #include "aria/subscription.hpp"
@@ -39,14 +40,27 @@ public:
     /// Total cart items (int, for badge rendering).
     aria::Property<int> cartItemCount{0};
 
+    // ── Cross-module extension point (mount) ───────────────────────────
+    /// The mounted provider's module id for slot "dashboard.content"
+    /// ("" = slot empty → View renders the placeholder). Mirrors
+    /// MountRegistry for side-channel platforms.
+    aria::Property<std::string> mountedModule;
+    /// The mounted provider's ViewModel instance (nullptr when empty).
+    /// The View builds the provider's UI from this via the View factory.
+    aria::Property<std::shared_ptr<aria::binding::ViewModel>> mountedVm;
+    /// Toggle the extension on/off (SetEnabled — the provider stays
+    /// registered, the host just flips the switch). Demonstrates live
+    /// hot-plug of another module's UI into this page.
+    aria::Command<> mountToggle;
+    /// Status line: "mounted: cart" / "slot empty" (i18n).
+    aria::Property<std::string> mountStatus;
+    /// Button label for the toggle (i18n).
+    aria::Property<std::string> mountToggleLabel;
+
     // ── Cross-module navigation (VM-layer routing) ─────────────────────
-    /// Open the cart page via the typed ICartPage contract, carrying a
-    /// prefill param ("product" / "price"). The View only fires the
-    /// Command and renders navigator().current().
-    aria::Command<> openCart;
-    /// Same navigation, but presented as a modal dialog (Presentation::Modal).
+    /// Open the cart page as a modal dialog (Presentation::Modal).
     aria::Command<> modalCart;
-    /// Same navigation, but presented as a standalone window
+    /// Open the cart page as a standalone window
     /// (Presentation::Window; mobile shells fall back to modal).
     aria::Command<> windowCart;
     /// Pop the navigation stack.
@@ -68,13 +82,15 @@ public:
     aria::Property<int> navPresentation{0};
 
     /// Button labels for the navigation demo (i18n).
-    aria::Property<std::string> openCartLabel;
     aria::Property<std::string> modalCartLabel;
     aria::Property<std::string> windowCartLabel;
     aria::Property<std::string> navBackLabel;
 
 private:
+    void sync_mount_state();
+
     wb::module_api::NavigatorHost* navigator_ = nullptr;
+    wb::module_api::MountRegistry* mounts_ = nullptr;
 
     // Cross-module subscriptions live for the VM's entire lifetime (not in
     // bag()) so the badge stays current even when the user is on another tab.

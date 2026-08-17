@@ -11,13 +11,7 @@ namespace wb::dashboard {
 
 DashboardVm::DashboardVm(wb::module_api::ModuleContext& ctx)
     : navigator_(&ctx.navigator()),
-      openCart([this] {
-          // VM-layer routing with a TYPED payload: compile-time field
-          // checking, serialized to json by the navigator. The View only
-          // fires the Command — routing lives here in the VM.
-          navigator_->Push<wb::module_api::ICartPage>(
-              wb::module_api::CartArgs{.product = "Apple", .price = 2.5});
-      }),
+      mounts_(&ctx.mounts()),
       modalCart([this] {
           // Same navigation, presented as a modal dialog: the View renders
           // the entry as an overlay (Qt QDialog / iOS present / Compose Dialog).
@@ -34,17 +28,29 @@ DashboardVm::DashboardVm(wb::module_api::ModuleContext& ctx)
               wb::module_api::NavOptions{
                   .presentation = wb::module_api::Presentation::Window});
       }),
-      navBack([this] { navigator_->Pop(); })
+      navBack([this] { navigator_->Pop(); }),
+      mountToggle([this] {
+          // Flip the extension on/off. The cart module registered the slot's
+          // provider factory at load time; we only toggle the switch — no
+          // knowledge of the provider needed (decoupled both ways).
+          const bool enable = mountedModule.get().empty();
+          mounts_->SetEnabled(wb::module_api::slots::kDashboardContent, enable);
+          sync_mount_state();
+      })
 {
     text(welcome, "welcome");
     text(summary, "summary");
-    text(openCartLabel, "open_cart");
     text(modalCartLabel, "modal_cart");
     text(windowCartLabel, "window_cart");
     text(navBackLabel, "back");
+    text(mountToggleLabel, "mount_toggle");
     // Seed the badge with zero items.
     cartBadge.set(wb::i18n::str_in("dashboard", "cart_empty"));
     lastOrder.set(wb::i18n::str_in("dashboard", "no_orders"));
+
+    // Seed the extension state from what the cart module registered at
+    // load time (dashboard.content is provided by cart's register_mounts).
+    sync_mount_state();
 
     // Cross-module: subscribe to cart events so the home badge updates live
     // whenever the user adds items in the cart module (no direct coupling).
@@ -105,6 +111,21 @@ DashboardVm::DashboardVm(wb::module_api::ModuleContext& ctx)
     };
     nav_sync_sub_ = depth.on_changed([sync_nav](const auto&) { sync_nav(); });
     sync_nav();
+}
+
+void DashboardVm::sync_mount_state() {
+    const auto mod =
+        mounts_->module_of(wb::module_api::slots::kDashboardContent);
+    mountedModule.set(mod.value_or(""));
+    if (mod) {
+        auto m = mounts_->Resolve(wb::module_api::slots::kDashboardContent);
+        mountedVm.set(m ? std::move(m->vm) : nullptr);
+        mountStatus.set(wb::i18n::str_in("dashboard", "mount_mounted")
+                        + " " + *mod);
+    } else {
+        mountedVm.set(nullptr);
+        mountStatus.set(wb::i18n::str_in("dashboard", "mount_empty"));
+    }
 }
 
 }  // namespace wb::dashboard

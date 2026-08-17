@@ -5,6 +5,7 @@
 // they never new services themselves and don't know concrete implementations.
 //
 #include "infra/ServiceHub.h"
+#include "module_api/MountRegistry.h"
 #include "module_api/NavigatorHost.h"
 #include "aria/binding/view_model.hpp"
 #include "aria/runtime/event_bus.hpp"
@@ -62,10 +63,23 @@ public:
         return *navigator_;
     }
 
+    /// Install the cross-module mount registry (set by AppCore once). The
+    /// registry owns the slot→provider map; hosts resolve slot content via
+    /// `ctx.mounts().Resolve("dashboard.content")`.
+    void set_mounts(std::shared_ptr<MountRegistry> mounts) {
+        mounts_ = std::move(mounts);
+    }
+
+    /// Cross-module mount registry (may be null before AppCore installs it).
+    [[nodiscard]] MountRegistry& mounts() {
+        return *mounts_;
+    }
+
 private:
     wb::infra::ServiceHub& hub_;
     ModuleVmFactory vmFactory_;
     std::shared_ptr<NavigatorHost> navigator_;
+    std::shared_ptr<MountRegistry> mounts_;
 };
 
 }  // namespace wb::module_api

@@ -6,7 +6,8 @@ namespace wb::core {
 AppCore::AppCore(std::string i18nBaseDir, std::string initialLang)
     : hub_(std::move(i18nBaseDir), std::move(initialLang)),
       ctx_(hub_),
-      navigator_(std::make_shared<wb::module_api::NavigatorHost>(ctx_))
+      navigator_(std::make_shared<wb::module_api::NavigatorHost>(ctx_)),
+      mounts_(std::make_shared<wb::module_api::MountRegistry>(ctx_))
 {
     // Cross-module navigation: business VMs resolve other modules' VMs
     // through ModuleContext. The factory creates fresh instances so pushed
@@ -14,6 +15,7 @@ AppCore::AppCore(std::string i18nBaseDir, std::string initialLang)
     ctx_.set_vm_factory(
         [this](const std::string& id) { return create_module_vm(id); });
     ctx_.set_navigator(navigator_);
+    ctx_.set_mounts(mounts_);
 
     // load_modules() is called by the platform shell AFTER set_ui_executor /
     // set_timer. Doing it here would trip AsyncCommand's graph thread-affinity
@@ -39,6 +41,12 @@ void AppCore::load_modules() {
     // (interface → page factory) before any VM is created.
     for (const auto& m : registry_.ordered()) {
         m->register_navigation(*navigator_);
+    }
+
+    // Then let each module provide cross-module extension points
+    // (slot → UI factory) — hosts resolve slots when they render.
+    for (const auto& m : registry_.ordered()) {
+        m->register_mounts(*mounts_);
     }
 
     for (const auto& m : registry_.ordered()) {

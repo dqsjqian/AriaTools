@@ -11,4 +11,7 @@
     <string name="modal_cart">Open cart (modal)</string>
     <string name="window_cart">Open cart (window)</string>
     <string name="back">Back</string>
+    <string name="mount_toggle">Toggle extension</string>
+    <string name="mount_mounted">Mounted:</string>
+    <string name="mount_empty">This area is extensible by other modules (extension point)</string>
 </resources>

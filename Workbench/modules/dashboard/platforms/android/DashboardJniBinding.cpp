@@ -16,10 +16,13 @@ void subscribe_dashboard(aria::runtime::EventBus& bus, DashboardVm& vm,
     bind_str(subs, "dashboard", "cartBadge", vm.cartBadge);
     bind_str(subs, "dashboard", "lastOrder", vm.lastOrder);
     // Navigation demo labels.
-    bind_str(subs, "dashboard", "open_cart",   vm.openCartLabel);
     bind_str(subs, "dashboard", "modal_cart",  vm.modalCartLabel);
     bind_str(subs, "dashboard", "window_cart", vm.windowCartLabel);
     bind_str(subs, "dashboard", "back",        vm.navBackLabel);
+    // Extension point (mount) labels + state.
+    bind_str(subs, "dashboard", "mount_toggle",  vm.mountToggleLabel);
+    bind_str(subs, "dashboard", "mount_status",  vm.mountStatus);
+    bind_str(subs, "dashboard", "mountedModule", vm.mountedModule);
     // Navigation mirrors (pushed over the side-channel so Compose can
     // render the pushed page by module id + presentation kind).
     bind_str(subs, "dashboard", "navCurrentModule", vm.navCurrentModule);
@@ -37,10 +40,10 @@ void set_dashboard_text(DashboardVm& vm, const std::string& propName,
 }
 
 void exec_dashboard_command(DashboardVm& vm, const std::string& cmdName) {
-    if (cmdName == "openCart") vm.openCart.execute();
-    else if (cmdName == "modalCart") vm.modalCart.execute();
+    if (cmdName == "modalCart") vm.modalCart.execute();
     else if (cmdName == "windowCart") vm.windowCart.execute();
     else if (cmdName == "navBack") vm.navBack.execute();
+    else if (cmdName == "mountToggle") vm.mountToggle.execute();
 }
 
 void register_dashboard_binding(wb::jni::BindingTable& table) {
