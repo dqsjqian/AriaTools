@@ -2,5 +2,4 @@
 <resources>
     <string name="title">回声</string>
     <string name="message">热插拔模块演示</string>
-    <string name="nav_echo">回声示例</string>
 </resources>

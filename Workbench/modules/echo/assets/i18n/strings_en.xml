@@ -2,5 +2,4 @@
 <resources>
     <string name="title">Echo</string>
     <string name="message">Hot-pluggable module demo</string>
-    <string name="nav_echo">Echo demo</string>
 </resources>
