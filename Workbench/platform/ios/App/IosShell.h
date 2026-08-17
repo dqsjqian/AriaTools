@@ -9,6 +9,8 @@
 #include "aria/adapters/uikit/UIKitAdapter.hpp"
 #include "aria/binding/binding_engine.hpp"
 
+#include "support/IosExecutors.h"
+
 #include <memory>
 
 namespace wb::ios {
@@ -26,6 +28,8 @@ public:
 private:
     std::shared_ptr<aria::adapters::uikit::UIKitAdapter> adapter_;
     aria::binding::BindingEngine                         be_;
+    MainQueueExec                                        ui_exec_;
+    MainQueueDelay                                       delay_;
     wb::core::AppCore                                    core_;
 };
 

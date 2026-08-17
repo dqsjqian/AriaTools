@@ -17,10 +17,21 @@ std::string bundle_i18n_dir() {
 
 IosShell::IosShell()
     : adapter_(std::make_shared<aria::adapters::uikit::UIKitAdapter>()),
-      // UIKit callbacks are already on the main thread, so the Direct strategy suffices (no dispatcher needed).
+      // UIKit callbacks are already on the main thread, but AsyncCommand still
+      // needs a MainQueueExecutor to schedule the final co_await schedule_on(ui)
+      // — otherwise the InlineExecutor fallback trips the graph thread-affinity
+      // check the moment any module creates an AsyncCommand (e.g. login).
       be_(adapter_),
       core_(bundle_i18n_dir(), "zh-CN")
 {
+    // Inject the main-queue executor + delay BEFORE load_modules(): see
+    // AppCore::AppCore() comment — "load_modules() is called by the platform
+    // shell AFTER set_ui_executor / set_timer". Without these, login/login
+    // AsyncCommand throws std::invalid_argument at construction time and the
+    // app crashes to a blank screen.
+    core_.set_ui_executor(&ui_exec_);
+    core_.set_timer(&delay_);
+    core_.load_modules();
     register_all_views();
 }
 
