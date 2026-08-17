@@ -2,6 +2,7 @@
 #include "viewmodels/CartVm.h"
 
 #include "module_api/capabilities/cart/ICartPage.h"
+#include "module_api/capabilities/dashboard/DashboardSlots.h"
 
 namespace wb::cart {
 
@@ -27,7 +28,7 @@ void CartModule::register_mounts(wb::module_api::MountRegistry& mounts) {
     // instance (shared with the main cart tab): mounted UI and the tab
     // show/edit the SAME data, and side-channel command routing (Android
     // typing / addItem) works without any mount-aware dispatch layer.
-    mounts.Provide(wb::module_api::slots::kDashboardContent, id(),
+    mounts.Provide(wb::module_api::DashboardSlots::kContent, id(),
                    [](wb::module_api::ModuleContext& ctx)
                        -> std::shared_ptr<aria::binding::ViewModel> {
                        auto primary = ctx.primary_vm("cart");
