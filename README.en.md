@@ -37,6 +37,7 @@ One C++20 core, four platform view shells: Qt / iOS / Android / Web
 - 🔌 **Platform service injection** — UI-thread executor / worker pool / delayed scheduler injected by each platform shell into `ServiceHub`; modules get them via `ModuleContext` — business code stays platform-free
 - 🖥 **Four platform shells** — Qt6 (desktop), iOS (UIKit), Android (Compose + JNI side-channel), Web (HTTP adapter, planned)
 - 🧭 **Route presentation** — `NavigatorHost::Push<I>(payload, NavOptions)` picks HOW a target appears in one call: `Push` (stack-embedded) / `Modal` (dialog) / `Window` (standalone top-level window). Each shell maps it to the native presentation (Qt QStackedWidget / QDialog / top-level window; iOS child VC / present VC; Android embedded / Compose Dialog); closing a modal or window pops the stack entry
+- 🧩 **Extension points (MountRegistry)** — `IModule::register_mounts` lets one module mount its UI into a slot another module declares (VS Code `contributes.views` / Eclipse extension-point pattern): `Provide(slotId, moduleId, factory)` / `Resolve(slotId)`; host and provider are fully decoupled (host only knows the slot id, provider never knows the host); `SetEnabled` hot-toggles, empty slots render a placeholder (graceful degradation); the mounted VM is the provider's PRIMARY instance — shares state with the module's own tab, so interaction is identical across all three platforms
 
 ## 🏗 Architecture
 
@@ -73,7 +74,7 @@ C++ VM (aria::Property) → on_changed → JNI callback → Kotlin StateFlow →
 
 | Module | Purpose | Aria capabilities demonstrated |
 |---|---|---|
-| dashboard | Home overview | Property / i18n / cross-module nav (interface routing + 3 presentation kinds) |
+| dashboard | Home overview | Property / i18n / extension-point host (mounted cart, hot-toggle) + cross-module nav (modal / window) |
 | notes / calendar / tools | Notes / Calendar / Tools | ObservableList / forms |
 | settings / sync | Settings / Sync | service injection / EventBus |
 | tipcalc | Tip calculator | Computed / Command / reactive::batch |
@@ -98,6 +99,30 @@ Every platform separates page implementation from platform registration:
 | Android | `<Mod>Page.kt` | `<Mod>PageEntry.kt` |
 
 The business `module/<Mod>Module.cpp`, UI implementation, and platform Entry are three distinct layers. View/Page files must not register themselves with a Factory.
+
+### Cross-module extension points (MountRegistry)
+
+Besides *navigating* (pushing another module's page onto the stack), a module can *mount* its UI into a slot another module declares — the C++ take on VS Code `contributes.views` / Eclipse extension points, fully decoupled both ways:
+
+```cpp
+// provider (cart module, inside register_mounts)
+mounts.Provide(wb::module_api::slots::kDashboardContent, id(),
+               [](ModuleContext& ctx) {
+                   return ctx.primary_vm("cart");  // shares state with the cart tab
+               });
+
+// host (dashboard module)
+if (auto m = ctx.mounts().Resolve(slots::kDashboardContent)) {
+    // render m->moduleId's UI via the View factory, data from m->vm
+} else {
+    render_placeholder();  // empty slot -> placeholder (graceful degradation)
+}
+```
+
+- **Zero coupling**: the host only knows the slot id, the provider never knows who consumes it; deleting the provider module just empties the slot — no crash
+- **Hot toggle**: `SetEnabled(slotId, bool)` keeps the provider factory and only flips the switch — dashboard's "toggle extension" button demonstrates it
+- **Shared instance**: the mounted VM is the provider's PRIMARY instance, so the mounted UI and the module's tab show/edit the same data; Android side-channel command routing works with zero changes
+- **Orthogonal to navigation**: navigation pushes a fresh page instance (returnable); mounting is a resident shared panel. The dashboard demonstrates both at once (mounted cart + modal/window navigation)
 
 ## 🚀 Quick Start
 
