@@ -1,3 +1,4 @@
+#include "TipCalcView.h"
 #include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "viewmodels/TipCalcVm.h"
@@ -44,7 +45,8 @@ aria::binding::Converter<int, std::string> make_int_conv() {
 
 }  // namespace
 
-static UIViewController* build(TipCalcVm& vm, aria::binding::BindingEngine& be) {
+TipCalcView::TipCalcView(TipCalcVm& vm, aria::binding::BindingEngine& be)
+    : vc_(nil) {
     UILabel*  title   = wb::ios::ui::make_title(@"");
     UILabel*  desc    = wb::ios::ui::make_label(@"");
     UILabel*  billLbl = wb::ios::ui::make_label(@"");
@@ -58,7 +60,7 @@ static UIViewController* build(TipCalcVm& vm, aria::binding::BindingEngine& be) 
     UILabel*  perLbl    = wb::ios::ui::make_label(@"");
     UIButton* roundBtn  = wb::ios::ui::make_button(@"");
 
-    auto* vc = wb::ios::ui::make_stack_vc(@[
+    vc_ = wb::ios::ui::make_stack_vc(@[
         title, desc,
         billLbl, billField,
         tipLbl, tipField,
@@ -105,8 +107,6 @@ static UIViewController* build(TipCalcVm& vm, aria::binding::BindingEngine& be) 
 
     // Button text (i18n) via a projected binding on the caption property.
     be.bind_text_oneway(vm.roundUpText, wb::ios::ui::view_for(roundBtn));
-
-    return vc;
 }
 
 }  // namespace wb::tipcalc::iosview
@@ -115,7 +115,8 @@ namespace wb::tipcalc {
 void register_tipcalc_view() {
     wb::ios::UIViewFactory::instance().register_builder(
         "tipcalc", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            return iosview::build(static_cast<TipCalcVm&>(vm), be);
+            auto* view = new iosview::TipCalcView(static_cast<TipCalcVm&>(vm), be);
+            return view->viewController();
         });
 }
 }  // namespace wb::tipcalc

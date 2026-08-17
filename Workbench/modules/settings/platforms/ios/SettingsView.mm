@@ -1,3 +1,4 @@
+#include "SettingsView.h"
 #include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "viewmodels/SettingsVm.h"
@@ -7,14 +8,16 @@
 #include <string>
 
 namespace wb::settings::iosview {
-static UIViewController* build(SettingsVm& vm, aria::binding::BindingEngine& be) {
+
+SettingsView::SettingsView(SettingsVm& vm, aria::binding::BindingEngine& be)
+    : vc_(nil) {
     UILabel*  title   = wb::ios::ui::make_title(@"");
     UILabel*  hint    = wb::ios::ui::make_label(@"");
     UILabel*  langLbl = wb::ios::ui::make_label(@"");
     UIButton* zh      = wb::ios::ui::make_button(@"");
     UIButton* en      = wb::ios::ui::make_button(@"");
 
-    auto* vc = wb::ios::ui::make_stack_vc(@[title, hint, langLbl, zh, en]);
+    vc_ = wb::ios::ui::make_stack_vc(@[title, hint, langLbl, zh, en]);
 
     be.bind_text_oneway(vm.title, wb::ios::ui::view_for(title));
     be.bind_text_oneway(vm.hint, wb::ios::ui::view_for(hint));
@@ -24,15 +27,16 @@ static UIViewController* build(SettingsVm& vm, aria::binding::BindingEngine& be)
     be.bind_text_oneway(vm.enLabel, wb::ios::ui::view_for(en));
     be.bind_command(vm.switchLanguage, wb::ios::ui::view_for(zh), std::string("zh-CN"));
     be.bind_command(vm.switchLanguage, wb::ios::ui::view_for(en), std::string("en"));
-    return vc;
 }
+
 }  // namespace wb::settings::iosview
 
 namespace wb::settings {
 void register_settings_view() {
     wb::ios::UIViewFactory::instance().register_builder(
         "settings", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            return iosview::build(static_cast<SettingsVm&>(vm), be);
+            auto* view = new iosview::SettingsView(static_cast<SettingsVm&>(vm), be);
+            return view->viewController();
         });
 }
 }  // namespace wb::settings

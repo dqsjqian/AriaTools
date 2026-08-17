@@ -1,3 +1,4 @@
+#include "LoginView.h"
 #include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "infra/i18n/I18n.h"
@@ -7,7 +8,8 @@
 
 namespace wb::login::iosview {
 
-static UIViewController* build(LoginVm& vm, aria::binding::BindingEngine& be) {
+LoginView::LoginView(LoginVm& vm, aria::binding::BindingEngine& be)
+    : vc_(nil) {
     UILabel*     title    = wb::ios::ui::make_title(@"");
     UILabel*     desc     = wb::ios::ui::make_label(@"");
     UILabel*     userLbl  = wb::ios::ui::make_label(@"");
@@ -19,7 +21,7 @@ static UIViewController* build(LoginVm& vm, aria::binding::BindingEngine& be) {
     UILabel*     welcomeLbl = wb::ios::ui::make_label(@"");
     UILabel*     errLbl   = wb::ios::ui::make_label(@"");
 
-    auto* vc = wb::ios::ui::make_stack_vc(
+    vc_ = wb::ios::ui::make_stack_vc(
         @[title, desc, userLbl, userField, pwdLbl, pwdField, loginBtn,
           activeLbl, welcomeLbl, errLbl]);
 
@@ -46,7 +48,6 @@ static UIViewController* build(LoginVm& vm, aria::binding::BindingEngine& be) {
         [](const LoginResult& r) { return r.welcome; },
         wb::i18n::str_in("login", "not_logged_in"));
     be.bind_text_oneway(vm.login.last_error_message, wb::ios::ui::view_for(errLbl));
-    return vc;
 }
 
 }  // namespace wb::login::iosview
@@ -55,7 +56,8 @@ namespace wb::login {
 void register_login_view() {
     wb::ios::UIViewFactory::instance().register_builder(
         "login", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            return iosview::build(static_cast<LoginVm&>(vm), be);
+            auto* view = new iosview::LoginView(static_cast<LoginVm&>(vm), be);
+            return view->viewController();
         });
 }
 }  // namespace wb::login

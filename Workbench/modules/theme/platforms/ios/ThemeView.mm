@@ -1,3 +1,4 @@
+#include "ThemeView.h"
 #include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "infra/i18n/I18n.h"
@@ -8,8 +9,10 @@
 
 namespace wb::theme::iosview {
 
-static UIViewController* build(ThemeVm& vm, ThemeVmHostVm& host,
-                                aria::binding::BindingEngine& be) {
+ThemeView::ThemeView(ThemeVmHostVm& host, aria::binding::BindingEngine& be)
+    : vc_(nil) {
+    auto& vm = host.inner();
+
     UILabel*  title   = wb::ios::ui::make_title(@"");
     UILabel*  desc    = wb::ios::ui::make_label(@"");
     UILabel*  current = wb::ios::ui::make_label(@"");
@@ -19,7 +22,7 @@ static UIViewController* build(ThemeVm& vm, ThemeVmHostVm& host,
     UILabel*  cardTitle = wb::ios::ui::make_label(@"");
     UILabel*  cardBody  = wb::ios::ui::make_label(@"");
 
-    auto* vc = wb::ios::ui::make_stack_vc(
+    vc_ = wb::ios::ui::make_stack_vc(
         @[title, desc, current, pickLight, pickDark, pickSolar, cardTitle, cardBody]);
 
     be.bind_text_oneway(host.title,            wb::ios::ui::view_for(title));
@@ -40,7 +43,6 @@ static UIViewController* build(ThemeVm& vm, ThemeVmHostVm& host,
     // Card text (i18n) — static per language; re-resolved on VC rebuild.
     cardTitle.text = [NSString stringWithUTF8String:wb::i18n::str_in("theme","card_title").c_str()];
     cardBody.text  = [NSString stringWithUTF8String:wb::i18n::str_in("theme","card_body").c_str()];
-    return vc;
 }
 
 }  // namespace wb::theme::iosview
@@ -50,7 +52,8 @@ void register_theme_view() {
     wb::ios::UIViewFactory::instance().register_builder(
         "theme", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
             auto& host = static_cast<ThemeVmHostVm&>(vm);
-            return iosview::build(host.inner(), host, be);
+            auto* view = new iosview::ThemeView(host, be);
+            return view->viewController();
         });
 }
 }  // namespace wb::theme

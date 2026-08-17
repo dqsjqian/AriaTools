@@ -2,4 +2,8 @@
 <resources>
     <string name="welcome">欢迎使用 Workbench 工作台</string>
     <string name="summary">这里将展示待办、最近笔记、日历事项等概览卡片。</string>
+    <string name="cart_empty">购物车为空</string>
+    <string name="cart_items">购物车</string>
+    <string name="no_orders">暂无订单</string>
+    <string name="order_placed">已下单</string>
 </resources>

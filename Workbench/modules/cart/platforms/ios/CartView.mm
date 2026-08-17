@@ -1,3 +1,4 @@
+#include "CartView.h"
 #include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "infra/i18n/I18n.h"
@@ -26,7 +27,8 @@ aria::binding::Converter<double, std::string> make_dbl_conv() {
 
 }  // namespace
 
-static UIViewController* build(CartVm& vm, aria::binding::BindingEngine& be) {
+CartView::CartView(CartVm& vm, aria::binding::BindingEngine& be)
+    : vc_(nil) {
     UILabel*     title     = wb::ios::ui::make_title(@"");
     UILabel*     desc      = wb::ios::ui::make_label(@"");
     UILabel*     nameLbl   = wb::ios::ui::make_label(@"");
@@ -39,7 +41,7 @@ static UIViewController* build(CartVm& vm, aria::binding::BindingEngine& be) {
     UILabel*     taxLbl     = wb::ios::ui::make_label(@"");
     UILabel*     totalLbl   = wb::ios::ui::make_label(@"");
 
-    auto* vc = wb::ios::ui::make_stack_vc(
+    vc_ = wb::ios::ui::make_stack_vc(
         @[title, desc, nameLbl, nameField, priceLbl, priceField, addBtn,
           countLbl, subLbl, taxLbl, totalLbl]);
 
@@ -72,7 +74,6 @@ static UIViewController* build(CartVm& vm, aria::binding::BindingEngine& be) {
         [fmt_money](const double v) { return fmt_money("tax", v); });
     be.bind_text_projected(vm.total,    wb::ios::ui::view_for(totalLbl),
         [fmt_money](const double v) { return fmt_money("total", v); });
-    return vc;
 }
 
 }  // namespace wb::cart::iosview
@@ -81,7 +82,8 @@ namespace wb::cart {
 void register_cart_view() {
     wb::ios::UIViewFactory::instance().register_builder(
         "cart", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            return iosview::build(static_cast<CartVm&>(vm), be);
+            auto* view = new iosview::CartView(static_cast<CartVm&>(vm), be);
+            return view->viewController();
         });
 }
 }  // namespace wb::cart

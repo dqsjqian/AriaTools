@@ -1,13 +1,17 @@
-
-#include "support/UiHelpers.h"
+#include "ThemeView.h"
 #include "support/QtViewFactory.h"
+#include "support/UiHelpers.h"
 #include "infra/i18n/I18n.h"
 #include "viewmodels/ThemeVm.h"
 #include "viewmodels/ThemeVmHostVm.h"
+
+#include "aria/binding/binding_engine.hpp"
+
 #include <QComboBox>
 #include <QFrame>
 #include <QLabel>
 #include <QVBoxLayout>
+
 namespace wb::theme::qtview {
 using namespace wb::ui;
 namespace {
@@ -43,11 +47,12 @@ void repopulate_picker(QComboBox* picker, ThemeVm& vm) {
     picker->blockSignals(false);
 }
 }  // namespace
-QWidget* build_view(ThemeVmHostVm& host, aria::binding::BindingEngine& be) {
+
+ThemeView::ThemeView(ThemeVmHostVm& host, aria::binding::BindingEngine& be)
+    : root_(new QWidget) {
     auto& vm = host.inner();
-    auto* w = new QWidget;
-    auto& s_subs = subs_attached_to(w);
-    auto* lay = new QVBoxLayout(w);
+    auto& s_subs = subs_attached_to(root_);
+    auto* lay = new QVBoxLayout(root_);
     // Hint banner: VM-owned desc property (i18n, auto-refreshes on language change).
     auto* info = wb::ui::make_info("");
     lay->addWidget(info);
@@ -88,8 +93,8 @@ QWidget* build_view(ThemeVmHostVm& host, aria::binding::BindingEngine& be) {
             title->setText(QString::fromStdString(wb::i18n::str_in("theme", "card_title")));
             body ->setText(QString::fromStdString(wb::i18n::str_in("theme", "card_body")));
         }));
-    return w;
 }
+
 }  // namespace wb::theme::qtview
 
 namespace wb::theme {
@@ -97,7 +102,9 @@ void register_theme_view() {
     wb::qt::QtViewFactory::instance().register_builder(
         "theme",
         [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            return qtview::build_view(static_cast<ThemeVmHostVm&>(vm), be);
+            auto& host = static_cast<ThemeVmHostVm&>(vm);
+            auto* view = new qtview::ThemeView(host, be);
+            return view->widget();
         });
 }
 }  // namespace wb::theme

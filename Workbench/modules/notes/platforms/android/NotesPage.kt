@@ -26,6 +26,11 @@ private const val MOD = "notes"
  * NotesPage — Android (Compose) view for the "notes" module.
  * Editable title + body (two-way bound), add/save/delete buttons,
  * and a note list rendered from VM state.
+ *
+ * Decomposed into sub-composables:
+ *   NoteActionBar — add/save/delete buttons
+ *   NoteEditor    — title + body fields (two-way bound)
+ *   NoteList      — list of saved notes
  */
 @Composable
 fun NotesPage(vm: AppViewModel) {
@@ -38,28 +43,45 @@ fun NotesPage(vm: AppViewModel) {
         Text(props["$MOD.hint"] ?: "", style = MaterialTheme.typography.bodySmall)
         Text(props["$MOD.status"] ?: "", style = MaterialTheme.typography.bodyMedium)
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { vm.execute(MOD, "addNote") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.add"] ?: "Add") }
-            Button(onClick = { vm.execute(MOD, "saveNote") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.save"] ?: "Save") }
-            Button(onClick = { vm.execute(MOD, "deleteSelected") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.delete"] ?: "Delete") }
-        }
-        OutlinedTextField(
-            value = props["$MOD.editTitle"] ?: "",
-            onValueChange = { vm.setText(MOD, "editTitle", it) },
-            label = { Text(props["$MOD.title_placeholder"] ?: "Title") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedTextField(
-            value = props["$MOD.editBody"] ?: "",
-            onValueChange = { vm.setText(MOD, "editBody", it) },
-            label = { Text(props["$MOD.body_placeholder"] ?: "Body") },
-            modifier = Modifier.fillMaxWidth().weight(1f),
-        )
+        NoteActionBar(vm, props)
+        NoteEditor(vm, props)
         HorizontalDivider()
-        val list = (props["$MOD.noteList"] ?: "").split('\n').filter { it.isNotBlank() }
-        LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
-            items(list) { t -> Text(t, style = MaterialTheme.typography.bodySmall) }
-        }
+        NoteList(props)
+    }
+}
+
+// ─── Sub-composables ──────────────────────────────────────────────────────
+
+@Composable
+private fun NoteActionBar(vm: AppViewModel, props: Map<String, String>) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(onClick = { vm.execute(MOD, "addNote") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.add"] ?: "Add") }
+        Button(onClick = { vm.execute(MOD, "saveNote") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.save"] ?: "Save") }
+        Button(onClick = { vm.execute(MOD, "deleteSelected") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.delete"] ?: "Delete") }
+    }
+}
+
+@Composable
+private fun NoteEditor(vm: AppViewModel, props: Map<String, String>) {
+    OutlinedTextField(
+        value = props["$MOD.editTitle"] ?: "",
+        onValueChange = { vm.setText(MOD, "editTitle", it) },
+        label = { Text(props["$MOD.title_placeholder"] ?: "Title") },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    OutlinedTextField(
+        value = props["$MOD.editBody"] ?: "",
+        onValueChange = { vm.setText(MOD, "editBody", it) },
+        label = { Text(props["$MOD.body_placeholder"] ?: "Body") },
+        modifier = Modifier.fillMaxWidth().weight(1f),
+    )
+}
+
+@Composable
+private fun NoteList(props: Map<String, String>) {
+    val list = (props["$MOD.noteList"] ?: "").split('\n').filter { it.isNotBlank() }
+    LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
+        items(list) { t -> Text(t, style = MaterialTheme.typography.bodySmall) }
     }
 }

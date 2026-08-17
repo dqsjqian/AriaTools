@@ -18,6 +18,10 @@ private const val MOD = "dashboard"
 /**
  * DashboardPage — Android (Compose) view for the "dashboard" module.
  * Read-only overview: welcome + summary from VM (i18n, auto-refresh).
+ *
+ * Decomposed into sub-composables:
+ *   WelcomeText  — headline welcome label
+ *   SummaryText  — body summary paragraph
  */
 @Composable
 fun DashboardPage(vm: AppViewModel) {
@@ -26,7 +30,19 @@ fun DashboardPage(vm: AppViewModel) {
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(props["dashboard.welcome"] ?: "", style = MaterialTheme.typography.headlineSmall)
-        Text(props["dashboard.summary"] ?: "", style = MaterialTheme.typography.bodyLarge)
+        WelcomeText(props)
+        SummaryText(props)
     }
+}
+
+// ─── Sub-composables ──────────────────────────────────────────────────────
+
+@Composable
+private fun WelcomeText(props: Map<String, String>) {
+    Text(props["$MOD.welcome"] ?: "", style = MaterialTheme.typography.headlineSmall)
+}
+
+@Composable
+private fun SummaryText(props: Map<String, String>) {
+    Text(props["$MOD.summary"] ?: "", style = MaterialTheme.typography.bodyLarge)
 }

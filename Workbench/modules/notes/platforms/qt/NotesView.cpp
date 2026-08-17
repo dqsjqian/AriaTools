@@ -1,5 +1,5 @@
+#include "NotesView.h"
 #include "support/QtViewFactory.h"
-#include "support/UiHelpers.h"
 #include "viewmodels/NotesVm.h"
 
 #include "aria/binding/binding_engine.hpp"
@@ -20,10 +20,10 @@ namespace wb::notes::qtview {
 // Store the note id in the list item's UserRole to avoid depending on row numbers.
 static constexpr int kNoteIdRole = Qt::UserRole + 1;
 
-static QWidget* build(wb::notes::NotesVm& vm, aria::binding::BindingEngine& be) {
-    auto* w = new QWidget;
-    auto& subs = wb::ui::subs_attached_to(w);
-    auto* root = new QVBoxLayout(w);
+NotesView::NotesView(NotesVm& vm, aria::binding::BindingEngine& be)
+    : root_(new QWidget) {
+    auto& subs = wb::ui::subs_attached_to(root_);
+    auto* root = new QVBoxLayout(root_);
 
     auto* title = wb::ui::make_title("");
     auto* hint = wb::ui::make_info("");
@@ -145,8 +145,6 @@ static QWidget* build(wb::notes::NotesVm& vm, aria::binding::BindingEngine& be) 
                              current->data(kNoteIdRole).toString().toStdString();
                          if (id != vm.selectedId.get()) vm.selectNote.execute(id);
                      });
-
-    return w;
 }
 
 }  // namespace wb::notes::qtview
@@ -157,7 +155,8 @@ void register_notes_view() {
     wb::qt::QtViewFactory::instance().register_builder(
         "notes",
         [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            return qtview::build(static_cast<NotesVm&>(vm), be);
+            auto* view = new qtview::NotesView(static_cast<NotesVm&>(vm), be);
+            return view->widget();
         });
 }
 

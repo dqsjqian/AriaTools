@@ -21,7 +21,9 @@ function(wb_add_module)
     set(_tgt wb_module_${WBM_NAME})
     add_library(${_tgt} STATIC ${WBM_SOURCES})
 
-    target_include_directories(${_tgt} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+    target_include_directories(${_tgt} PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/../_shared)  # cross-module shared events/types
     target_link_libraries(${_tgt} PUBLIC
         wb_module_api wb_infra wb_utils aria::binding aria::core)
     if(WBM_EXTRA_LIBS)

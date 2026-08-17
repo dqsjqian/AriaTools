@@ -1,19 +1,25 @@
-
-#include "support/UiHelpers.h"
+#include "SearchView.h"
 #include "support/QtViewFactory.h"
+#include "support/UiHelpers.h"
 #include "viewmodels/SearchVm.h"
 #include "viewmodels/SearchVmHostVm.h"
 #include "aria/adapters/qt6/qt_list_model_adapter.hpp"
+
+#include "aria/binding/binding_engine.hpp"
+
 #include <QLabel>
 #include <QLineEdit>
 #include <QListView>
 #include <QVBoxLayout>
+
 namespace wb::search::qtview {
 using namespace wb::ui;
-static QWidget* build(SearchVm& vm, SearchVmHostVm& host, aria::binding::BindingEngine& be) {
-    auto* w = new QWidget;
-    auto& s_subs = subs_attached_to(w);
-    auto* lay = new QVBoxLayout(w);
+
+SearchView::SearchView(SearchVmHostVm& host, aria::binding::BindingEngine& be)
+    : root_(new QWidget) {
+    auto& vm = host.inner();
+    auto& s_subs = subs_attached_to(root_);
+    auto* lay = new QVBoxLayout(root_);
     // Hint banner: VM-owned desc property (i18n, auto-refreshes on language change).
     auto* info = wb::ui::make_info("");
     lay->addWidget(info);
@@ -64,8 +70,8 @@ static QWidget* build(SearchVm& vm, SearchVmHostVm& host, aria::binding::Binding
         });
     listView->setModel(model);
     lay->addWidget(listView, 1);
-    return w;
 }
+
 }  // namespace wb::search::qtview
 
 namespace wb::search {
@@ -74,7 +80,8 @@ void register_search_view() {
         "search",
         [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
             auto& host = static_cast<SearchVmHostVm&>(vm);
-            return qtview::build(host.inner(), host, be);
+            auto* view = new qtview::SearchView(host, be);
+            return view->widget();
         });
 }
 }  // namespace wb::search

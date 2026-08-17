@@ -12,4 +12,5 @@
     <string name="subtotal">Subtotal: ¥ %1</string>
     <string name="tax">Tax (8%): ¥ %1</string>
     <string name="total">Total: ¥ %1</string>
+    <string name="checkout">Checkout</string>
 </resources>
