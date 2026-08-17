@@ -1,6 +1,7 @@
+#include "CalendarView.h"
 #include "support/QtViewFactory.h"
-#include "support/UiHelpers.h"
 #include "viewmodels/CalendarVm.h"
+#include "models/CalendarTypes.h"
 
 #include "aria/binding/binding_engine.hpp"
 
@@ -13,19 +14,12 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-#include <array>
 #include <string>
 
 namespace wb::calendar::qtview {
 
-// One day cell: the day number on top, with event titles below (limited number shown).
-struct DayWidgets {
-    QFrame* frame = nullptr;
-    QLabel* dayLabel = nullptr;
-    QLabel* events = nullptr;
-};
-
-static void paint_cell(wb::calendar::CalendarVm& vm, DayWidgets& w, const DayCell& c) {
+// ─── Day cell painting ────────────────────────────────────────────────────
+void DayGridView::paint_cell_(CalendarVm& vm, DayWidgets& w, const DayCell& c) {
     w.dayLabel->setText(QString::fromStdString(c.label));
     w.events->setText(QString::fromStdString(vm.display_events(c)));
 
@@ -42,21 +36,10 @@ static void paint_cell(wb::calendar::CalendarVm& vm, DayWidgets& w, const DayCel
     w.events->setStyleSheet("QLabel { color:#455a64; font-size:10px; border:none; }");
 }
 
-static QWidget* build(wb::calendar::CalendarVm& vm, aria::binding::BindingEngine& be) {
-    auto* w = new QWidget;
-    auto& subs = wb::ui::subs_attached_to(w);
-    auto* root = new QVBoxLayout(w);
-
-    // Top: title + hint
-    auto* title = wb::ui::make_title("");
-    auto* hint = wb::ui::make_info("");
-    root->addWidget(title);
-    root->addWidget(hint);
-    be.bind_text_oneway(vm.title, wb::ui::view_for(title));
-    be.bind_text_oneway(vm.hint, wb::ui::view_for(hint));
-
-    // Nav row: prev month | month title | next month | today | refresh
-    auto* navRow = new QHBoxLayout;
+// ─── MonthNavView ──────────────────────────────────────────────────────────
+MonthNavView::MonthNavView(CalendarVm& vm, aria::binding::BindingEngine& be)
+    : nav_(new QWidget) {
+    auto* row = new QHBoxLayout(nav_);
     auto* prevBtn = new QPushButton;
     auto* monthLbl = new QLabel;
     auto* nextBtn = new QPushButton;
@@ -64,43 +47,47 @@ static QWidget* build(wb::calendar::CalendarVm& vm, aria::binding::BindingEngine
     auto* refreshBtn = new QPushButton;
     monthLbl->setAlignment(Qt::AlignCenter);
     monthLbl->setStyleSheet("QLabel { font-size:16px; font-weight:bold; }");
-    navRow->addWidget(prevBtn);
-    navRow->addWidget(monthLbl, 1);
-    navRow->addWidget(nextBtn);
-    navRow->addWidget(todayBtn);
-    navRow->addWidget(refreshBtn);
-    root->addLayout(navRow);
-    be.bind_text_oneway(vm.prevLabel, wb::ui::view_for(prevBtn));
-    be.bind_text_oneway(vm.nextLabel, wb::ui::view_for(nextBtn));
-    be.bind_text_oneway(vm.todayLabel, wb::ui::view_for(todayBtn));
+    row->addWidget(prevBtn);
+    row->addWidget(monthLbl, 1);
+    row->addWidget(nextBtn);
+    row->addWidget(todayBtn);
+    row->addWidget(refreshBtn);
+
+    be.bind_text_oneway(vm.prevLabel,    wb::ui::view_for(prevBtn));
+    be.bind_text_oneway(vm.nextLabel,    wb::ui::view_for(nextBtn));
+    be.bind_text_oneway(vm.todayLabel,   wb::ui::view_for(todayBtn));
     be.bind_text_oneway(vm.refreshLabel, wb::ui::view_for(refreshBtn));
-    be.bind_text_oneway(vm.monthTitle, wb::ui::view_for(monthLbl));
-    be.bind_command(vm.prevMonth, wb::ui::view_for(prevBtn));
-    be.bind_command(vm.nextMonth, wb::ui::view_for(nextBtn));
-    be.bind_command(vm.today, wb::ui::view_for(todayBtn));
-    be.bind_command(vm.refresh, wb::ui::view_for(refreshBtn));
+    be.bind_text_oneway(vm.monthTitle,   wb::ui::view_for(monthLbl));
+    be.bind_command(vm.prevMonth,  wb::ui::view_for(prevBtn));
+    be.bind_command(vm.nextMonth,  wb::ui::view_for(nextBtn));
+    be.bind_command(vm.today,      wb::ui::view_for(todayBtn));
+    be.bind_command(vm.refresh,    wb::ui::view_for(refreshBtn));
+}
 
-    // Month grid: row 0 is the weekday header; rows 1..6 are 6 weeks x 7 days.
-    auto* grid = new QGridLayout;
-    grid->setSpacing(3);
-    root->addLayout(grid, 1);
+// ─── DayGridView ───────────────────────────────────────────────────────────
+DayGridView::DayGridView(CalendarVm& vm, aria::binding::BindingEngine& be,
+                         std::vector<aria::Subscription>& subs)
+    : grid_(new QWidget),
+      cells_(std::make_shared<std::array<DayWidgets, 42>>()) {
+    auto* layout = new QGridLayout(grid_);
+    layout->setSpacing(3);
 
+    // Weekday header row.
     std::array<aria::Property<std::string>*, 7> wds{
         &vm.wd1, &vm.wd2, &vm.wd3, &vm.wd4, &vm.wd5, &vm.wd6, &vm.wd7};
     for (int col = 0; col < 7; ++col) {
         auto* h = new QLabel;
         h->setAlignment(Qt::AlignCenter);
         h->setStyleSheet("QLabel { color:#616161; font-weight:bold; }");
-        grid->addWidget(h, 0, col);
+        layout->addWidget(h, 0, col);
         be.bind_text_oneway(*wds[static_cast<std::size_t>(col)], wb::ui::view_for(h));
     }
 
-    // 42 cell widgets (fixed); on rebuild only contents are updated, widgets are not recreated.
-    auto cells = std::make_shared<std::array<DayWidgets, 42>>();
+    // 42 day cells.
     for (int i = 0; i < 42; ++i) {
         const int row = i / 7 + 1;
         const int col = i % 7;
-        auto& dw = (*cells)[static_cast<std::size_t>(i)];
+        auto& dw = (*cells_)[static_cast<std::size_t>(i)];
         dw.frame = new QFrame;
         dw.frame->setMinimumSize(64, 56);
         auto* cellLay = new QVBoxLayout(dw.frame);
@@ -111,24 +98,28 @@ static QWidget* build(wb::calendar::CalendarVm& vm, aria::binding::BindingEngine
         dw.events->setWordWrap(true);
         cellLay->addWidget(dw.dayLabel);
         cellLay->addWidget(dw.events, 1);
-        grid->addWidget(dw.frame, row, col);
+        layout->addWidget(dw.frame, row, col);
     }
 
-    auto repaint = [cells, &vm]() {
+    auto repaint = [cells = cells_, &vm, this]() {
         for (std::size_t i = 0; i < 42 && i < vm.days.size(); ++i) {
-            if (auto c = vm.days.at(i)) paint_cell(vm, (*cells)[i], *c);
+            if (auto c = vm.days.at(i)) paint_cell_(vm, (*cells)[i], *c);
         }
     };
     repaint();
     subs.push_back(vm.days.on_any_change([repaint]() { repaint(); }));
+}
 
-    // Subscription row: input + subscribe button
-    auto* subRow = new QHBoxLayout;
+// ─── SubscriptionBarView ──────────────────────────────────────────────────
+SubscriptionBarView::SubscriptionBarView(CalendarVm& vm, aria::binding::BindingEngine& be,
+                                         std::vector<aria::Subscription>& subs)
+    : bar_(new QWidget) {
+    auto* row = new QHBoxLayout(bar_);
     auto* urlEdit = new QLineEdit;
     auto* subBtn = new QPushButton;
-    subRow->addWidget(urlEdit, 1);
-    subRow->addWidget(subBtn);
-    root->addLayout(subRow);
+    row->addWidget(urlEdit, 1);
+    row->addWidget(subBtn);
+
     urlEdit->setPlaceholderText(QString::fromStdString(vm.urlPlaceholder.get()));
     subs.push_back(vm.urlPlaceholder.on_changed([urlEdit](const std::string& s) {
         urlEdit->setPlaceholderText(QString::fromStdString(s));
@@ -136,38 +127,64 @@ static QWidget* build(wb::calendar::CalendarVm& vm, aria::binding::BindingEngine
     be.bind_text_oneway(vm.subscribeLabel, wb::ui::view_for(subBtn));
     wb::ui::bind_editable_text(be, vm.subscribeUrl, urlEdit);
     be.bind_command(vm.addSubscription, wb::ui::view_for(subBtn));
+}
 
-    // Subscription list (double-click to remove)
-    auto* subList = new QListWidget;
-    subList->setMaximumHeight(90);
-    root->addWidget(subList);
-    auto rebuildSubs = [subList, &vm]() {
-        subList->clear();
+// ─── SubscriptionListView ─────────────────────────────────────────────────
+SubscriptionListView::SubscriptionListView(CalendarVm& vm, aria::binding::BindingEngine&,
+                                           std::vector<aria::Subscription>& subs)
+    : list_(new QListWidget) {
+    list_->setMaximumHeight(90);
+    auto rebuildSubs = [this, &vm]() {
+        list_->clear();
         for (std::size_t i = 0; i < vm.subscriptions.size(); ++i) {
             if (auto s = vm.subscriptions.at(i)) {
                 auto* item = new QListWidgetItem(
                     QString::fromStdString(vm.display_sub_name(*s)));
                 item->setData(Qt::UserRole + 1, QString::fromStdString(s->id));
                 item->setToolTip(QString::fromStdString(s->url));
-                subList->addItem(item);
+                list_->addItem(item);
             }
         }
     };
     rebuildSubs();
     subs.push_back(vm.subscriptions.on_any_change([rebuildSubs]() { rebuildSubs(); }));
-    QObject::connect(subList, &QListWidget::itemDoubleClicked,
+    QObject::connect(list_, &QListWidget::itemDoubleClicked,
                      [&vm](QListWidgetItem* item) {
                          if (!item) return;
                          vm.removeSubscription.execute(
                              item->data(Qt::UserRole + 1).toString().toStdString());
                      });
+}
 
-    // Status
+// ─── Top-level CalendarView ───────────────────────────────────────────────
+CalendarView::CalendarView(CalendarVm& vm, aria::binding::BindingEngine& be)
+    : root_(new QWidget) {
+    auto& subs = wb::ui::subs_attached_to(root_);
+    auto* lay = new QVBoxLayout(root_);
+
+    // Title + hint.
+    auto* title = wb::ui::make_title("");
+    auto* hint = wb::ui::make_info("");
+    lay->addWidget(title);
+    lay->addWidget(hint);
+    be.bind_text_oneway(vm.title, wb::ui::view_for(title));
+    be.bind_text_oneway(vm.hint,  wb::ui::view_for(hint));
+
+    // Sub-views.
+    nav_    = std::make_unique<MonthNavView>(vm, be);
+    grid_   = std::make_unique<DayGridView>(vm, be, subs);
+    subBar_ = std::make_unique<SubscriptionBarView>(vm, be, subs);
+    subList_ = std::make_unique<SubscriptionListView>(vm, be, subs);
+
+    lay->addWidget(nav_->widget());
+    lay->addWidget(grid_->widget(), 1);
+    lay->addWidget(subBar_->widget());
+    lay->addWidget(subList_->widget());
+
+    // Status.
     auto* statusLbl = new QLabel;
-    root->addWidget(statusLbl);
+    lay->addWidget(statusLbl);
     be.bind_text_oneway(vm.status, wb::ui::view_for(statusLbl));
-
-    return w;
 }
 
 }  // namespace wb::calendar::qtview
@@ -178,7 +195,8 @@ void register_calendar_view() {
     wb::qt::QtViewFactory::instance().register_builder(
         "calendar",
         [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            return qtview::build(static_cast<CalendarVm&>(vm), be);
+            auto* view = new qtview::CalendarView(static_cast<CalendarVm&>(vm), be);
+            return view->widget();
         });
 }
 
