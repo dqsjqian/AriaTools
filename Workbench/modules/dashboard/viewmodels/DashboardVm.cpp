@@ -29,32 +29,33 @@ DashboardVm::DashboardVm()
                          + " " + std::to_string(cartItemCount.get()));
         }
     });
-    cart_sub_ = bus.subscribe<wb::shared::events::ItemAddedToCart>(
-        [this](const wb::shared::events::ItemAddedToCart& ev) {
-            int n = cartItemCount.get() + ev.qty;
-            cartItemCount.set(n);
-            cartBadge.set(wb::i18n::str_in("dashboard", "cart_items")
-                         + " " + std::to_string(n));
+    cart_sub_ = bus.subscribe<wb::shared::events::CartStateChanged>(
+        [this](const wb::shared::events::CartStateChanged& ev) {
+            // Adopt the CURRENT count from the cart module — NOT a running
+            // sum. A running sum goes stale when items are removed (the
+            // counting bug: deleting a cart item didn't decrement the badge).
+            cartItemCount.set(ev.itemCount);
+            if (ev.itemCount == 0) {
+                cartBadge.set(wb::i18n::str_in("dashboard", "cart_empty"));
+            } else {
+                cartBadge.set(wb::i18n::str_in("dashboard", "cart_items")
+                             + " " + std::to_string(ev.itemCount));
+            }
         });
+    // Keep ItemAddedToCart / ItemQtyChanged subscriptions for the richer
+    // "what happened" detail (chat / notes use them); the badge count itself
+    // is driven by CartStateChanged above.
     order_sub_ = bus.subscribe<wb::shared::events::OrderPlaced>(
         [this](const wb::shared::events::OrderPlaced& ev) {
             lastOrder.set(wb::i18n::str_in("dashboard", "order_placed")
                          + ": " + ev.orderId
                          + " (" + std::to_string(ev.itemCount) + " items, "
                          + std::to_string(ev.total) + ")");
-            cartItemCount.set(0);
-            cartBadge.set(wb::i18n::str_in("dashboard", "cart_empty"));
         });
     qty_sub_ = bus.subscribe<wb::shared::events::ItemQtyChanged>(
         [this](const wb::shared::events::ItemQtyChanged& ev) {
-            // Model → EventBus → dashboard VM: a cart item's qty changed.
-            // Update the badge to reflect the latest count.
-            int n = cartItemCount.get();
-            // qty change doesn't change total count (it's a swap, not add)
-            // but we log it for the demo.
             lastOrder.set(wb::i18n::str_in("dashboard", "qty_changed")
                          + ": " + ev.productName);
-            (void)n;
         });
 }
 
