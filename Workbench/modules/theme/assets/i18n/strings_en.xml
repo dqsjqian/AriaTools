@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">Theme Switch</string>
+    <string name="desc">DI Container: three ITheme implementations swapped via register_singleton; the View only knows the ITheme abstraction.</string>
+    <string name="card_title">Aria Framework</string>
+    <string name="card_body">A sample card — switching themes changes its background, font and border.</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_solarized">Solarized</string>
+</resources>

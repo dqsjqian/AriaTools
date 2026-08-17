@@ -12,8 +12,13 @@
 #    platform/qt|ios    thin per-platform shells (entry + shell + support)
 #
 #  One core, multiple view shells; modules build independently. Platform switches:
-#    -DWORKBENCH_TARGET_QT=ON    Qt desktop (default)
-#    -DWORKBENCH_TARGET_IOS=ON   iOS UIKit (requires -G Xcode -DCMAKE_SYSTEM_NAME=iOS)
+#    -DWORKBENCH_TARGET_QT=ON       Qt desktop (default)
+#    -DWORKBENCH_TARGET_IOS=ON      iOS UIKit (requires -G Xcode -DCMAKE_SYSTEM_NAME=iOS)
+#    -DWORKBENCH_TARGET_ANDROID=ON  Android: builds the pure-C++ core + module
+#                                   static libraries only; the Kotlin/Compose
+#                                   view shell + JNI bridge live in
+#                                   platform/android/app (Gradle), which links
+#                                   the .a archives produced here.
 # ============================================================================
 cmake_minimum_required(VERSION 3.20)
 project(workbench LANGUAGES CXX)
@@ -38,12 +43,16 @@ include(WbModule)
 set(WB_RUNTIME_I18N_DIR "${CMAKE_BINARY_DIR}/i18n" CACHE INTERNAL "")
 set(WB_RUNTIME_ASSETS_DIR "${CMAKE_BINARY_DIR}/assets" CACHE INTERNAL "")
 
-option(WORKBENCH_TARGET_QT  "Build the Qt6 desktop app (Win/Mac/Linux)" ON)
-option(WORKBENCH_TARGET_IOS "Build the iOS UIKit app"                    OFF)
+option(WORKBENCH_TARGET_QT       "Build the Qt6 desktop app (Win/Mac/Linux)" ON)
+option(WORKBENCH_TARGET_IOS      "Build the iOS UIKit app"                    OFF)
+option(WORKBENCH_TARGET_ANDROID  "Build the Android JNI core (static libs)"   OFF)
 
 if(WORKBENCH_TARGET_IOS)
     set(WORKBENCH_TARGET_QT OFF CACHE BOOL "" FORCE)
     enable_language(OBJCXX)
+endif()
+if(WORKBENCH_TARGET_ANDROID)
+    set(WORKBENCH_TARGET_QT OFF CACHE BOOL "" FORCE)
 endif()
 
 # -- Pull in the Aria framework --
@@ -56,6 +65,13 @@ endif()
 if(WORKBENCH_TARGET_IOS)
     set(ARIA_BUILD_UIKIT ON CACHE BOOL "" FORCE)
     set(ARIA_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+endif()
+if(WORKBENCH_TARGET_ANDROID)
+    # Android consumers link STATIC archives; the JNI adapter bridges the
+    # core to Kotlin/Compose (View layer lives in platform/android/app).
+    set(ARIA_BUILD_JNI   ON  CACHE BOOL "" FORCE)
+    set(ARIA_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+    set(ARIA_BUILD_QT6   OFF CACHE BOOL "" FORCE)
 endif()
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/aria
@@ -73,7 +89,8 @@ if(WORKBENCH_TARGET_QT)
 endif()
 
 # -- Business modules (one lib each). Collect lib names for wb_core_app to link. --
-set(WB_MODULES dashboard notes calendar tools settings sync)
+set(WB_MODULES dashboard notes calendar tools settings sync
+              tipcalc unitconvert cart signup search login chat theme wizard)
 set(WB_MODULE_LIBS "")
 foreach(m ${WB_MODULES})
     list(APPEND WB_MODULE_LIBS wb_module_${m})

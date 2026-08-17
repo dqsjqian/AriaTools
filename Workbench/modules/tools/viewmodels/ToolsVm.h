@@ -22,6 +22,9 @@ public:
     aria::Command<> base64Decode;
 
     // Random string
+    // Random-string length bounds — business constraint, owned by the VM.
+    static constexpr int kRandomLengthMin = 1;
+    static constexpr int kRandomLengthMax = 256;
     aria::Property<int>         randomLength;
     aria::Property<std::string> randomOutput;
     aria::Command<> genRandom;

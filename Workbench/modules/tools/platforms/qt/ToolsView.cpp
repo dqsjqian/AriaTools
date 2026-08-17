@@ -73,7 +73,7 @@ static QGroupBox* build_random(ToolsVm& vm, aria::binding::BindingEngine& be,
     auto* length = new QSpinBox;
     auto* generate = new QPushButton;
     auto* output = new QLineEdit;
-    length->setRange(1, 256);
+    length->setRange(ToolsVm::kRandomLengthMin, ToolsVm::kRandomLengthMax);
     output->setReadOnly(true);
     bind_label(lengthLabel, vm.lengthLabel, subs);
     row->addWidget(lengthLabel);

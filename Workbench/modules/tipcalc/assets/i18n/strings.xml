@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">小费计算器</string>
+    <string name="desc">账单、小费%、人数任一变化都会触发三个 Computed 自动重算。Round up 按钮同时改两个 Property——用 reactive::batch 包住，下游只 flush 一次。</string>
+    <string name="bill_label">账单</string>
+    <string name="tip_label">小费 %</string>
+    <string name="people_label">人数</string>
+    <string name="tip_amount">小费金额</string>
+    <string name="total">总计</string>
+    <string name="per_person">每人付</string>
+    <string name="round_up">Round up（bill 取整 + tip 对齐 5%）</string>
+</resources>

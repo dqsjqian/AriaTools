@@ -10,10 +10,20 @@
     <string name="theme">主题</string>
     <string name="lang_zh_CN">简体中文</string>
     <string name="lang_en">English</string>
+    <string name="untitled">未命名</string>
     <string name="nav_dashboard">首页</string>
     <string name="nav_notes">记事本</string>
     <string name="nav_calendar">日历</string>
     <string name="nav_tools">小工具</string>
     <string name="nav_settings">设置</string>
     <string name="nav_sync">同步</string>
+    <string name="nav_tipcalc">小费计算器</string>
+    <string name="nav_unitconvert">单位换算</string>
+    <string name="nav_cart">购物车</string>
+    <string name="nav_signup">注册表单</string>
+    <string name="nav_search">搜索框</string>
+    <string name="nav_login">模拟登录</string>
+    <string name="nav_chat">聊天室</string>
+    <string name="nav_theme">主题切换</string>
+    <string name="nav_wizard">注册向导</string>
 </resources>

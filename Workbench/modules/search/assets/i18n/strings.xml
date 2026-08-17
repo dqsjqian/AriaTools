@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">搜索框</string>
+    <string name="desc">query 变化经 debounce(300ms) 压成最后一次，distinct_until_changed 去掉相邻重复。</string>
+    <string name="placeholder">输入关键词，停 300ms 后触发搜索…</string>
+    <string name="searches">已发起的搜索：</string>
+    <string name="item">#%1   搜索: %2</string>
+</resources>

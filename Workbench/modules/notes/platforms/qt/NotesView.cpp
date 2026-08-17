@@ -20,11 +20,6 @@ namespace wb::notes::qtview {
 // Store the note id in the list item's UserRole to avoid depending on row numbers.
 static constexpr int kNoteIdRole = Qt::UserRole + 1;
 
-static QString display_title(const Note& note) {
-    return note.title.empty() ? QStringLiteral("—")
-                              : QString::fromStdString(note.title);
-}
-
 static QWidget* build(wb::notes::NotesVm& vm, aria::binding::BindingEngine& be) {
     auto* w = new QWidget;
     auto& subs = wb::ui::subs_attached_to(w);
@@ -131,7 +126,7 @@ static QWidget* build(wb::notes::NotesVm& vm, aria::binding::BindingEngine& be) 
         for (std::size_t i = 0; i < vm.notes.size(); ++i) {
             auto n = vm.notes.at(i);
             if (!n) continue;
-            auto* item = new QListWidgetItem(display_title(*n));
+            auto* item = new QListWidgetItem(QString::fromStdString(vm.display_title(*n)));
             item->setData(kNoteIdRole, QString::fromStdString(n->id));
             list->addItem(item);
             if (n->id == sel) list->setCurrentItem(item);

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">Search</string>
+    <string name="desc">Query changes are debounced (300ms) to the last one and deduplicated by distinct_until_changed.</string>
+    <string name="placeholder">Type a keyword; search fires 300ms after you stop…</string>
+    <string name="searches">Searches fired:</string>
+    <string name="item">#%1   query: %2</string>
+</resources>

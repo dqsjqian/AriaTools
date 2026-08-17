@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">Unit Converter</string>
+    <string name="desc">Unit converter. The Computed switches formulas by category; switching categories rebuilds the dependency set automatically.</string>
+    <string name="cat_temperature">Temperature (°C → °F)</string>
+    <string name="cat_length">Length (m → ft)</string>
+    <string name="cat_weight">Weight (kg → lb)</string>
+    <string name="input">Input: </string>
+    <string name="equals">= %1 %2</string>
+</resources>

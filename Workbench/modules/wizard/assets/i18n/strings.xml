@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">注册向导</string>
+    <string name="desc">三步向导：每步一个子 ViewModel，Navigator push/replace/pop 自动 activate/deactivate，共享 WizardDraft。</string>
+    <string name="step1">第 1 步 — 账户</string>
+    <string name="step2">第 2 步 — 偏好</string>
+    <string name="step3">第 3 步 — 确认</string>
+    <string name="username">用户名</string>
+    <string name="email">邮箱</string>
+    <string name="theme">主题</string>
+    <string name="finish">完成注册</string>
+    <string name="unfinished">(未完成)</string>
+    <string name="summary">用户名: %1\n邮箱: %2\n主题: %3</string>
+    <string name="nav1">1 · 账户</string>
+    <string name="nav2">2 · 偏好</string>
+    <string name="nav3">3 · 确认</string>
+    <string name="registered_suffix">注册完成</string>
+    <string name="theme_light">浅色</string>
+    <string name="theme_dark">深色</string>
+    <string name="theme_solarized">Solarized</string>
+</resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">Tip Calculator</string>
+    <string name="desc">Any change to bill / tip % / people recomputes the three Computed values live. Round up writes two Properties inside reactive::batch so downstream flushes once.</string>
+    <string name="bill_label">Bill</string>
+    <string name="tip_label">Tip %</string>
+    <string name="people_label">People</string>
+    <string name="tip_amount">Tip amount</string>
+    <string name="total">Total</string>
+    <string name="per_person">Per person</string>
+    <string name="round_up">Round up (bill + tip snapped to 5%)</string>
+</resources>

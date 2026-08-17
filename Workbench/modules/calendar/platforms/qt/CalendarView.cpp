@@ -25,21 +25,9 @@ struct DayWidgets {
     QLabel* events = nullptr;
 };
 
-static QString join_events(const DayCell& c) {
-    QString s;
-    int shown = 0;
-    for (const auto& t : c.eventTitles) {
-        if (shown >= 3) { s += QStringLiteral("…"); break; }
-        if (!s.isEmpty()) s += QStringLiteral("\n");
-        s += QString::fromStdString(t);
-        ++shown;
-    }
-    return s;
-}
-
-static void paint_cell(DayWidgets& w, const DayCell& c) {
+static void paint_cell(wb::calendar::CalendarVm& vm, DayWidgets& w, const DayCell& c) {
     w.dayLabel->setText(QString::fromStdString(c.label));
-    w.events->setText(join_events(c));
+    w.events->setText(QString::fromStdString(vm.display_events(c)));
 
     QString bg = c.inCurrentMonth ? "#ffffff" : "#f5f5f5";
     QString fg = c.inCurrentMonth ? "#212121" : "#bdbdbd";
@@ -128,7 +116,7 @@ static QWidget* build(wb::calendar::CalendarVm& vm, aria::binding::BindingEngine
 
     auto repaint = [cells, &vm]() {
         for (std::size_t i = 0; i < 42 && i < vm.days.size(); ++i) {
-            if (auto c = vm.days.at(i)) paint_cell((*cells)[i], *c);
+            if (auto c = vm.days.at(i)) paint_cell(vm, (*cells)[i], *c);
         }
     };
     repaint();
@@ -158,7 +146,7 @@ static QWidget* build(wb::calendar::CalendarVm& vm, aria::binding::BindingEngine
         for (std::size_t i = 0; i < vm.subscriptions.size(); ++i) {
             if (auto s = vm.subscriptions.at(i)) {
                 auto* item = new QListWidgetItem(
-                    QString::fromStdString(s->name.empty() ? s->url : s->name));
+                    QString::fromStdString(vm.display_sub_name(*s)));
                 item->setData(Qt::UserRole + 1, QString::fromStdString(s->id));
                 item->setToolTip(QString::fromStdString(s->url));
                 subList->addItem(item);

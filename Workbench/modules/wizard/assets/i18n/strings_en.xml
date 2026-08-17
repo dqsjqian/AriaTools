@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">Sign-up Wizard</string>
+    <string name="desc">Three-step wizard: one child ViewModel per step, Navigator push/replace/pop auto activates/deactivates, sharing a WizardDraft.</string>
+    <string name="step1">Step 1 — Account</string>
+    <string name="step2">Step 2 — Preferences</string>
+    <string name="step3">Step 3 — Confirm</string>
+    <string name="username">Username</string>
+    <string name="email">Email</string>
+    <string name="theme">Theme</string>
+    <string name="finish">Finish</string>
+    <string name="unfinished">(not finished)</string>
+    <string name="summary">User: %1\nEmail: %2\nTheme: %3</string>
+    <string name="nav1">1 · Account</string>
+    <string name="nav2">2 · Preferences</string>
+    <string name="nav3">3 · Confirm</string>
+    <string name="registered_suffix">registered</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_solarized">Solarized</string>
+</resources>

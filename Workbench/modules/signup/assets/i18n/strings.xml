@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">注册表单</string>
+    <string name="desc">每个字段是 FormField，由 FormValidator 聚合；submit 的 enabled 绑定 form.is_valid，跨字段规则自动重算。</string>
+    <string name="username">用户名</string>
+    <string name="email">邮箱</string>
+    <string name="password">密码</string>
+    <string name="confirm">确认密码</string>
+    <string name="submit">注册</string>
+    <string name="unregistered">(未注册)</string>
+    <string name="registered_suffix">已注册</string>
+    <string name="err_username_short">用户名至少 3 个字符</string>
+    <string name="err_username_long">用户名不超过 16 个字符</string>
+    <string name="err_email_required">邮箱必填</string>
+    <string name="err_email_invalid">邮箱格式不正确</string>
+    <string name="err_password_short">密码至少 6 位</string>
+    <string name="err_password_no_digit">密码需包含至少一位数字</string>
+    <string name="err_password_mismatch">两次密码不一致</string>
+</resources>

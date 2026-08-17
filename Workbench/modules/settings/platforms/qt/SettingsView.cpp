@@ -39,8 +39,9 @@ static QWidget* build(wb::settings::SettingsVm& vm, aria::binding::BindingEngine
 
     // Language selector: switching refreshes immediately (via the VM's switchLanguage command).
     auto* langBox = new QComboBox;
-    langBox->addItem("简体中文", "zh-CN");
-    langBox->addItem("English", "en");
+    for (const auto& lang : vm.available_languages())
+        langBox->addItem(QString::fromStdString(lang.label),
+                         QString::fromStdString(lang.code));
     for (int i = 0; i < langBox->count(); ++i)
         if (langBox->itemData(i).toString().toStdString() == vm.language.get())
             langBox->setCurrentIndex(i);

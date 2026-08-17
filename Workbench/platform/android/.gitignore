@@ -1,0 +1,10 @@
+# Gradle / Android build outputs — all regenerable
+.gradle/
+build/
+app/build/
+app/.cxx/
+local.properties
+.idea/
+.kotlin/
+captures/
+*.iml
