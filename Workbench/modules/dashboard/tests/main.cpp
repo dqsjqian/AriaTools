@@ -249,6 +249,32 @@ int main() {
     check(vm2->mountedVm.get() == mainCartVm,
           "toggle re-mounts the shared primary instance");
 
+    // ── Extension points: mount parameters (IMountArgs) ────────────────
+    // The host passes json args to the provider via on_mount; the mounted
+    // cart prefills draftName/draftPrice from them.
+    auto mArgs = mounts->Resolve(slots::kDashboardContent,
+                                 {{"product", "From Mount"}, {"price", 4.2}});
+    check(mArgs.has_value(), "Resolve with args succeeds");
+    check(mArgs && mArgs->vm == mainCartVm,
+          "arg-resolved mount is still the shared primary VM");
+    auto* cartMounted = mArgs ? dynamic_cast<wb::cart::CartVm*>(mArgs->vm.get()) : nullptr;
+    check(cartMounted && cartMounted->draftName.get() == "From Mount",
+          "mount args prefilled draftName via on_mount");
+    check(cartMounted && cartMounted->draftPrice.get() == 4.2,
+          "mount args prefilled draftPrice via on_mount");
+
+    // TYPED mount channel: Resolve<IMountCartArgs>(slot, CartArgs{...}) —
+    // compile-time checked struct fields, no json round-trip.
+    auto mTyped = mounts->Resolve<wb::module_api::IMountCartArgs>(
+        slots::kDashboardContent,
+        wb::module_api::CartArgs{.product = "Typed Mount", .price = 6.6});
+    check(mTyped.has_value(), "typed Resolve succeeds");
+    auto* cartTyped = mTyped ? dynamic_cast<wb::cart::CartVm*>(mTyped->vm.get()) : nullptr;
+    check(cartTyped && cartTyped->draftName.get() == "Typed Mount",
+          "typed mount prefilled draftName via IMountCartArgs");
+    check(cartTyped && cartTyped->draftPrice.get() == 6.6,
+          "typed mount prefilled draftPrice via IMountCartArgs");
+
     std::filesystem::remove_all(tmp);
 
     std::puts(g_failures == 0 ? "[dashboard-tests] PASS" : "[dashboard-tests] FAIL");

@@ -63,4 +63,15 @@ public:
     }
 };
 
+/// Optional extension-point consumer for TYPED cart mount args. A host
+/// mounts the cart with `Resolve<IMountCartArgs>(slot, CartArgs{...})`;
+/// the cart VM implements this to receive the struct directly (compile-time
+/// checked fields, no json round-trip). Mirror of ICartPage's typed
+/// navigation channel, but for extension points.
+class IMountCartArgs {
+public:
+    virtual ~IMountCartArgs() = default;
+    virtual bool on_mount(const CartArgs& args) = 0;
+};
+
 }  // namespace wb::module_api

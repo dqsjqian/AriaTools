@@ -118,7 +118,15 @@ void DashboardVm::sync_mount_state() {
         mounts_->module_of(wb::module_api::slots::kDashboardContent);
     mountedModule.set(mod.value_or(""));
     if (mod) {
-        auto m = mounts_->Resolve(wb::module_api::slots::kDashboardContent);
+        // Extension points carry parameters via TWO channels (mirroring
+        // navigation): typed struct — Resolve<IMountCartArgs>(slot,
+        // CartArgs{...}) — and free-form json. The dashboard uses the typed
+        // channel to pre-fill the mounted cart with a product; a host would
+        // normally pass its own state.
+        auto m = mounts_->Resolve<wb::module_api::IMountCartArgs>(
+            wb::module_api::slots::kDashboardContent,
+            wb::module_api::CartArgs{.product = "Mounted Apple",
+                                     .price   = 7.5});
         mountedVm.set(m ? std::move(m->vm) : nullptr);
         mountStatus.set(wb::i18n::str_in("dashboard", "mount_mounted")
                         + " " + *mod);
