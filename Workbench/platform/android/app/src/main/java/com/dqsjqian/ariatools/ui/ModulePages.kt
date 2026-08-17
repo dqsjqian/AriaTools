@@ -1,40 +1,44 @@
 package com.dqsjqian.ariatools.ui
 
-import com.dqsjqian.ariatools.pages.CalendarPage
-import com.dqsjqian.ariatools.pages.CartPage
-import com.dqsjqian.ariatools.pages.ChatPage
-import com.dqsjqian.ariatools.pages.DashboardPage
-import com.dqsjqian.ariatools.pages.LoginPage
-import com.dqsjqian.ariatools.pages.NotesPage
-import com.dqsjqian.ariatools.pages.SearchPage
-import com.dqsjqian.ariatools.pages.SettingsPage
-import com.dqsjqian.ariatools.pages.SignupPage
-import com.dqsjqian.ariatools.pages.SyncPage
-import com.dqsjqian.ariatools.pages.ThemePage
-import com.dqsjqian.ariatools.pages.TipCalcPage
-import com.dqsjqian.ariatools.pages.ToolsPage
-import com.dqsjqian.ariatools.pages.UnitConvertPage
-import com.dqsjqian.ariatools.pages.WizardPage
+import com.dqsjqian.ariatools.pages.register_calendar_page
+import com.dqsjqian.ariatools.pages.register_cart_page
+import com.dqsjqian.ariatools.pages.register_chat_page
+import com.dqsjqian.ariatools.pages.register_dashboard_page
+import com.dqsjqian.ariatools.pages.register_login_page
+import com.dqsjqian.ariatools.pages.register_notes_page
+import com.dqsjqian.ariatools.pages.register_search_page
+import com.dqsjqian.ariatools.pages.register_settings_page
+import com.dqsjqian.ariatools.pages.register_signup_page
+import com.dqsjqian.ariatools.pages.register_sync_page
+import com.dqsjqian.ariatools.pages.register_theme_page
+import com.dqsjqian.ariatools.pages.register_tipcalc_page
+import com.dqsjqian.ariatools.pages.register_tools_page
+import com.dqsjqian.ariatools.pages.register_unitconvert_page
+import com.dqsjqian.ariatools.pages.register_wizard_page
 
 /**
  * ModulePages — Android page registration manifest, the twin of
  * QtViewManifest.cpp / IosViewManifest.mm. Called once at startup; every
- * module self-registers its Compose page into ComposeViewFactory.
+ * module self-registers its Compose page into ComposeViewFactory via its
+ * own register_<mod>_page() function (defined in each module's Page.kt).
+ *
+ * To add a module: create modules/<mod>/platforms/android/<Mod>Page.kt with
+ * a register_<mod>_page() function, add one import + one call here.
  */
 fun registerAllModulePages() {
-    ComposeViewFactory.register("dashboard") { DashboardPage(it) }
-    ComposeViewFactory.register("notes") { NotesPage(it) }
-    ComposeViewFactory.register("calendar") { CalendarPage(it) }
-    ComposeViewFactory.register("tools") { ToolsPage(it) }
-    ComposeViewFactory.register("settings") { SettingsPage(it) }
-    ComposeViewFactory.register("sync") { SyncPage(it) }
-    ComposeViewFactory.register("tipcalc") { TipCalcPage(it) }
-    ComposeViewFactory.register("unitconvert") { UnitConvertPage(it) }
-    ComposeViewFactory.register("cart") { CartPage(it) }
-    ComposeViewFactory.register("signup") { SignupPage(it) }
-    ComposeViewFactory.register("search") { SearchPage(it) }
-    ComposeViewFactory.register("login") { LoginPage(it) }
-    ComposeViewFactory.register("chat") { ChatPage(it) }
-    ComposeViewFactory.register("theme") { ThemePage(it) }
-    ComposeViewFactory.register("wizard") { WizardPage(it) }
+    register_dashboard_page()
+    register_notes_page()
+    register_calendar_page()
+    register_tools_page()
+    register_settings_page()
+    register_sync_page()
+    register_tipcalc_page()
+    register_unitconvert_page()
+    register_cart_page()
+    register_signup_page()
+    register_search_page()
+    register_login_page()
+    register_chat_page()
+    register_theme_page()
+    register_wizard_page()
 }

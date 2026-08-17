@@ -88,3 +88,8 @@ private fun JsonTool(vm: AppViewModel, props: Map<String, String>) {
     }
     Text(props["$MOD.jsonOutput"] ?: "", style = MaterialTheme.typography.bodySmall)
 }
+
+// ── Module self-registration (Android twin of Qt/iOS register_<mod>_view) ──
+fun register_tools_page() {
+    com.dqsjqian.ariatools.ui.ComposeViewFactory.register("tools") { ToolsPage(it) }
+}

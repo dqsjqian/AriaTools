@@ -85,3 +85,8 @@ private fun NoteList(props: Map<String, String>) {
         items(list) { t -> Text(t, style = MaterialTheme.typography.bodySmall) }
     }
 }
+
+// ── Module self-registration (Android twin of Qt/iOS register_<mod>_view) ──
+fun register_notes_page() {
+    com.dqsjqian.ariatools.ui.ComposeViewFactory.register("notes") { NotesPage(it) }
+}

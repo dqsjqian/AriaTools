@@ -60,3 +60,8 @@ private fun TipResults(props: Map<String, String>) {
     Text("${props["$MOD.total"] ?: ""}: ${props["$MOD.total"] ?: ""}", style = MaterialTheme.typography.bodyLarge)
     Text("${props["$MOD.per_person"] ?: ""}: ${props["$MOD.perPerson"] ?: ""}", style = MaterialTheme.typography.bodyLarge)
 }
+
+// ── Module self-registration (Android twin of Qt/iOS register_<mod>_view) ──
+fun register_tipcalc_page() {
+    com.dqsjqian.ariatools.ui.ComposeViewFactory.register("tipcalc") { TipCalcPage(it) }
+}

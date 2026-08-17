@@ -1,5 +1,6 @@
 #include "WizardView.h"
 #include "support/QtViewFactory.h"
+#include "support/UiHelpers.h"
 #include "infra/i18n/I18n.h"
 #include "viewmodels/WizardVm.h"
 #include "viewmodels/WizardVmHostVm.h"
@@ -20,6 +21,7 @@ namespace wb::wizard::qtview {
 using namespace wb::ui;
 
 namespace {
+
 QString wiz_str(const char* key) {
     return QString::fromStdString(wb::i18n::str_in("wizard", key));
 }
@@ -33,11 +35,10 @@ QString build_step3_summary(const WizardDraft& draft) {
             : draft.theme.get() == "Solarized" ? "theme_solarized"
                                                 : "theme_light")));
 }
-}  // namespace
 
-// ─── Step1AccountView ──────────────────────────────────────────────────────
-Step1AccountView::Step1AccountView(Step1Vm& vm, aria::binding::BindingEngine& be)
-    : w_(new QWidget) {
+// ─── Step 1 account sub-view ───────────────────────────────────────────────
+QWidget* build_step1(Step1Vm& vm, aria::binding::BindingEngine& be) {
+    auto* w_ = new QWidget;
     auto* lay = new QVBoxLayout(w_);
     lay->addWidget(new QLabel("<h3>" + wiz_str("step1") + "</h3>"));
     auto* form = new QFormLayout;
@@ -49,11 +50,12 @@ Step1AccountView::Step1AccountView(Step1Vm& vm, aria::binding::BindingEngine& be
     lay->addStretch();
     be.bind_text(vm.draft->username, view_for(user));
     be.bind_text(vm.draft->email,    view_for(mail));
+    return w_;
 }
 
-// ─── Step2ThemeView ────────────────────────────────────────────────────────
-Step2ThemeView::Step2ThemeView(Step2Vm& vm, aria::binding::BindingEngine& be)
-    : w_(new QWidget) {
+// ─── Step 2 theme sub-view ─────────────────────────────────────────────────
+QWidget* build_step2(Step2Vm& vm, aria::binding::BindingEngine& be) {
+    auto* w_ = new QWidget;
     auto* lay = new QVBoxLayout(w_);
     lay->addWidget(new QLabel("<h3>" + wiz_str("step2") + "</h3>"));
     auto* form = new QFormLayout;
@@ -76,12 +78,12 @@ Step2ThemeView::Step2ThemeView(Step2Vm& vm, aria::binding::BindingEngine& be)
         vm.draft->theme.set(themeBox->currentData().toString().toStdString());
     });
     (void)be;
+    return w_;
 }
 
-// ─── Step3ConfirmView ─────────────────────────────────────────────────────
-Step3ConfirmView::Step3ConfirmView(Step3Vm& vm, aria::binding::BindingEngine& be,
-                                     std::vector<aria::Subscription>& subs)
-    : w_(new QWidget) {
+// ─── Step 3 confirm sub-view ───────────────────────────────────────────────
+QWidget* build_step3(Step3Vm& vm, aria::binding::BindingEngine& be) {
+    auto* w_ = new QWidget;
     auto& s_subs = subs_attached_to(w_);
     auto* lay = new QVBoxLayout(w_);
     lay->addWidget(new QLabel("<h3>" + wiz_str("step3") + "</h3>"));
@@ -114,11 +116,14 @@ Step3ConfirmView::Step3ConfirmView(Step3Vm& vm, aria::binding::BindingEngine& be
             summary->setText(build_step3_summary(*draft));
         }));
     (void)be;
+    return w_;
 }
 
-// ─── Top-level WizardView ──────────────────────────────────────────────────
-WizardView::WizardView(WizardVmHostVm& host, aria::binding::BindingEngine& be)
-    : root_(new QWidget) {
+}  // namespace
+
+// ─── Top-level build_view ──────────────────────────────────────────────────
+QWidget* build_view(WizardVmHostVm& host, aria::binding::BindingEngine& be) {
+    auto* root_ = new QWidget;
     auto& vm = host.inner();
     auto& s_subs = subs_attached_to(root_);
     auto* lay = new QVBoxLayout(root_);
@@ -138,15 +143,12 @@ WizardView::WizardView(WizardVmHostVm& host, aria::binding::BindingEngine& be)
 
     // Step views (each owns its VM).
     auto* stack = new QStackedWidget;
-    auto step1 = std::make_unique<Step1AccountView>(*vm.step1, be);
-    auto step2 = std::make_unique<Step2ThemeView>(*vm.step2, be);
-    auto step3Widget = new QWidget;
-    auto* step3Lay = new QVBoxLayout(step3Widget);
-    auto* step3Impl = new Step3ConfirmView(*vm.step3, be, s_subs);
-    step3Lay->addWidget(step3Impl->widget());
-    stack->addWidget(step1->widget());
-    stack->addWidget(step2->widget());
-    stack->addWidget(step3Widget);
+    auto* step1 = build_step1(*vm.step1, be);
+    auto* step2 = build_step2(*vm.step2, be);
+    auto* step3 = build_step3(*vm.step3, be);
+    stack->addWidget(step1);
+    stack->addWidget(step2);
+    stack->addWidget(step3);
     lay->addWidget(stack, 1);
 
     auto* depthLbl = new QLabel;
@@ -156,14 +158,15 @@ WizardView::WizardView(WizardVmHostVm& host, aria::binding::BindingEngine& be)
     QObject::connect(b1, &QPushButton::clicked, [&vm, stack] { vm.toStep(1); stack->setCurrentIndex(0); });
     QObject::connect(b2, &QPushButton::clicked, [&vm, stack] { vm.toStep(2); stack->setCurrentIndex(1); });
     QObject::connect(b3, &QPushButton::clicked,
-                     [&vm, stack, step3Impl, &be, &s_subs]() mutable {
-        auto* newImpl = new Step3ConfirmView(*vm.step3, be, s_subs);
-        int idx = stack->indexOf(step3Impl->widget());
-        if (idx >= 0) { stack->removeWidget(step3Impl->widget()); step3Impl->widget()->deleteLater(); }
-        stack->insertWidget(2, newImpl->widget());
+                     [&vm, stack, &step3, &be]() {
+        // Rebuild a fresh confirm view each time (resets its local state).
+        auto* newStep3 = build_step3(*vm.step3, be);
+        int idx = stack->indexOf(step3);
+        if (idx >= 0) { stack->removeWidget(step3); step3->deleteLater(); }
+        stack->insertWidget(2, newStep3);
+        step3 = newStep3;
         vm.toStep(3);
         stack->setCurrentIndex(2);
-        (void)be;
     });
 
     s_subs.push_back(vm.nav->current.on_changed(
@@ -172,11 +175,7 @@ WizardView::WizardView(WizardVmHostVm& host, aria::binding::BindingEngine& be)
                               .arg(vm.nav->depth.get()));
         }));
     depthLbl->setText(QString("Navigator current depth = %1").arg(vm.nav->depth.get()));
-
-    // Prevent step1/step2 unique_ptr from freeing the widget (stack owns it now).
-    (void)step1.release();
-    (void)step2.release();
-    (void)step3Impl;
+    return root_;
 }
 
 }  // namespace wb::wizard::qtview
@@ -187,8 +186,7 @@ void register_wizard_view() {
         "wizard",
         [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
             auto& host = static_cast<WizardVmHostVm&>(vm);
-            auto* view = new qtview::WizardView(host, be);
-            return view->widget();
+            return qtview::build_view(host, be);
         });
 }
 }  // namespace wb::wizard

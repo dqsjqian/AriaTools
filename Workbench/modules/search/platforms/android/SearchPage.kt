@@ -73,3 +73,8 @@ private fun SearchHistory(props: Map<String, String>) {
         items(hits) { h -> Text(h, style = MaterialTheme.typography.bodySmall) }
     }
 }
+
+// ── Module self-registration (Android twin of Qt/iOS register_<mod>_view) ──
+fun register_search_page() {
+    com.dqsjqian.ariatools.ui.ComposeViewFactory.register("search") { SearchPage(it) }
+}

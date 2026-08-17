@@ -1,5 +1,6 @@
 #include "TipCalcView.h"
 #include "support/QtViewFactory.h"
+#include "support/UiHelpers.h"
 #include "viewmodels/TipCalcVm.h"
 
 #include "aria/binding/binding_engine.hpp"
@@ -15,8 +16,8 @@
 
 namespace wb::tipcalc::qtview {
 
-TipCalcView::TipCalcView(TipCalcVm& vm, aria::binding::BindingEngine& be)
-    : root_(new QWidget) {
+QWidget* build_view(TipCalcVm& vm, aria::binding::BindingEngine& be) {
+    auto* root_ = new QWidget;
     auto& s_subs = wb::ui::subs_attached_to(root_);
     auto* lay = new QVBoxLayout(root_);
 
@@ -99,6 +100,7 @@ TipCalcView::TipCalcView(TipCalcVm& vm, aria::binding::BindingEngine& be)
     s_subs.push_back(vm.tipAmountText.on_changed([&vm, syncTip](const std::string&) { syncTip(vm.tipAmount.get()); }));
     s_subs.push_back(vm.totalText.on_changed([&vm, syncTotal](const std::string&) { syncTotal(vm.total.get()); }));
     s_subs.push_back(vm.perPersonText.on_changed([&vm, syncPer](const std::string&) { syncPer(vm.perPerson.get()); }));
+    return root_;
 }
 
 }  // namespace wb::tipcalc::qtview
@@ -109,8 +111,7 @@ void register_tipcalc_view() {
     wb::qt::QtViewFactory::instance().register_builder(
         "tipcalc",
         [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            auto* view = new qtview::TipCalcView(static_cast<TipCalcVm&>(vm), be);
-            return view->widget();
+            return qtview::build_view(static_cast<TipCalcVm&>(vm), be);
         });
 }
 

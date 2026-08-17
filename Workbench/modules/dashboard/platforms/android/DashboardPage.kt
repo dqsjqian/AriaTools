@@ -46,3 +46,8 @@ private fun WelcomeText(props: Map<String, String>) {
 private fun SummaryText(props: Map<String, String>) {
     Text(props["$MOD.summary"] ?: "", style = MaterialTheme.typography.bodyLarge)
 }
+
+// ── Module self-registration (Android twin of Qt/iOS register_<mod>_view) ──
+fun register_dashboard_page() {
+    com.dqsjqian.ariatools.ui.ComposeViewFactory.register("dashboard") { DashboardPage(it) }
+}

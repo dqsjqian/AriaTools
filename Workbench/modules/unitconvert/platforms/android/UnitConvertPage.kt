@@ -60,3 +60,8 @@ private fun CategoryPicker(vm: AppViewModel, props: Map<String, String>) {
 private fun ConvertResult(props: Map<String, String>) {
     Text("= ${props["$MOD.converted"] ?: ""}", style = MaterialTheme.typography.headlineSmall)
 }
+
+// ── Module self-registration (Android twin of Qt/iOS register_<mod>_view) ──
+fun register_unitconvert_page() {
+    com.dqsjqian.ariatools.ui.ComposeViewFactory.register("unitconvert") { UnitConvertPage(it) }
+}

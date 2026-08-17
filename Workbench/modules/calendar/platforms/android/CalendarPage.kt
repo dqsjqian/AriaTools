@@ -115,3 +115,8 @@ private fun EventList(props: Map<String, String>) {
         items(events) { e -> Text(e, style = MaterialTheme.typography.bodySmall) }
     }
 }
+
+// ── Module self-registration (Android twin of Qt/iOS register_<mod>_view) ──
+fun register_calendar_page() {
+    com.dqsjqian.ariatools.ui.ComposeViewFactory.register("calendar") { CalendarPage(it) }
+}

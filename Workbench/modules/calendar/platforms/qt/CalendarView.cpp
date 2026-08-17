@@ -1,5 +1,6 @@
 #include "CalendarView.h"
 #include "support/QtViewFactory.h"
+#include "support/UiHelpers.h"
 #include "viewmodels/CalendarVm.h"
 #include "models/CalendarTypes.h"
 
@@ -14,12 +15,18 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
+#include <array>
+#include <memory>
 #include <string>
 
 namespace wb::calendar::qtview {
 
+namespace {
+
+struct DayWidgets { QFrame* frame; QLabel* dayLabel; QLabel* events; };
+
 // ─── Day cell painting ────────────────────────────────────────────────────
-void DayGridView::paint_cell_(CalendarVm& vm, DayWidgets& w, const DayCell& c) {
+void paint_cell(CalendarVm& vm, DayWidgets& w, const DayCell& c) {
     w.dayLabel->setText(QString::fromStdString(c.label));
     w.events->setText(QString::fromStdString(vm.display_events(c)));
 
@@ -36,9 +43,9 @@ void DayGridView::paint_cell_(CalendarVm& vm, DayWidgets& w, const DayCell& c) {
     w.events->setStyleSheet("QLabel { color:#455a64; font-size:10px; border:none; }");
 }
 
-// ─── MonthNavView ──────────────────────────────────────────────────────────
-MonthNavView::MonthNavView(CalendarVm& vm, aria::binding::BindingEngine& be)
-    : nav_(new QWidget) {
+// ─── Month nav sub-view ────────────────────────────────────────────────────
+QWidget* build_month_nav(CalendarVm& vm, aria::binding::BindingEngine& be) {
+    auto* nav_ = new QWidget;
     auto* row = new QHBoxLayout(nav_);
     auto* prevBtn = new QPushButton;
     auto* monthLbl = new QLabel;
@@ -62,13 +69,14 @@ MonthNavView::MonthNavView(CalendarVm& vm, aria::binding::BindingEngine& be)
     be.bind_command(vm.nextMonth,  wb::ui::view_for(nextBtn));
     be.bind_command(vm.today,      wb::ui::view_for(todayBtn));
     be.bind_command(vm.refresh,    wb::ui::view_for(refreshBtn));
+    return nav_;
 }
 
-// ─── DayGridView ───────────────────────────────────────────────────────────
-DayGridView::DayGridView(CalendarVm& vm, aria::binding::BindingEngine& be,
-                         std::vector<aria::Subscription>& subs)
-    : grid_(new QWidget),
-      cells_(std::make_shared<std::array<DayWidgets, 42>>()) {
+// ─── Day grid sub-view ─────────────────────────────────────────────────────
+QWidget* build_day_grid(CalendarVm& vm, aria::binding::BindingEngine& be,
+                        std::vector<aria::Subscription>& subs) {
+    auto* grid_ = new QWidget;
+    auto cells = std::make_shared<std::array<DayWidgets, 42>>();
     auto* layout = new QGridLayout(grid_);
     layout->setSpacing(3);
 
@@ -87,7 +95,7 @@ DayGridView::DayGridView(CalendarVm& vm, aria::binding::BindingEngine& be,
     for (int i = 0; i < 42; ++i) {
         const int row = i / 7 + 1;
         const int col = i % 7;
-        auto& dw = (*cells_)[static_cast<std::size_t>(i)];
+        auto& dw = (*cells)[static_cast<std::size_t>(i)];
         dw.frame = new QFrame;
         dw.frame->setMinimumSize(64, 56);
         auto* cellLay = new QVBoxLayout(dw.frame);
@@ -101,19 +109,20 @@ DayGridView::DayGridView(CalendarVm& vm, aria::binding::BindingEngine& be,
         layout->addWidget(dw.frame, row, col);
     }
 
-    auto repaint = [cells = cells_, &vm, this]() {
+    auto repaint = [cells, &vm]() {
         for (std::size_t i = 0; i < 42 && i < vm.days.size(); ++i) {
-            if (auto c = vm.days.at(i)) paint_cell_(vm, (*cells)[i], *c);
+            if (auto c = vm.days.at(i)) paint_cell(vm, (*cells)[i], *c);
         }
     };
     repaint();
     subs.push_back(vm.days.on_any_change([repaint]() { repaint(); }));
+    return grid_;
 }
 
-// ─── SubscriptionBarView ──────────────────────────────────────────────────
-SubscriptionBarView::SubscriptionBarView(CalendarVm& vm, aria::binding::BindingEngine& be,
-                                         std::vector<aria::Subscription>& subs)
-    : bar_(new QWidget) {
+// ─── Subscription bar sub-view ─────────────────────────────────────────────
+QWidget* build_subscription_bar(CalendarVm& vm, aria::binding::BindingEngine& be,
+                                std::vector<aria::Subscription>& subs) {
+    auto* bar_ = new QWidget;
     auto* row = new QHBoxLayout(bar_);
     auto* urlEdit = new QLineEdit;
     auto* subBtn = new QPushButton;
@@ -127,14 +136,15 @@ SubscriptionBarView::SubscriptionBarView(CalendarVm& vm, aria::binding::BindingE
     be.bind_text_oneway(vm.subscribeLabel, wb::ui::view_for(subBtn));
     wb::ui::bind_editable_text(be, vm.subscribeUrl, urlEdit);
     be.bind_command(vm.addSubscription, wb::ui::view_for(subBtn));
+    return bar_;
 }
 
-// ─── SubscriptionListView ─────────────────────────────────────────────────
-SubscriptionListView::SubscriptionListView(CalendarVm& vm, aria::binding::BindingEngine&,
-                                           std::vector<aria::Subscription>& subs)
-    : list_(new QListWidget) {
+// ─── Subscription list sub-view ────────────────────────────────────────────
+QListWidget* build_subscription_list(CalendarVm& vm, aria::binding::BindingEngine&,
+                                     std::vector<aria::Subscription>& subs) {
+    auto* list_ = new QListWidget;
     list_->setMaximumHeight(90);
-    auto rebuildSubs = [this, &vm]() {
+    auto rebuildSubs = [list_, &vm]() {
         list_->clear();
         for (std::size_t i = 0; i < vm.subscriptions.size(); ++i) {
             if (auto s = vm.subscriptions.at(i)) {
@@ -154,11 +164,14 @@ SubscriptionListView::SubscriptionListView(CalendarVm& vm, aria::binding::Bindin
                          vm.removeSubscription.execute(
                              item->data(Qt::UserRole + 1).toString().toStdString());
                      });
+    return list_;
 }
 
-// ─── Top-level CalendarView ───────────────────────────────────────────────
-CalendarView::CalendarView(CalendarVm& vm, aria::binding::BindingEngine& be)
-    : root_(new QWidget) {
+}  // namespace
+
+// ─── Top-level build_view ──────────────────────────────────────────────────
+QWidget* build_view(CalendarVm& vm, aria::binding::BindingEngine& be) {
+    auto* root_ = new QWidget;
     auto& subs = wb::ui::subs_attached_to(root_);
     auto* lay = new QVBoxLayout(root_);
 
@@ -171,20 +184,16 @@ CalendarView::CalendarView(CalendarVm& vm, aria::binding::BindingEngine& be)
     be.bind_text_oneway(vm.hint,  wb::ui::view_for(hint));
 
     // Sub-views.
-    nav_    = std::make_unique<MonthNavView>(vm, be);
-    grid_   = std::make_unique<DayGridView>(vm, be, subs);
-    subBar_ = std::make_unique<SubscriptionBarView>(vm, be, subs);
-    subList_ = std::make_unique<SubscriptionListView>(vm, be, subs);
-
-    lay->addWidget(nav_->widget());
-    lay->addWidget(grid_->widget(), 1);
-    lay->addWidget(subBar_->widget());
-    lay->addWidget(subList_->widget());
+    lay->addWidget(build_month_nav(vm, be));
+    lay->addWidget(build_day_grid(vm, be, subs), 1);
+    lay->addWidget(build_subscription_bar(vm, be, subs));
+    lay->addWidget(build_subscription_list(vm, be, subs));
 
     // Status.
     auto* statusLbl = new QLabel;
     lay->addWidget(statusLbl);
     be.bind_text_oneway(vm.status, wb::ui::view_for(statusLbl));
+    return root_;
 }
 
 }  // namespace wb::calendar::qtview
@@ -195,8 +204,7 @@ void register_calendar_view() {
     wb::qt::QtViewFactory::instance().register_builder(
         "calendar",
         [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            auto* view = new qtview::CalendarView(static_cast<CalendarVm&>(vm), be);
-            return view->widget();
+            return qtview::build_view(static_cast<CalendarVm&>(vm), be);
         });
 }
 

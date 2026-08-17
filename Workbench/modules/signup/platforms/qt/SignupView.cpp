@@ -46,8 +46,8 @@ void wire_field(std::vector<aria::Subscription>& subs,
 }
 }  // namespace
 
-SignupView::SignupView(SignupVmHostVm& host, aria::binding::BindingEngine& be)
-    : root_(new QWidget) {
+QWidget* build_view(SignupVmHostVm& host, aria::binding::BindingEngine& be) {
+    auto* root_ = new QWidget;
     auto& vm = host.inner();
     auto& s_subs = subs_attached_to(root_);
     auto* lay = new QVBoxLayout(root_);
@@ -101,6 +101,7 @@ SignupView::SignupView(SignupVmHostVm& host, aria::binding::BindingEngine& be)
     lay->addWidget(summary);
     be.bind_text_oneway(vm.submittedSummary, view_for(summary));
     lay->addStretch();
+    return root_;
 }
 
 }  // namespace wb::signup::qtview
@@ -111,8 +112,7 @@ void register_signup_view() {
         "signup",
         [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
             auto& host = static_cast<SignupVmHostVm&>(vm);
-            auto* view = new qtview::SignupView(host, be);
-            return view->widget();
+            return qtview::build_view(host, be);
         });
 }
 }  // namespace wb::signup

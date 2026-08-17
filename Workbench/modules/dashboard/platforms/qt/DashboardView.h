@@ -1,11 +1,10 @@
 #pragma once
 //
-// DashboardView — Qt view for the "dashboard" module.
+// DashboardView — Qt view for the "dashboard" module (Aria free-function view).
 //
-// register_dashboard_view() is a thin entry point that constructs the view
-// and returns its root widget.
+// build_view() creates the widgets, wires the bindings, and returns the root
+// widget. register_dashboard_view() registers it with the QtViewFactory.
 //
-#include "support/UiHelpers.h"
 #include "aria/binding/binding_engine.hpp"
 
 #include <QWidget>
@@ -14,12 +13,6 @@ namespace wb::dashboard { class DashboardVm; }
 
 namespace wb::dashboard::qtview {
 
-class DashboardView {
-public:
-    DashboardView(DashboardVm& vm, aria::binding::BindingEngine& be);
-    QWidget* widget() const { return root_; }
-private:
-    QWidget* root_;
-};
+QWidget* build_view(DashboardVm& vm, aria::binding::BindingEngine& be);
 
 }  // namespace wb::dashboard::qtview
