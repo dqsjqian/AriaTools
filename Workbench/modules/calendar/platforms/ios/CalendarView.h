@@ -1,49 +1,25 @@
 #pragma once
 //
-// CalendarView — iOS UIKit view for the "calendar" module.
+// CalendarView — pure UIKit view for the "calendar" module.
 //
-// Decomposed into sub-views (mirroring the Qt CalendarView structure):
-//   MonthNavView       — prev/next/today/refresh buttons + month title
-//   SubscriptionBarView — URL field + subscribe button
-//   SubscriptionListView — list of subscriptions (double-tap to remove)
-//
-// The top-level CalendarView assembles them into a vertical stack VC and
-// wires the shared VM. register_calendar_view() is a thin entry point.
+// Follows Aria demo3 pattern: View inherits UIView, is pure UI, exposes
+// outlets for the Controller to bind. Does NOT know about CalendarVm or
+// BindingEngine — that's the Controller's job.
 //
 #import <UIKit/UIKit.h>
 
-#include "aria/binding/binding_engine.hpp"
+@interface CalendarView : UIView
 
-namespace wb::calendar { class CalendarVm; }
+// Outlets the Controller binds to.
+@property (nonatomic, strong, readonly) UILabel *titleLabel;
+@property (nonatomic, strong, readonly) UILabel *hintLabel;
+@property (nonatomic, strong, readonly) UILabel *statusLabel;
+@property (nonatomic, strong, readonly) UILabel *monthTitleLabel;
+@property (nonatomic, strong, readonly) UIButton *prevButton;
+@property (nonatomic, strong, readonly) UIButton *nextButton;
+@property (nonatomic, strong, readonly) UIButton *todayButton;
+@property (nonatomic, strong, readonly) UIButton *refreshButton;
+@property (nonatomic, strong, readonly) UITextField *urlField;
+@property (nonatomic, strong, readonly) UIButton *subscribeButton;
 
-namespace wb::calendar::iosview {
-
-// ─── Sub-views (each builds a UIView*) ────────────────────────────────────
-
-class MonthNavView {
-public:
-    MonthNavView(CalendarVm& vm, aria::binding::BindingEngine& be);
-    UIView* view() const { return nav_; }
-private:
-    UIView* nav_;
-};
-
-class SubscriptionBarView {
-public:
-    SubscriptionBarView(CalendarVm& vm, aria::binding::BindingEngine& be);
-    UIView* view() const { return bar_; }
-private:
-    UIView* bar_;
-};
-
-// ─── Top-level CalendarView ───────────────────────────────────────────────
-
-class CalendarView {
-public:
-    CalendarView(CalendarVm& vm, aria::binding::BindingEngine& be);
-    UIViewController* viewController() const { return vc_; }
-private:
-    UIViewController* vc_;
-};
-
-}  // namespace wb::calendar::iosview
+@end

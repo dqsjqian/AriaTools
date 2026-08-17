@@ -6,8 +6,8 @@
 // one WB_MODULE_ENTRY(mod, Mod) line per discovered module. We expand each
 // into a forward-declaration of register_<mod>_view() + a call.
 //
-// To add/remove a module's iOS View, just create/delete its platforms/ios/
-// sources — no changes to this file.
+// Each register_xxx_view() registers a builder into UIViewFactory that
+// creates the module's ViewController (which owns the VM + bindings).
 
 // ── Phase 1: forward-declare each View register function (global scope) ──
 #define WB_MODULE_ENTRY(mod, Mod) \

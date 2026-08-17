@@ -1,6 +1,7 @@
 #include "App/QtAppShell.h"
 #include "App/QtViewManifest.h"
 #include "support/QtViewFactory.h"
+#include "support/QtExecutors.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -25,11 +26,21 @@ std::string QtAppShell::resolve_i18n_dir() {
 
 QtAppShell::QtAppShell(QObject* qt_ctx)
     : dispatcher_(std::make_shared<aria::adapters::qt6::QtDispatcher>(qt_ctx)),
+      ui_exec_(*dispatcher_),
+      delay_(*dispatcher_),
       adapter_(std::make_shared<aria::adapters::qt6::QtAdapter>()),
       be_(adapter_, dispatcher_,
           aria::binding::BindingEngine::DispatchPolicy::SmartMarshal),
       core_(resolve_i18n_dir(), "zh-CN")
 {
+    // Inject QtDispatcher (wrapped as IExecutor + IDelayedScheduler) into
+    // ServiceHub BEFORE load_modules() so AsyncCommand VMs (e.g. login) get
+    // a real UI-thread co_await target. The InlineExecutor fallback would
+    // trip the graph thread-affinity invariant when worker runs on a
+    // different thread.
+    core_.set_ui_executor(&ui_exec_);
+    core_.set_timer(&delay_);
+    core_.load_modules();
     register_all_views();  // Register each module's Qt View builder.
 }
 
