@@ -23,6 +23,23 @@ void subscribe_dashboard(aria::runtime::EventBus& bus, DashboardVm& vm,
     bind_str(subs, "dashboard", "mount_toggle",  vm.mountToggleLabel);
     bind_str(subs, "dashboard", "mount_status",  vm.mountStatus);
     bind_str(subs, "dashboard", "mountedModule", vm.mountedModule);
+
+    // Bridge the MOUNTED provider's VM onto the side-channel: when the
+    // extension changes (toggle on/off), rebridge a fresh VM via the module
+    // binding table (cart's subscribe_cart pushes "cart.*" props). Lets
+    // Compose render the mounted provider's UI with zero coupling here.
+    auto mountSubs = std::make_shared<std::vector<aria::Subscription>>();
+    auto rebridge = [mountSubs, &vm](
+                        const std::shared_ptr<aria::binding::ViewModel>& vmp) {
+        for (auto& s : *mountSubs) s.detach();
+        mountSubs->clear();
+        if (!vmp) return;
+        wb::jni::bridge_vm(vm.mountedModule.get(), *vmp, *mountSubs);
+    };
+    subs.push_back(vm.mountedVm.on_changed(rebridge));
+    if (auto vmp = vm.mountedVm.get()) {
+        rebridge(vmp);
+    }
     // Navigation mirrors (pushed over the side-channel so Compose can
     // render the pushed page by module id + presentation kind).
     bind_str(subs, "dashboard", "navCurrentModule", vm.navCurrentModule);
