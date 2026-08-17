@@ -2,7 +2,6 @@ package com.dqsjqian.ariatools.pages
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,6 +23,10 @@ private const val MOD = "tipcalc"
  * TipCalcPage — Android (Compose) view for the "tipcalc" module.
  * Bill/tip%/people inputs (numeric strings) + round up button + results.
  * Numeric inputs are written as strings; the VM-side converter parses them.
+ *
+ * Decomposed into sub-composables:
+ *   TipForm    — bill/tip%/people inputs + round up button
+ *   TipResults — tip amount / total / per-person result lines
  */
 @Composable
 fun TipCalcPage(vm: AppViewModel) {
@@ -35,13 +38,25 @@ fun TipCalcPage(vm: AppViewModel) {
         Text(props["$MOD.title"] ?: "tipcalc", style = MaterialTheme.typography.headlineSmall)
         Text(props["$MOD.desc"] ?: "", style = MaterialTheme.typography.bodySmall)
         HorizontalDivider()
-        OutlinedTextField(value = props["$MOD.bill"] ?: "", onValueChange = { vm.setText(MOD, "bill", it) }, label = { Text(props["$MOD.bill_label"] ?: "Bill") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = props["$MOD.tipPercent"] ?: "", onValueChange = { vm.setText(MOD, "tipPercent", it) }, label = { Text(props["$MOD.tip_label"] ?: "Tip %") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = props["$MOD.people"] ?: "", onValueChange = { vm.setText(MOD, "people", it) }, label = { Text(props["$MOD.people_label"] ?: "People") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-        Button(onClick = { vm.execute(MOD, "roundUp") }, modifier = Modifier.fillMaxWidth()) { Text(props["$MOD.round_up"] ?: "Round up") }
+        TipForm(vm, props)
         HorizontalDivider()
-        Text("${props["$MOD.tip_amount"] ?: ""}: ${props["$MOD.tipAmount"] ?: ""}", style = MaterialTheme.typography.bodyLarge)
-        Text("${props["$MOD.total"] ?: ""}: ${props["$MOD.total"] ?: ""}", style = MaterialTheme.typography.bodyLarge)
-        Text("${props["$MOD.per_person"] ?: ""}: ${props["$MOD.perPerson"] ?: ""}", style = MaterialTheme.typography.bodyLarge)
+        TipResults(props)
     }
+}
+
+// ─── Sub-composables ──────────────────────────────────────────────────────
+
+@Composable
+private fun TipForm(vm: AppViewModel, props: Map<String, String>) {
+    OutlinedTextField(value = props["$MOD.bill"] ?: "", onValueChange = { vm.setText(MOD, "bill", it) }, label = { Text(props["$MOD.bill_label"] ?: "Bill") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+    OutlinedTextField(value = props["$MOD.tipPercent"] ?: "", onValueChange = { vm.setText(MOD, "tipPercent", it) }, label = { Text(props["$MOD.tip_label"] ?: "Tip %") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+    OutlinedTextField(value = props["$MOD.people"] ?: "", onValueChange = { vm.setText(MOD, "people", it) }, label = { Text(props["$MOD.people_label"] ?: "People") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+    Button(onClick = { vm.execute(MOD, "roundUp") }, modifier = Modifier.fillMaxWidth()) { Text(props["$MOD.round_up"] ?: "Round up") }
+}
+
+@Composable
+private fun TipResults(props: Map<String, String>) {
+    Text("${props["$MOD.tip_amount"] ?: ""}: ${props["$MOD.tipAmount"] ?: ""}", style = MaterialTheme.typography.bodyLarge)
+    Text("${props["$MOD.total"] ?: ""}: ${props["$MOD.total"] ?: ""}", style = MaterialTheme.typography.bodyLarge)
+    Text("${props["$MOD.per_person"] ?: ""}: ${props["$MOD.perPerson"] ?: ""}", style = MaterialTheme.typography.bodyLarge)
 }

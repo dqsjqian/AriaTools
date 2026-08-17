@@ -1,13 +1,17 @@
-
-#include "support/UiHelpers.h"
+#include "SignupView.h"
 #include "support/QtViewFactory.h"
+#include "support/UiHelpers.h"
 #include "viewmodels/SignupVm.h"
 #include "viewmodels/SignupVmHostVm.h"
+
+#include "aria/binding/binding_engine.hpp"
+
 #include <QFormLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QVBoxLayout>
+
 namespace wb::signup::qtview {
 using namespace wb::ui;
 namespace {
@@ -41,10 +45,12 @@ void wire_field(std::vector<aria::Subscription>& subs,
     subs.push_back(field.error   .on_changed([sync](const std::string&) { sync(); }));
 }
 }  // namespace
-static QWidget* build(SignupVm& vm, SignupVmHostVm& host, aria::binding::BindingEngine& be) {
-    auto* w = new QWidget;
-    auto& s_subs = subs_attached_to(w);
-    auto* lay = new QVBoxLayout(w);
+
+SignupView::SignupView(SignupVmHostVm& host, aria::binding::BindingEngine& be)
+    : root_(new QWidget) {
+    auto& vm = host.inner();
+    auto& s_subs = subs_attached_to(root_);
+    auto* lay = new QVBoxLayout(root_);
     // Hint banner: VM-owned desc property (i18n, auto-refreshes on language change).
     auto* info = wb::ui::make_info("");
     lay->addWidget(info);
@@ -95,8 +101,8 @@ static QWidget* build(SignupVm& vm, SignupVmHostVm& host, aria::binding::Binding
     lay->addWidget(summary);
     be.bind_text_oneway(vm.submittedSummary, view_for(summary));
     lay->addStretch();
-    return w;
 }
+
 }  // namespace wb::signup::qtview
 
 namespace wb::signup {
@@ -105,7 +111,8 @@ void register_signup_view() {
         "signup",
         [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
             auto& host = static_cast<SignupVmHostVm&>(vm);
-            return qtview::build(host.inner(), host, be);
+            auto* view = new qtview::SignupView(host, be);
+            return view->widget();
         });
 }
 }  // namespace wb::signup

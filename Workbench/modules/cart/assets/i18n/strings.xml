@@ -12,4 +12,5 @@
     <string name="subtotal">小计: ¥ %1</string>
     <string name="tax">税 (8%): ¥ %1</string>
     <string name="total">总计: ¥ %1</string>
+    <string name="checkout">结账下单</string>
 </resources>

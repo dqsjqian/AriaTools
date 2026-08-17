@@ -1,5 +1,5 @@
+#include "ToolsView.h"
 #include "support/QtViewFactory.h"
-#include "support/UiHelpers.h"
 #include "viewmodels/ToolsVm.h"
 
 #include "aria/binding/binding_engine.hpp"
@@ -16,6 +16,7 @@
 
 namespace wb::tools::qtview {
 
+// ─── Shared helpers ───────────────────────────────────────────────────────
 static void bind_group_title(QGroupBox* box, aria::Property<std::string>& prop,
                              std::vector<aria::Subscription>& subs) {
     box->setTitle(QString::fromStdString(prop.get()));
@@ -32,11 +33,12 @@ static void bind_label(QLabel* label, aria::Property<std::string>& prop,
     }));
 }
 
-static QGroupBox* build_base64(ToolsVm& vm, aria::binding::BindingEngine& be,
-                               std::vector<aria::Subscription>& subs) {
-    auto* box = new QGroupBox;
-    bind_group_title(box, vm.base64Group, subs);
-    auto* layout = new QVBoxLayout(box);
+// ─── Base64GroupView ──────────────────────────────────────────────────────
+Base64GroupView::Base64GroupView(ToolsVm& vm, aria::binding::BindingEngine& be,
+                                 std::vector<aria::Subscription>& subs)
+    : box_(new QGroupBox) {
+    bind_group_title(box_, vm.base64Group, subs);
+    auto* layout = new QVBoxLayout(box_);
     auto* inputLabel = new QLabel;
     auto* outputLabel = new QLabel;
     auto* input = new QPlainTextEdit;
@@ -61,14 +63,14 @@ static QGroupBox* build_base64(ToolsVm& vm, aria::binding::BindingEngine& be,
     be.bind_text_oneway(vm.base64Output, wb::ui::view_for(output));
     be.bind_command(vm.base64Encode, wb::ui::view_for(encode));
     be.bind_command(vm.base64Decode, wb::ui::view_for(decode));
-    return box;
 }
 
-static QGroupBox* build_random(ToolsVm& vm, aria::binding::BindingEngine& be,
-                               std::vector<aria::Subscription>& subs) {
-    auto* box = new QGroupBox;
-    bind_group_title(box, vm.randomGroup, subs);
-    auto* row = new QHBoxLayout(box);
+// ─── RandomGroupView ──────────────────────────────────────────────────────
+RandomGroupView::RandomGroupView(ToolsVm& vm, aria::binding::BindingEngine& be,
+                                 std::vector<aria::Subscription>& subs)
+    : box_(new QGroupBox) {
+    bind_group_title(box_, vm.randomGroup, subs);
+    auto* row = new QHBoxLayout(box_);
     auto* lengthLabel = new QLabel;
     auto* length = new QSpinBox;
     auto* generate = new QPushButton;
@@ -84,14 +86,14 @@ static QGroupBox* build_random(ToolsVm& vm, aria::binding::BindingEngine& be,
     be.bind_int(vm.randomLength, wb::ui::view_for(length));
     be.bind_command(vm.genRandom, wb::ui::view_for(generate));
     be.bind_text_oneway(vm.randomOutput, wb::ui::view_for(output));
-    return box;
 }
 
-static QGroupBox* build_json(ToolsVm& vm, aria::binding::BindingEngine& be,
-                             std::vector<aria::Subscription>& subs) {
-    auto* box = new QGroupBox;
-    bind_group_title(box, vm.jsonGroup, subs);
-    auto* layout = new QVBoxLayout(box);
+// ─── JsonGroupView ────────────────────────────────────────────────────────
+JsonGroupView::JsonGroupView(ToolsVm& vm, aria::binding::BindingEngine& be,
+                             std::vector<aria::Subscription>& subs)
+    : box_(new QGroupBox) {
+    bind_group_title(box_, vm.jsonGroup, subs);
+    auto* layout = new QVBoxLayout(box_);
     auto* input = new QPlainTextEdit;
     auto* output = new QPlainTextEdit;
     auto* status = new QLabel;
@@ -113,14 +115,14 @@ static QGroupBox* build_json(ToolsVm& vm, aria::binding::BindingEngine& be,
     be.bind_command(vm.jsonMinify, wb::ui::view_for(minify));
     be.bind_text_oneway(vm.jsonStatus, wb::ui::view_for(status));
     be.bind_text_oneway(vm.jsonOutput, wb::ui::view_for(output));
-    return box;
 }
 
-static QGroupBox* build_file_crypto(ToolsVm& vm, aria::binding::BindingEngine& be,
-                                    std::vector<aria::Subscription>& subs) {
-    auto* box = new QGroupBox;
-    bind_group_title(box, vm.fileGroup, subs);
-    auto* layout = new QVBoxLayout(box);
+// ─── FileCryptoGroupView ──────────────────────────────────────────────────
+FileCryptoGroupView::FileCryptoGroupView(ToolsVm& vm, aria::binding::BindingEngine& be,
+                                        std::vector<aria::Subscription>& subs)
+    : box_(new QGroupBox) {
+    bind_group_title(box_, vm.fileGroup, subs);
+    auto* layout = new QVBoxLayout(box_);
     auto* fileRow = new QHBoxLayout;
     auto* filePath = new QLineEdit;
     auto* choose = new QPushButton;
@@ -155,22 +157,27 @@ static QGroupBox* build_file_crypto(ToolsVm& vm, aria::binding::BindingEngine& b
             vm.filePath.set(path.toStdString());
         }
     });
-    return box;
 }
 
-static QWidget* build(ToolsVm& vm, aria::binding::BindingEngine& be) {
-    auto* widget = new QWidget;
-    auto& subs = wb::ui::subs_attached_to(widget);
-    auto* layout = new QVBoxLayout(widget);
+// ─── Top-level ToolsView ──────────────────────────────────────────────────
+ToolsView::ToolsView(ToolsVm& vm, aria::binding::BindingEngine& be)
+    : root_(new QWidget) {
+    auto& subs = wb::ui::subs_attached_to(root_);
+    auto* layout = new QVBoxLayout(root_);
     auto* title = wb::ui::make_title("");
     layout->addWidget(title);
     be.bind_text_oneway(vm.title, wb::ui::view_for(title));
-    layout->addWidget(build_base64(vm, be, subs));
-    layout->addWidget(build_random(vm, be, subs));
-    layout->addWidget(build_json(vm, be, subs));
-    layout->addWidget(build_file_crypto(vm, be, subs));
+
+    base64_     = std::make_unique<Base64GroupView>(vm, be, subs);
+    random_     = std::make_unique<RandomGroupView>(vm, be, subs);
+    json_       = std::make_unique<JsonGroupView>(vm, be, subs);
+    fileCrypto_ = std::make_unique<FileCryptoGroupView>(vm, be, subs);
+
+    layout->addWidget(base64_->widget());
+    layout->addWidget(random_->widget());
+    layout->addWidget(json_->widget());
+    layout->addWidget(fileCrypto_->widget());
     layout->addStretch();
-    return widget;
 }
 
 }  // namespace wb::tools::qtview
@@ -180,7 +187,8 @@ namespace wb::tools {
 void register_tools_view() {
     wb::qt::QtViewFactory::instance().register_builder(
         "tools", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            return qtview::build(static_cast<ToolsVm&>(vm), be);
+            auto* view = new qtview::ToolsView(static_cast<ToolsVm&>(vm), be);
+            return view->widget();
         });
 }
 

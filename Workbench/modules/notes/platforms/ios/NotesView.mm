@@ -1,3 +1,4 @@
+#include "NotesView.h"
 #include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "viewmodels/NotesVm.h"
@@ -5,7 +6,9 @@
 #include "aria/binding/binding_engine.hpp"
 
 namespace wb::notes::iosview {
-static UIViewController* build(NotesVm& vm, aria::binding::BindingEngine& be) {
+
+NotesView::NotesView(NotesVm& vm, aria::binding::BindingEngine& be)
+    : vc_(nil) {
     UILabel*     title  = wb::ios::ui::make_title(@"");
     UILabel*     hint   = wb::ios::ui::make_label(@"");
     UILabel*     status = wb::ios::ui::make_label(@"");
@@ -15,7 +18,7 @@ static UIViewController* build(NotesVm& vm, aria::binding::BindingEngine& be) {
     UIButton*    save   = wb::ios::ui::make_button(@"");
     UIButton*    del    = wb::ios::ui::make_button(@"");
 
-    auto* vc = wb::ios::ui::make_stack_vc(
+    vc_ = wb::ios::ui::make_stack_vc(
         @[title, hint, status, editTitle, editBody, add, save, del]);
 
     be.bind_text_oneway(vm.title, wb::ios::ui::view_for(title));
@@ -29,15 +32,16 @@ static UIViewController* build(NotesVm& vm, aria::binding::BindingEngine& be) {
     be.bind_command(vm.addNote, wb::ios::ui::view_for(add));
     be.bind_command(vm.saveNote, wb::ios::ui::view_for(save));
     be.bind_command(vm.deleteSelected, wb::ios::ui::view_for(del));
-    return vc;
 }
+
 }  // namespace wb::notes::iosview
 
 namespace wb::notes {
 void register_notes_view() {
     wb::ios::UIViewFactory::instance().register_builder(
         "notes", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            return iosview::build(static_cast<NotesVm&>(vm), be);
+            auto* view = new iosview::NotesView(static_cast<NotesVm&>(vm), be);
+            return view->viewController();
         });
 }
 }  // namespace wb::notes

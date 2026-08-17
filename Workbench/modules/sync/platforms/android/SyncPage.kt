@@ -23,6 +23,10 @@ private const val MOD = "sync"
 /**
  * SyncPage — Android (Compose) view for the "sync" module.
  * Git sync config form (data dir, remote, branch, user, token) + action buttons.
+ *
+ * Decomposed into sub-composables:
+ *   ConfigForm  — five config input fields (data dir / remote / branch / user / token)
+ *   SyncActions — save/sync/pull/push action buttons
  */
 @Composable
 fun SyncPage(vm: AppViewModel) {
@@ -35,18 +39,30 @@ fun SyncPage(vm: AppViewModel) {
         Text(props["$MOD.hint"] ?: "", style = MaterialTheme.typography.bodySmall)
         Text(props["$MOD.status"] ?: "", style = MaterialTheme.typography.bodyMedium)
         HorizontalDivider()
-        OutlinedTextField(value = props["$MOD.dataDir"] ?: "", onValueChange = { vm.setText(MOD, "dataDir", it) }, label = { Text(props["$MOD.data_dir"] ?: "Data dir") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = props["$MOD.remote"] ?: "", onValueChange = { vm.setText(MOD, "remote", it) }, label = { Text(props["$MOD.remote_label"] ?: "Remote") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = props["$MOD.branch"] ?: "", onValueChange = { vm.setText(MOD, "branch", it) }, label = { Text(props["$MOD.branch_label"] ?: "Branch") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = props["$MOD.username"] ?: "", onValueChange = { vm.setText(MOD, "username", it) }, label = { Text(props["$MOD.username"] ?: "Username") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = props["$MOD.token"] ?: "", onValueChange = { vm.setText(MOD, "token", it) }, label = { Text(props["$MOD.token"] ?: "Token") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { vm.execute(MOD, "saveConfig") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.save_config"] ?: "Save") }
-            Button(onClick = { vm.execute(MOD, "syncNow") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.sync_now"] ?: "Sync") }
-        }
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { vm.execute(MOD, "pull") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.pull"] ?: "Pull") }
-            Button(onClick = { vm.execute(MOD, "push") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.push"] ?: "Push") }
-        }
+        ConfigForm(vm, props)
+        SyncActions(vm, props)
+    }
+}
+
+// ─── Sub-composables ──────────────────────────────────────────────────────
+
+@Composable
+private fun ConfigForm(vm: AppViewModel, props: Map<String, String>) {
+    OutlinedTextField(value = props["$MOD.dataDir"] ?: "", onValueChange = { vm.setText(MOD, "dataDir", it) }, label = { Text(props["$MOD.data_dir"] ?: "Data dir") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+    OutlinedTextField(value = props["$MOD.remote"] ?: "", onValueChange = { vm.setText(MOD, "remote", it) }, label = { Text(props["$MOD.remote_label"] ?: "Remote") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+    OutlinedTextField(value = props["$MOD.branch"] ?: "", onValueChange = { vm.setText(MOD, "branch", it) }, label = { Text(props["$MOD.branch_label"] ?: "Branch") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+    OutlinedTextField(value = props["$MOD.username"] ?: "", onValueChange = { vm.setText(MOD, "username", it) }, label = { Text(props["$MOD.username"] ?: "Username") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+    OutlinedTextField(value = props["$MOD.token"] ?: "", onValueChange = { vm.setText(MOD, "token", it) }, label = { Text(props["$MOD.token"] ?: "Token") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+}
+
+@Composable
+private fun SyncActions(vm: AppViewModel, props: Map<String, String>) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(onClick = { vm.execute(MOD, "saveConfig") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.save_config"] ?: "Save") }
+        Button(onClick = { vm.execute(MOD, "syncNow") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.sync_now"] ?: "Sync") }
+    }
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(onClick = { vm.execute(MOD, "pull") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.pull"] ?: "Pull") }
+        Button(onClick = { vm.execute(MOD, "push") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.push"] ?: "Push") }
     }
 }

@@ -1,20 +1,40 @@
 #include "viewmodels/CartVm.h"
 
+#include "events/CrossModuleEvents.h"
+
 #include <memory>
 
 namespace wb::cart {
 
-CartVm::CartVm()
-    : addItem(
+CartVm::CartVm(aria::runtime::EventBus& bus)
+    : bus_(bus),
+      addItem(
           [this] {
               const auto name = draftName.get();
               if (name.empty() || draftPrice.get() <= 0) return;
               items.push_back(std::make_shared<CartItem>(
                   name, draftPrice.get(), 1));
+              // Cross-module: notify other modules that an item was added.
+              bus_.publish(wb::shared::events::ItemAddedToCart{
+                  name, draftPrice.get(), 1});
           },
           [this] {
               return !draftName.get().empty() && draftPrice.get() > 0;
-          })
+          }),
+      checkout(
+          [this] {
+              if (items.snapshot().empty()) return;
+              // Cross-module: notify that an order was placed.
+              bus_.publish(wb::shared::events::OrderPlaced{
+                  "order-" + std::to_string(itemCount.get()),
+                  total.get(),
+                  itemCount.get()});
+              // Clear the cart after checkout.
+              while (!items.snapshot().empty()) {
+                  items.remove_at(0);
+              }
+          },
+          [this] { return !items.snapshot().empty(); })
 {
     text(title,         "title");
     text(desc,          "desc");
@@ -25,19 +45,11 @@ CartVm::CartVm()
     text(subtotalLabel, "subtotal");
     text(taxLabel,      "tax");
     text(totalLabel,    "total");
+    text(checkoutLabel, "checkout");
 }
 
 void CartVm::on_activate() {
-    // Any list mutation (Insert / Remove / Replace / ItemChanged)
-    // re-aggregates the totals.
     bag() += items.on_any_change([this] { recompute_(); });
-
-    // Changes to the draft fields automatically refresh
-    // addItem.can_execute and the UI button enables / disables itself.
-    // No manual Effect + notify_can_execute_changed is required:
-    // Command<>'s internal Effect already turns reads of draftName /
-    // draftPrice into dependency edges.
-
     recompute_();
 }
 

@@ -22,6 +22,9 @@ private const val MOD = "settings"
 /**
  * SettingsPage — Android (Compose) view for the "settings" module.
  * Language selector: two buttons switch the UI language via VM command.
+ *
+ * Decomposed into sub-composables:
+ *   LanguageSection — language label + zh/en switch buttons
  */
 @Composable
 fun SettingsPage(vm: AppViewModel) {
@@ -33,10 +36,17 @@ fun SettingsPage(vm: AppViewModel) {
         Text(props["$MOD.title"] ?: "settings", style = MaterialTheme.typography.headlineSmall)
         Text(props["$MOD.hint"] ?: "", style = MaterialTheme.typography.bodySmall)
         HorizontalDivider()
-        Text(props["$MOD.language"] ?: "Language", style = MaterialTheme.typography.titleMedium)
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { vm.execute(MOD, "switchLanguage-zh-CN") }, modifier = Modifier.weight(1f)) { Text("简体中文") }
-            Button(onClick = { vm.execute(MOD, "switchLanguage-en") }, modifier = Modifier.weight(1f)) { Text("English") }
-        }
+        LanguageSection(vm, props)
+    }
+}
+
+// ─── Sub-composables ──────────────────────────────────────────────────────
+
+@Composable
+private fun LanguageSection(vm: AppViewModel, props: Map<String, String>) {
+    Text(props["$MOD.language"] ?: "Language", style = MaterialTheme.typography.titleMedium)
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(onClick = { vm.execute(MOD, "switchLanguage-zh-CN") }, modifier = Modifier.weight(1f)) { Text("简体中文") }
+        Button(onClick = { vm.execute(MOD, "switchLanguage-en") }, modifier = Modifier.weight(1f)) { Text("English") }
     }
 }

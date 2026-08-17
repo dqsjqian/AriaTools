@@ -23,6 +23,10 @@ private const val MOD = "unitconvert"
 /**
  * UnitConvertPage — Android (Compose) view for the "unitconvert" module.
  * Category picker (3 buttons) + value input + converted result.
+ *
+ * Decomposed into sub-composables:
+ *   CategoryPicker — temperature/length/weight category buttons + value input
+ *   ConvertResult  — converted result headline
  */
 @Composable
 fun UnitConvertPage(vm: AppViewModel) {
@@ -34,13 +38,25 @@ fun UnitConvertPage(vm: AppViewModel) {
         Text(props["$MOD.title"] ?: "unitconvert", style = MaterialTheme.typography.headlineSmall)
         Text(props["$MOD.desc"] ?: "", style = MaterialTheme.typography.bodySmall)
         HorizontalDivider()
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { vm.execute(MOD, "selectTemperature") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.cat_temperature"] ?: "Temp") }
-            Button(onClick = { vm.execute(MOD, "selectLength") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.cat_length"] ?: "Length") }
-            Button(onClick = { vm.execute(MOD, "selectWeight") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.cat_weight"] ?: "Weight") }
-        }
-        OutlinedTextField(value = props["$MOD.value"] ?: "", onValueChange = { vm.setText(MOD, "value", it) }, label = { Text(props["$MOD.input"] ?: "Input") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        CategoryPicker(vm, props)
         HorizontalDivider()
-        Text("= ${props["$MOD.converted"] ?: ""}", style = MaterialTheme.typography.headlineSmall)
+        ConvertResult(props)
     }
+}
+
+// ─── Sub-composables ──────────────────────────────────────────────────────
+
+@Composable
+private fun CategoryPicker(vm: AppViewModel, props: Map<String, String>) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(onClick = { vm.execute(MOD, "selectTemperature") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.cat_temperature"] ?: "Temp") }
+        Button(onClick = { vm.execute(MOD, "selectLength") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.cat_length"] ?: "Length") }
+        Button(onClick = { vm.execute(MOD, "selectWeight") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.cat_weight"] ?: "Weight") }
+    }
+    OutlinedTextField(value = props["$MOD.value"] ?: "", onValueChange = { vm.setText(MOD, "value", it) }, label = { Text(props["$MOD.input"] ?: "Input") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+}
+
+@Composable
+private fun ConvertResult(props: Map<String, String>) {
+    Text("= ${props["$MOD.converted"] ?: ""}", style = MaterialTheme.typography.headlineSmall)
 }

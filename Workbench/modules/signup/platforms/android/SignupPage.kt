@@ -23,6 +23,10 @@ private const val MOD = "signup"
  * SignupPage — Android (Compose) view for the "signup" module.
  * Four-field form (username/email/password/confirm) with per-field error
  * hints + form-level error + submit button + result summary.
+ *
+ * Decomposed into sub-composables:
+ *   FieldWithError — reusable field + error text pair (used for each input)
+ *   SubmitSection  — submit button + result/error summary
  */
 @Composable
 fun SignupPage(vm: AppViewModel) {
@@ -34,15 +38,37 @@ fun SignupPage(vm: AppViewModel) {
         Text(props["$MOD.title"] ?: "signup", style = MaterialTheme.typography.headlineSmall)
         Text(props["$MOD.desc"] ?: "", style = MaterialTheme.typography.bodySmall)
         HorizontalDivider()
-        OutlinedTextField(value = props["$MOD.username"] ?: "", onValueChange = { vm.setText(MOD, "username", it) }, label = { Text(props["$MOD.username"] ?: "Username") }, singleLine = true, modifier = Modifier.fillMaxWidth(), isError = (props["$MOD.username_error"] ?: "").isNotEmpty())
-        Text(props["$MOD.username_error"] ?: "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-        OutlinedTextField(value = props["$MOD.email"] ?: "", onValueChange = { vm.setText(MOD, "email", it) }, label = { Text(props["$MOD.email"] ?: "Email") }, singleLine = true, modifier = Modifier.fillMaxWidth(), isError = (props["$MOD.email_error"] ?: "").isNotEmpty())
-        Text(props["$MOD.email_error"] ?: "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-        OutlinedTextField(value = props["$MOD.password"] ?: "", onValueChange = { vm.setText(MOD, "password", it) }, label = { Text(props["$MOD.password"] ?: "Password") }, singleLine = true, modifier = Modifier.fillMaxWidth(), isError = (props["$MOD.password_error"] ?: "").isNotEmpty())
-        Text(props["$MOD.password_error"] ?: "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-        OutlinedTextField(value = props["$MOD.confirm"] ?: "", onValueChange = { vm.setText(MOD, "confirm", it) }, label = { Text(props["$MOD.confirm"] ?: "Confirm") }, singleLine = true, modifier = Modifier.fillMaxWidth(), isError = (props["$MOD.confirm_error"] ?: "").isNotEmpty())
-        Text(props["$MOD.confirm_error"] ?: "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-        Button(onClick = { vm.execute(MOD, "submit") }, modifier = Modifier.fillMaxWidth()) { Text(props["$MOD.submit"] ?: "Submit") }
-        Text(props["$MOD.submittedSummary"] ?: props["$MOD.unregistered"] ?: "", style = MaterialTheme.typography.bodyMedium)
+        FieldWithError(vm, props, fieldKey = "username", labelKey = "username")
+        FieldWithError(vm, props, fieldKey = "email", labelKey = "email")
+        FieldWithError(vm, props, fieldKey = "password", labelKey = "password")
+        FieldWithError(vm, props, fieldKey = "confirm", labelKey = "confirm")
+        SubmitSection(vm, props)
     }
+}
+
+// ─── Sub-composables ──────────────────────────────────────────────────────
+
+@Composable
+private fun FieldWithError(
+    vm: AppViewModel,
+    props: Map<String, String>,
+    fieldKey: String,
+    labelKey: String,
+) {
+    val error = props["$MOD.${fieldKey}_error"] ?: ""
+    OutlinedTextField(
+        value = props["$MOD.$fieldKey"] ?: "",
+        onValueChange = { vm.setText(MOD, fieldKey, it) },
+        label = { Text(props["$MOD.$labelKey"] ?: labelKey.replaceFirstChar { it.uppercase() }) },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+        isError = error.isNotEmpty(),
+    )
+    Text(error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+}
+
+@Composable
+private fun SubmitSection(vm: AppViewModel, props: Map<String, String>) {
+    Button(onClick = { vm.execute(MOD, "submit") }, modifier = Modifier.fillMaxWidth()) { Text(props["$MOD.submit"] ?: "Submit") }
+    Text(props["$MOD.submittedSummary"] ?: props["$MOD.unregistered"] ?: "", style = MaterialTheme.typography.bodyMedium)
 }

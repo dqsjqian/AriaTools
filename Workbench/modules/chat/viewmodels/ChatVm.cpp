@@ -1,5 +1,7 @@
 #include "viewmodels/ChatVm.h"
 
+#include "events/CrossModuleEvents.h"
+
 namespace wb::chat {
 
 // ── Publisher ────────────────────────────────────────────────────────────
@@ -19,9 +21,6 @@ ChatPublisherVm::ChatPublisherVm(aria::runtime::EventBus& bus)
 {}
 
 void ChatPublisherVm::on_activate() {
-    // `send`'s predicate reads `is_active`, `user` and `draft` reactively;
-    // `Command<>` auto-tracks those dependencies and re-evaluates
-    // can_execute on every change — no manual Effect needed here.
 }
 
 void ChatPublisherVm::on_deactivate() { bag().clear(); }
@@ -35,12 +34,32 @@ void ChatSubscriberVm::on_activate() {
     bag() += bus_.subscribe<ChatMessage>([this](const ChatMessage& m) {
         messages.push_back(std::make_shared<ChatMessage>(m));
     });
+
+    // ── Cross-module: react to cart events ────────────────────────────
+    // When a user adds an item to the cart (in the cart module), this
+    // subscriber auto-posts a system message — demonstrating that modules
+    // can communicate via the EventBus without direct coupling.
+    bag() += bus_.subscribe<wb::shared::events::ItemAddedToCart>(
+        [this](const wb::shared::events::ItemAddedToCart& ev) {
+            messages.push_back(std::make_shared<ChatMessage>(
+                ChatMessage{"[system]",
+                    ev.productName + " added to cart (¥"
+                    + std::to_string(ev.price) + ")"}));
+        });
+    bag() += bus_.subscribe<wb::shared::events::OrderPlaced>(
+        [this](const wb::shared::events::OrderPlaced& ev) {
+            messages.push_back(std::make_shared<ChatMessage>(
+                ChatMessage{"[system]",
+                    "Order " + ev.orderId + " placed ("
+                    + std::to_string(ev.itemCount) + " items)"}));
+        });
 }
 
 void ChatSubscriberVm::on_deactivate() { bag().clear(); }
 
 // ── Composite VM: activate cascades to children ──────────────────────────────
-ChatVm::ChatVm(aria::runtime::EventBus& bus)    : publisher(std::make_shared<ChatPublisherVm>(bus)),
+ChatVm::ChatVm(aria::runtime::EventBus& bus)
+    : publisher(std::make_shared<ChatPublisherVm>(bus)),
       subscriber(std::make_shared<ChatSubscriberVm>(bus))
 {
     text(title, "title");

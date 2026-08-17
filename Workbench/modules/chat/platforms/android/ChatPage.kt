@@ -2,7 +2,6 @@ package com.dqsjqian.ariatools.pages
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,6 +32,10 @@ private const val MOD = "chat"
  *
  * Symmetric with the Qt ChatView (QLineEdit × 2 + QPushButton + QListView)
  * and the iOS ChatView (UITextField × 2 + UIButton + UILabel list).
+ *
+ * Decomposed into sub-composables:
+ *   PublisherSection — user/draft inputs + send button
+ *   MessageList      — subscriber message list
  */
 @Composable
 fun ChatPage(vm: AppViewModel) {
@@ -46,41 +49,52 @@ fun ChatPage(vm: AppViewModel) {
 
         HorizontalDivider()
 
-        // Publisher: username + draft + send
-        Text("Publisher", style = MaterialTheme.typography.titleSmall)
-        OutlinedTextField(
-            value = props["$MOD.user"] ?: "",
-            onValueChange = { vm.setText(MOD, "user", it) },
-            label = { Text(props["$MOD.user_label"] ?: "User") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedTextField(
-            value = props["$MOD.draft"] ?: "",
-            onValueChange = { vm.setText(MOD, "draft", it) },
-            label = { Text(props["$MOD.draft_label"] ?: "Message") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Button(
-            onClick = { vm.execute(MOD, "send") },
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text(props["$MOD.send"] ?: "Send") }
+        PublisherSection(vm, props)
 
         Spacer(Modifier.height(8.dp))
         HorizontalDivider()
         Text("Subscriber", style = MaterialTheme.typography.titleSmall)
 
-        // Message list — pushed as a newline-joined string from C++ (each
-        // line is "<user>: <text>"). A LazyColumn renders each line.
-        val messages = (props["$MOD.messages"] ?: "").split('\n').filter { it.isNotBlank() }
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth().weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            items(messages) { line ->
-                Text(line, style = MaterialTheme.typography.bodyMedium)
-            }
+        MessageList(props)
+    }
+}
+
+// ─── Sub-composables ──────────────────────────────────────────────────────
+
+@Composable
+private fun PublisherSection(vm: AppViewModel, props: Map<String, String>) {
+    Text("Publisher", style = MaterialTheme.typography.titleSmall)
+    OutlinedTextField(
+        value = props["$MOD.user"] ?: "",
+        onValueChange = { vm.setText(MOD, "user", it) },
+        label = { Text(props["$MOD.user_label"] ?: "User") },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    OutlinedTextField(
+        value = props["$MOD.draft"] ?: "",
+        onValueChange = { vm.setText(MOD, "draft", it) },
+        label = { Text(props["$MOD.draft_label"] ?: "Message") },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    Button(
+        onClick = { vm.execute(MOD, "send") },
+        modifier = Modifier.fillMaxWidth(),
+    ) { Text(props["$MOD.send"] ?: "Send") }
+}
+
+@Composable
+private fun MessageList(props: Map<String, String>) {
+    // Message list — pushed as a newline-joined string from C++ (each
+    // line is "<user>: <text>"). A LazyColumn renders each line.
+    val messages = (props["$MOD.messages"] ?: "").split('\n').filter { it.isNotBlank() }
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth().weight(1f),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        items(messages) { line ->
+            Text(line, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

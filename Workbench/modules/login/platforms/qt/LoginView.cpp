@@ -1,19 +1,24 @@
-
-#include "support/UiHelpers.h"
+#include "LoginView.h"
 #include "support/QtViewFactory.h"
+#include "support/UiHelpers.h"
 #include "viewmodels/LoginVm.h"
+
+#include "aria/binding/binding_engine.hpp"
+
 #include <QFormLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QVBoxLayout>
+
 namespace wb::login::qtview {
 using namespace wb::ui;
-static QWidget* build(LoginVm& vm, aria::binding::BindingEngine& be) {
-    auto* w = new QWidget;
-    auto& s_subs = subs_attached_to(w);
-    auto* lay = new QVBoxLayout(w);
+
+LoginView::LoginView(LoginVm& vm, aria::binding::BindingEngine& be)
+    : root_(new QWidget) {
+    auto& s_subs = subs_attached_to(root_);
+    auto* lay = new QVBoxLayout(root_);
     // Hint banner: VM-owned desc property (i18n, auto-refreshes on language change).
     auto* info = wb::ui::make_info("");
     lay->addWidget(info);
@@ -74,8 +79,8 @@ static QWidget* build(LoginVm& vm, aria::binding::BindingEngine& be) {
     be.bind_optional_text(vm.login.last_result, view_for(welcome),
         [](const LoginResult& r) { return r.welcome; },
         wb::i18n::str_in("login", "not_logged_in"));
-    return w;
 }
+
 }  // namespace wb::login::qtview
 
 namespace wb::login {
@@ -83,7 +88,8 @@ void register_login_view() {
     wb::qt::QtViewFactory::instance().register_builder(
         "login",
         [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            return qtview::build(static_cast<LoginVm&>(vm), be);
+            auto* view = new qtview::LoginView(static_cast<LoginVm&>(vm), be);
+            return view->widget();
         });
 }
 }  // namespace wb::login

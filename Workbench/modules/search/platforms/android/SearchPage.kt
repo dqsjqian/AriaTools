@@ -23,6 +23,11 @@ private const val MOD = "search"
 /**
  * SearchPage — Android (Compose) view for the "search" module.
  * Query input (debounced in VM) + debounced/distinct labels + history list.
+ *
+ * Decomposed into sub-composables:
+ *   SearchInput   — query text field
+ *   SearchDebug   — debounced/distinct debug labels
+ *   SearchHistory — searches header + hits list
  */
 @Composable
 fun SearchPage(vm: AppViewModel) {
@@ -33,21 +38,38 @@ fun SearchPage(vm: AppViewModel) {
     ) {
         Text(props["$MOD.title"] ?: "search", style = MaterialTheme.typography.headlineSmall)
         Text(props["$MOD.desc"] ?: "", style = MaterialTheme.typography.bodySmall)
-        OutlinedTextField(
-            value = props["$MOD.query"] ?: "",
-            onValueChange = { vm.setText(MOD, "query", it) },
-            label = { Text(props["$MOD.placeholder"] ?: "Search") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        SearchInput(vm, props)
         HorizontalDivider()
-        Text("debounced: ${props["$MOD.debounced"] ?: ""}", style = MaterialTheme.typography.bodySmall)
-        Text("distinct: ${props["$MOD.distinct"] ?: ""}", style = MaterialTheme.typography.bodySmall)
+        SearchDebug(props)
         HorizontalDivider()
-        Text(props["$MOD.searches"] ?: "History", style = MaterialTheme.typography.titleSmall)
-        val hits = (props["$MOD.hits"] ?: "").split('\n').filter { it.isNotBlank() }
-        LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
-            items(hits) { h -> Text(h, style = MaterialTheme.typography.bodySmall) }
-        }
+        SearchHistory(props)
+    }
+}
+
+// ─── Sub-composables ──────────────────────────────────────────────────────
+
+@Composable
+private fun SearchInput(vm: AppViewModel, props: Map<String, String>) {
+    OutlinedTextField(
+        value = props["$MOD.query"] ?: "",
+        onValueChange = { vm.setText(MOD, "query", it) },
+        label = { Text(props["$MOD.placeholder"] ?: "Search") },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun SearchDebug(props: Map<String, String>) {
+    Text("debounced: ${props["$MOD.debounced"] ?: ""}", style = MaterialTheme.typography.bodySmall)
+    Text("distinct: ${props["$MOD.distinct"] ?: ""}", style = MaterialTheme.typography.bodySmall)
+}
+
+@Composable
+private fun SearchHistory(props: Map<String, String>) {
+    Text(props["$MOD.searches"] ?: "History", style = MaterialTheme.typography.titleSmall)
+    val hits = (props["$MOD.hits"] ?: "").split('\n').filter { it.isNotBlank() }
+    LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
+        items(hits) { h -> Text(h, style = MaterialTheme.typography.bodySmall) }
     }
 }

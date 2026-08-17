@@ -1,3 +1,4 @@
+#include "SignupView.h"
 #include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "infra/i18n/I18n.h"
@@ -8,8 +9,10 @@
 
 namespace wb::signup::iosview {
 
-static UIViewController* build(SignupVm& vm, SignupVmHostVm& host,
-                                aria::binding::BindingEngine& be) {
+SignupView::SignupView(SignupVmHostVm& host, aria::binding::BindingEngine& be)
+    : vc_(nil) {
+    auto& vm = host.inner();
+
     UILabel*     title    = wb::ios::ui::make_title(@"");
     UILabel*     desc     = wb::ios::ui::make_label(@"");
     UILabel*     userLbl  = wb::ios::ui::make_label(@"");
@@ -28,7 +31,7 @@ static UIViewController* build(SignupVm& vm, SignupVmHostVm& host,
     UILabel*     formError = wb::ios::ui::make_label(@"");
     UILabel*     summary   = wb::ios::ui::make_label(@"");
 
-    auto* vc = wb::ios::ui::make_stack_vc(
+    vc_ = wb::ios::ui::make_stack_vc(
         @[title, desc,
           userLbl, userField, userHint,
           emailLbl, emailField, emailHint,
@@ -62,7 +65,6 @@ static UIViewController* build(SignupVm& vm, SignupVmHostVm& host,
     be.bind_text_oneway(vm.form.first_error,  wb::ios::ui::view_for(formError));
     be.bind_text_oneway(vm.submittedSummary,  wb::ios::ui::view_for(summary));
     be.bind_command(vm.submit, wb::ios::ui::view_for(submitBtn));
-    return vc;
 }
 
 }  // namespace wb::signup::iosview
@@ -72,7 +74,8 @@ void register_signup_view() {
     wb::ios::UIViewFactory::instance().register_builder(
         "signup", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
             auto& host = static_cast<SignupVmHostVm&>(vm);
-            return iosview::build(host.inner(), host, be);
+            auto* view = new iosview::SignupView(host, be);
+            return view->viewController();
         });
 }
 }  // namespace wb::signup

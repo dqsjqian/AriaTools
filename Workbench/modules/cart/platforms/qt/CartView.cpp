@@ -1,8 +1,11 @@
-
-#include "support/UiHelpers.h"
+#include "CartView.h"
 #include "support/QtViewFactory.h"
+#include "support/UiHelpers.h"
 #include "viewmodels/CartVm.h"
 #include "aria/adapters/qt6/qt_list_model_adapter.hpp"
+
+#include "aria/binding/binding_engine.hpp"
+
 #include <QDoubleSpinBox>
 #include <QFormLayout>
 #include <QHBoxLayout>
@@ -11,12 +14,14 @@
 #include <QListView>
 #include <QPushButton>
 #include <QVBoxLayout>
+
 namespace wb::cart::qtview {
 using namespace wb::ui;
-static QWidget* build(CartVm& vm, aria::binding::BindingEngine& be) {
-    auto* w = new QWidget;
-    auto& s_subs = subs_attached_to(w);
-    auto* lay = new QVBoxLayout(w);
+
+CartView::CartView(CartVm& vm, aria::binding::BindingEngine& be)
+    : root_(new QWidget) {
+    auto& s_subs = subs_attached_to(root_);
+    auto* lay = new QVBoxLayout(root_);
     // Hint banner: VM-owned desc property (i18n, auto-refreshes on language change).
     auto* info = wb::ui::make_info("");
     lay->addWidget(info);
@@ -106,8 +111,8 @@ static QWidget* build(CartVm& vm, aria::binding::BindingEngine& be) {
     s_subs.push_back(vm.subtotal .on_changed(sS));
     s_subs.push_back(vm.tax      .on_changed(sT));
     s_subs.push_back(vm.total    .on_changed(sG));
-    return w;
 }
+
 }  // namespace wb::cart::qtview
 
 namespace wb::cart {
@@ -115,7 +120,8 @@ void register_cart_view() {
     wb::qt::QtViewFactory::instance().register_builder(
         "cart",
         [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            return qtview::build(static_cast<CartVm&>(vm), be);
+            auto* view = new qtview::CartView(static_cast<CartVm&>(vm), be);
+            return view->widget();
         });
 }
 }  // namespace wb::cart

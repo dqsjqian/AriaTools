@@ -27,6 +27,10 @@ private const val MOD = "theme"
  * ThemePage — Android (Compose) view for the "theme" module.
  * Three theme picker buttons + current display name + sample card that
  * changes background/foreground based on the selected theme.
+ *
+ * Decomposed into sub-composables:
+ *   ThemePicker — light/dark/solarized picker buttons
+ *   ThemeCard   — sample card whose colors reflect the current theme
  */
 @Composable
 fun ThemePage(vm: AppViewModel) {
@@ -39,20 +43,32 @@ fun ThemePage(vm: AppViewModel) {
         Text(props["$MOD.desc"] ?: "", style = MaterialTheme.typography.bodySmall)
         Text(props["$MOD.currentDisplayName"] ?: "", style = MaterialTheme.typography.titleMedium)
         HorizontalDivider()
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { vm.execute(MOD, "pickLight") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.theme_light"] ?: "Light") }
-            Button(onClick = { vm.execute(MOD, "pickDark") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.theme_dark"] ?: "Dark") }
-            Button(onClick = { vm.execute(MOD, "pickSolarized") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.theme_solarized"] ?: "Solarized") }
-        }
-        // Sample card — background color reflects the current theme.
-        val bg = when (props["$MOD.currentId"] ?: "light") {
-            "dark" -> Color(0xFF263238); "solarized" -> Color(0xFFFDF6E3); else -> Color.White
-        }
-        val fg = when (props["$MOD.currentId"] ?: "light") {
-            "dark" -> Color(0xFFECEFF1); "solarized" -> Color(0xFF586E75); else -> Color(0xFF212121)
-        }
-        Box(modifier = Modifier.fillMaxWidth().size(120.dp).background(bg)) {
-            Text(props["$MOD.card_title"] ?: "Card", color = fg, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(16.dp))
-        }
+        ThemePicker(vm, props)
+        ThemeCard(props)
+    }
+}
+
+// ─── Sub-composables ──────────────────────────────────────────────────────
+
+@Composable
+private fun ThemePicker(vm: AppViewModel, props: Map<String, String>) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(onClick = { vm.execute(MOD, "pickLight") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.theme_light"] ?: "Light") }
+        Button(onClick = { vm.execute(MOD, "pickDark") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.theme_dark"] ?: "Dark") }
+        Button(onClick = { vm.execute(MOD, "pickSolarized") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.theme_solarized"] ?: "Solarized") }
+    }
+}
+
+@Composable
+private fun ThemeCard(props: Map<String, String>) {
+    // Sample card — background color reflects the current theme.
+    val bg = when (props["$MOD.currentId"] ?: "light") {
+        "dark" -> Color(0xFF263238); "solarized" -> Color(0xFFFDF6E3); else -> Color.White
+    }
+    val fg = when (props["$MOD.currentId"] ?: "light") {
+        "dark" -> Color(0xFFECEFF1); "solarized" -> Color(0xFF586E75); else -> Color(0xFF212121)
+    }
+    Box(modifier = Modifier.fillMaxWidth().size(120.dp).background(bg)) {
+        Text(props["$MOD.card_title"] ?: "Card", color = fg, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(16.dp))
     }
 }

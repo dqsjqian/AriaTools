@@ -1,3 +1,4 @@
+#include "UnitConvertView.h"
 #include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "infra/i18n/I18n.h"
@@ -27,8 +28,10 @@ aria::binding::Converter<double, std::string> make_dbl_conv() {
 
 }  // namespace
 
-static UIViewController* build(UnitConvertVm& vm, UnitConvertVmHostVm& host,
-                                aria::binding::BindingEngine& be) {
+UnitConvertView::UnitConvertView(UnitConvertVmHostVm& host, aria::binding::BindingEngine& be)
+    : vc_(nil) {
+    auto& vm = host.inner();
+
     UILabel*     title   = wb::ios::ui::make_title(@"");
     UILabel*     desc    = wb::ios::ui::make_label(@"");
     UIButton*    catTemp = wb::ios::ui::make_button(@"");
@@ -39,7 +42,7 @@ static UIViewController* build(UnitConvertVm& vm, UnitConvertVmHostVm& host,
     UILabel*     fromLbl  = wb::ios::ui::make_label(@"");
     UILabel*     outLbl   = wb::ios::ui::make_label(@"");
 
-    auto* vc = wb::ios::ui::make_stack_vc(
+    vc_ = wb::ios::ui::make_stack_vc(
         @[title, desc, catTemp, catLen, catWt, inputLbl, valField, fromLbl, outLbl]);
 
     be.bind_text_oneway(host.title, wb::ios::ui::view_for(title));
@@ -73,7 +76,6 @@ static UIViewController* build(UnitConvertVm& vm, UnitConvertVmHostVm& host,
     syncOut();
     subs.push_back(vm.converted.on_changed([syncOut](double){ syncOut(); }));
     subs.push_back(vm.toLabel  .on_changed([syncOut](const std::string&){ syncOut(); }));
-    return vc;
 }
 
 }  // namespace wb::unitconvert::iosview
@@ -83,7 +85,8 @@ void register_unitconvert_view() {
     wb::ios::UIViewFactory::instance().register_builder(
         "unitconvert", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
             auto& host = static_cast<UnitConvertVmHostVm&>(vm);
-            return iosview::build(host.inner(), host, be);
+            auto* view = new iosview::UnitConvertView(host, be);
+            return view->viewController();
         });
 }
 }  // namespace wb::unitconvert

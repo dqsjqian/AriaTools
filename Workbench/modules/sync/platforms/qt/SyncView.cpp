@@ -1,5 +1,5 @@
+#include "SyncView.h"
 #include "support/QtViewFactory.h"
-#include "support/UiHelpers.h"
 #include "viewmodels/SyncVm.h"
 
 #include "aria/binding/binding_engine.hpp"
@@ -25,10 +25,10 @@ static QLabel* row_label(aria::Property<std::string>& p,
     return l;
 }
 
-static QWidget* build(wb::sync::SyncVm& vm, aria::binding::BindingEngine& be) {
-    auto* w = new QWidget;
-    auto& subs = wb::ui::subs_attached_to(w);
-    auto* lay = new QVBoxLayout(w);
+SyncView::SyncView(SyncVm& vm, aria::binding::BindingEngine& be)
+    : root_(new QWidget) {
+    auto& subs = wb::ui::subs_attached_to(root_);
+    auto* lay = new QVBoxLayout(root_);
 
     auto* title = wb::ui::make_title("");
     auto* hint  = wb::ui::make_info("");
@@ -104,8 +104,6 @@ static QWidget* build(wb::sync::SyncVm& vm, aria::binding::BindingEngine& be) {
     logView->setReadOnly(true);
     lay->addWidget(logView, 1);
     be.bind_text_oneway(vm.log, wb::ui::view_for(logView));
-
-    return w;
 }
 
 }  // namespace wb::sync::qtview
@@ -116,7 +114,8 @@ void register_sync_view() {
     wb::qt::QtViewFactory::instance().register_builder(
         "sync",
         [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            return qtview::build(static_cast<SyncVm&>(vm), be);
+            auto* view = new qtview::SyncView(static_cast<SyncVm&>(vm), be);
+            return view->widget();
         });
 }
 

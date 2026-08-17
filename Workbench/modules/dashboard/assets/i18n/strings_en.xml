@@ -2,4 +2,8 @@
 <resources>
     <string name="welcome">Welcome to Workbench</string>
     <string name="summary">Overview cards for todos, recent notes and calendar events will appear here.</string>
+    <string name="cart_empty">Cart is empty</string>
+    <string name="cart_items">Cart</string>
+    <string name="no_orders">No orders yet</string>
+    <string name="order_placed">Order placed</string>
 </resources>

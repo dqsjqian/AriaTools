@@ -1,5 +1,5 @@
+#include "SettingsView.h"
 #include "support/QtViewFactory.h"
-#include "support/UiHelpers.h"
 #include "viewmodels/SettingsVm.h"
 
 #include "aria/binding/binding_engine.hpp"
@@ -11,6 +11,7 @@
 
 namespace wb::settings::qtview {
 
+// Form row labels: bound to VM text (updates on language change).
 static QLabel* row_label(aria::Property<std::string>& p,
                          std::vector<aria::Subscription>& subs) {
     auto* l = new QLabel(QString::fromStdString(p.get()));
@@ -20,10 +21,10 @@ static QLabel* row_label(aria::Property<std::string>& p,
     return l;
 }
 
-static QWidget* build(wb::settings::SettingsVm& vm, aria::binding::BindingEngine& be) {
-    auto* w = new QWidget;
-    auto& subs = wb::ui::subs_attached_to(w);
-    auto* lay = new QVBoxLayout(w);
+SettingsView::SettingsView(SettingsVm& vm, aria::binding::BindingEngine& be)
+    : root_(new QWidget) {
+    auto& subs = wb::ui::subs_attached_to(root_);
+    auto* lay = new QVBoxLayout(root_);
 
     auto* title = wb::ui::make_title("");
     auto* hint  = wb::ui::make_info("");
@@ -52,8 +53,6 @@ static QWidget* build(wb::settings::SettingsVm& vm, aria::binding::BindingEngine
     form->addRow(row_label(vm.languageLabel, subs), langBox);
     lay->addLayout(form);
     lay->addStretch();
-
-    return w;
 }
 
 }  // namespace wb::settings::qtview
@@ -64,7 +63,8 @@ void register_settings_view() {
     wb::qt::QtViewFactory::instance().register_builder(
         "settings",
         [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            return qtview::build(static_cast<SettingsVm&>(vm), be);
+            auto* view = new qtview::SettingsView(static_cast<SettingsVm&>(vm), be);
+            return view->widget();
         });
 }
 
