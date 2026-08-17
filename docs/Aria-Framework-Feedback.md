@@ -149,6 +149,79 @@ View 可以绑任何 Property 的任何方向（VM→View / View→VM / 双向�
 
 ---
 
+## 五点五、Android Kotlin View ↔ C++ VM 对接：Aria 最大的短板
+
+**这是整个框架里让我最难受的一块。** Aria 的 `demo5-android-jni-mvvm` 只演示了单模块、单方向的 C++ → Kotlin 推送；真实业务要三端对齐时，Android 端几乎是我**从零手搓的**——Aria 在 Android 侧几乎没有提供可复用的绑定能力。
+
+### 5.5.1 现状：jni_bridge.cpp 500+ 行手写样板
+
+AriaTools 的 Android 桥接（`platform/android/jni/jni_bridge.cpp` 509 行 + `AndroidShell.cpp` 212 行）全是手写的：
+
+```cpp
+// ① 每模块手写 subscribe_all（C++ → Kotlin 推送）
+static void subscribe_all(wb::core::AppCore& core) {
+    for (auto& entry : core.modules()) {
+        if (id == "cart") {
+            auto& vm = static_cast<wb::cart::CartVm&>(*entry.vm);
+            bind_str(id, "title", vm.title);
+            bind_dbl(id, "subtotal", vm.subtotal);
+            // ... 每个属性一行，15 模块 ≈ 150 行
+        }
+    }
+}
+
+// ② Kotlin → C++ 文本回写，if-else 硬路由
+void AndroidShell::set_text(...) {
+    if (moduleId == "notes") { if (propName == "editTitle") n.editTitle.set(value); }
+    else if (moduleId == "cart") { if (propName == "draftName") c.draftName.set(value); }
+    // ... 15 模块 if-else
+}
+```
+
+**每个新模块都要手写三处路由**（subscribe_all / set_text / execute_command），且是 if-else 硬编码——**违背了模块热插拔的承诺**（删模块必须同步改这个文件）。
+
+### 5.5.2 类型系统在 JNI 边界彻底崩塌
+
+Qt 端 `be.bind_double(vm.bill, view_for(billSpin))` 是类型安全的；Android 端一切退化为 **String 传输**：
+
+```kotlin
+// Kotlin 侧：所有属性变成 Map<String, String>
+private val _props = MutableStateFlow<Map<String, String>>(emptyMap())
+val props: StateFlow<Map<String, String>> = _props.asStateFlow()
+```
+
+- `Property<double>` → `std::to_string` → `"3.50"` → Kotlin `String` → 再 `toDoubleOrNull()`
+- `Property<int>` → `"25"` → `String` → 再 `toIntOrNull()`
+- `Property<bool>` → `"1"/"0"` → `String` → 再 `== "1"`
+- **列表（ObservableList）更离谱**：用 `"\n"` 拼接字符串传输，Kotlin 再 `split('\n')` 还原——没有类型、没有 item 结构、纯文本 hack
+- 命令调用是字符串：`execute("cart", "addItem")`——**拼错静默无操作**，没有编译期检查
+
+**对比**：Qt/iOS 用强类型绑定，Android 用字符串协议。同一份 VM 逻辑，三端绑定体验天差地别。
+
+### 5.5.3 生命周期不对称
+
+- C++ VM 的 activate/deactivate 由 `AndroidShell::activate_module` 驱动，但 **Compose 页面没有 Controller 生命周期概念**——VM 激活时机和 Compose recomposition 生命周期完全脱节
+- Qt 有 `subs_attached_to(widget)`，iOS 我 Hack 了 `subs_keepalive()`，Android **根本没有订阅生命周期管理**——订阅要么全局泄漏，要么全手动
+
+### 5.5.4 VM 被 Android 能力短板污染
+
+因为 Android View 无法直接调 i18n（JNI 限制），业务 VM 被迫暴露一堆**只为 Android 渲染 label 的冗余 Property**（第五节 5.2 详述）——业务代码被平台短板反向污染。
+
+### 5.5.5 建议
+
+| 优先级 | 建议 | 说明 |
+|---|---|---|
+| **P0** | **提供 Android 绑定引擎**（等价 Qt 的 BindingEngine + AndroidAdapter） | JNI 侧提供类型化的 `bind_double/bind_int/bind_bool/bind_text`，而不是 String 协议；Kotlin 侧提供 `StateFlow` 直接映射，消灭手写字符串解析 |
+| **P0** | **列表模型绑定**（等价 Qt 的 `qt_list_model_adapter`） | ObservableList → RecyclerView/LazyColumn 原生适配，而不是 `"\n"` 拼接 |
+| **P1** | **命令类型化** | `executeCommand(moduleId, cmdName)` 改为编译期生成的命令枚举/接口 |
+| **P1** | **订阅生命周期** | JNI 侧提供 per-Activity/per-Fragment 的 SubscriptionBag（等价 Qt `subs_attached_to`） |
+| **P1** | **JNI 路由注册表化** | subscribe_all/set_text/execute_command 改为注册表驱动，配合热插拔 |
+| **P2** | **demo5 升级** | 从单模块单向推送，升级为多模块 + 双向 + 类型化的完整示例 |
+
+**一句话**：Aria 在 Qt/iOS 是"成熟的绑定框架"，在 Android 是"裸 JNI 基础"——中间差了一整个适配层。业务开发者要用它做 Android 端，等于自己把框架该做的活全干了。
+
+---
+
 ## 六、基于框架的二次封装：哪些本该是框架内建的
 
 作为业务开发者，我被迫在业务层打了这些补丁（都源自框架能力缺失）：
@@ -195,20 +268,24 @@ View 可以绑任何 Property 的任何方向（VM→View / View→VM / 双向�
 |---|---|---|
 | **P0** | `Computed<T>` 绑定重载 | 最高频坑，新人劝退点 |
 | **P0** | iOS per-Controller 订阅袋 | 消灭全局 keepalive Hack，正式 App 必需 |
+| **P0** | **Android 绑定引擎**（类型化 JNI，消灭 String 协议） | Android 端最大短板，差一个适配层 |
+| **P0** | **Android 列表模型绑定** | ObservableList → LazyColumn，而非 "\n" 拼接 |
 | **P0** | API 文档 + 绑定速查表 | 降低学习曲线 |
 | **P1** | 统一 VM 基类（消灭 HostVm） | 消灭双轨制 |
 | **P1** | enum 绑定适配 | 减少绕路 |
 | **P1** | i18n C 导出（Android 直读） | 业务 VM 不再被平台污染 |
 | **P1** | Android JNI 路由注册表化 | 热插拔承诺在 Android 兑现 |
+| **P1** | Android 订阅生命周期 / 命令类型化 | 对齐 Qt/iOS 体验 |
 | **P2** | 动态模块加载（IModuleLoader） | 运行时热插拔 |
 | **P2** | 脚手架 CLI / 统一构建 CLI | 开发者体验 |
+| **P2** | demo5 升级为多模块双向类型化示例 | 官方样板对齐业务需求 |
 
 ---
 
 ## 十、结语
 
-Aria 的**内核设计是对的**（响应式图 + 类型安全 + 生命周期级联 + adapter 抽象），它让我能用一份 C++ 代码跑三端，这是 Qt/原生/iOS 单独做都做不到的。但**"框架"到"产品"之间还差最后一公里**：绑定 API 覆盖不全、平台订阅生命周期不对称、文档缺位、模块系统只有编译期解耦。
+Aria 的**内核设计是对的**（响应式图 + 类型安全 + 生命周期级联 + adapter 抽象），它让我能用一份 C++ 代码跑三端，这是 Qt/原生/iOS 单独做都做不到的。但**"框架"到"产品"之间还差最后一公里**：绑定 API 覆盖不全、平台订阅生命周期不对称、**Android 端缺整个绑定适配层**、文档缺位、模块系统只有编译期解耦。
 
-如果维护者能优先解决 P0 三项（Computed 绑定、iOS 订阅袋、文档），Aria 从"优秀框架"到"开发者友好框架"的跨越就完成了。
+如果维护者能优先解决 P0 五项（Computed 绑定、iOS 订阅袋、Android 绑定引擎、Android 列表绑定、文档），Aria 从"优秀框架"到"开发者友好框架"的跨越就完成了——尤其 Android 端，那是投入产出比最高的一块。
 
 —— 期待 Aria 变得更好。有任何需要我补充细节或提供复现代码的，随时联系。
