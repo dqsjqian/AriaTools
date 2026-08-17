@@ -13,6 +13,19 @@ std::string bundle_i18n_dir() {
     if (!res) return "./i18n";
     return std::string([[res stringByAppendingPathComponent:@"i18n"] UTF8String]);
 }
+
+// Initial language follows the device language (the XmlI18nService maps
+// "en" -> strings_en.xml; anything else falls back to strings.xml, the
+// default Chinese bundle). Previously hard-coded "zh-CN" made the whole
+// UI stay Chinese even on an English device.
+std::string initial_lang() {
+    NSString* lang = [NSLocale preferredLanguages].firstObject;
+    if (!lang) return "zh-CN";
+    NSString* tag = [lang componentsSeparatedByString:@"-"].firstObject;
+    if ([tag isEqualToString:@"en"]) return "en";
+    if ([tag isEqualToString:@"zh"]) return "zh-CN";
+    return "en";
+}
 }  // namespace
 
 IosShell::IosShell()
@@ -22,7 +35,7 @@ IosShell::IosShell()
       // — otherwise the InlineExecutor fallback trips the graph thread-affinity
       // check the moment any module creates an AsyncCommand (e.g. login).
       be_(adapter_),
-      core_(bundle_i18n_dir(), "zh-CN")
+      core_(bundle_i18n_dir(), initial_lang())
 {
     // Inject the main-queue executor + delay BEFORE load_modules(): see
     // AppCore::AppCore() comment — "load_modules() is called by the platform

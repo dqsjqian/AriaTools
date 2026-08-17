@@ -72,8 +72,11 @@ DashboardView::DashboardView(DashboardVm& vm, aria::binding::BindingEngine& be)
                 entry->module_id(), entry->inner(), be);
         }
 
-        // Clear the embedded host (Push kind) — root shows nothing.
-        for (UIViewController* child in vc_.childViewControllers) {
+        // Clear the embedded page container (Push kind) — at root it shows
+        // nothing. Embedded children live under pageHost_ (the container in
+        // the home layout), NOT over the whole dashboard — otherwise the
+        // home buttons get covered and the user cannot hit Back.
+        for (UIViewController* child in pageHost_.childViewControllers) {
             [child willMoveToParentViewController:nil];
             [child.view removeFromSuperview];
             [child removeFromParentViewController];
@@ -83,10 +86,14 @@ DashboardView::DashboardView(DashboardVm& vm, aria::binding::BindingEngine& be)
 
         switch (entry->presentation()) {
             case wb::module_api::Presentation::Push: {
-                [vc_ addChildViewController:page];
-                page.view.frame = vc_.view.bounds;
-                [vc_.view addSubview:page.view];
-                [page didMoveToParentViewController:vc_];
+                // Embed inside pageHost_, keeping the home title/buttons and
+                // the tab bar visible above/below.
+                [pageHost_ addChildViewController:page];
+                page.view.frame = pageHost_.view.bounds;
+                page.view.autoresizingMask =
+                    UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+                [pageHost_.view addSubview:page.view];
+                [page didMoveToParentViewController:pageHost_];
                 break;
             }
             case wb::module_api::Presentation::Modal:

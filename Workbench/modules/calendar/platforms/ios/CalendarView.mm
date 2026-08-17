@@ -34,6 +34,10 @@
 
     _subscribeButton = [UIButton buttonWithType:UIButtonTypeSystem];
 
+    _statusLabel = [[UILabel alloc] init];
+    _statusLabel.font = [UIFont systemFontOfSize:12];
+    _statusLabel.numberOfLines = 0;
+
     // Nav row (horizontal stack).
     UIStackView *navRow = [[UIStackView alloc] initWithArrangedSubviews:@[
         _prevButton, _monthTitleLabel, _nextButton, _todayButton, _refreshButton
