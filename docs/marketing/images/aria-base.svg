@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" font-family="-apple-system,'PingFang SC','Helvetica Neue',sans-serif">
+  <rect width="1280" height="720" fill="#0f172a"/>
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <text x="640" y="78" text-anchor="middle" fill="#f8fafc" font-size="46" font-weight="700">Aria · C++20 MVVM 框架底座</text>
+  <text x="640" y="124" text-anchor="middle" fill="#94a3b8" font-size="24">响应式引擎驱动 · 业务零平台依赖 · 一套逻辑三端复用</text>
+
+  <g filter="url(#sh)">
+    <rect x="60" y="170" width="1160" height="180" rx="18" fill="url(#g1)"/>
+    <text x="640" y="210" text-anchor="middle" fill="#fff" font-size="28" font-weight="600">响应式核心（Reactive Core）</text>
+    <g text-anchor="middle" fill="#f1f5f9" font-size="22">
+      <text x="180" y="280" font-weight="600">Property</text><text x="180" y="310" font-size="16" fill="#e0e7ff">单值状态</text>
+      <text x="410" y="280" font-weight="600">ObservableList</text><text x="410" y="310" font-size="16" fill="#e0e7ff">列表增删</text>
+      <text x="640" y="280" font-weight="600">Computed</text><text x="640" y="310" font-size="16" fill="#e0e7ff">自动派生</text>
+      <text x="860" y="280" font-weight="600">Command</text><text x="860" y="310" font-size="16" fill="#e0e7ff">用户动作</text>
+      <text x="1070" y="280" font-weight="600">Subscription</text><text x="1070" y="310" font-size="16" fill="#e0e7ff">生命周期</text>
+    </g>
+  </g>
+
+  <g filter="url(#sh)">
+    <rect x="60" y="392" width="1160" height="120" rx="18" fill="#1e293b" stroke="#334155"/>
+    <text x="640" y="428" text-anchor="middle" fill="#e2e8f0" font-size="26" font-weight="600">绑定引擎 BindingEngine</text>
+    <text x="640" y="466" text-anchor="middle" fill="#94a3b8" font-size="20">VM 属性 / 命令 → View：bind_text_oneway / bind_command / bind_*</text>
+    <text x="640" y="496" text-anchor="middle" fill="#64748b" font-size="17">线程亲和不变量（graph-thread）· 协程 AsyncCommand 自动调度回 UI 线程</text>
+  </g>
+
+  <text x="640" y="562" text-anchor="middle" fill="#e2e8f0" font-size="26" font-weight="600">平台适配器（同一份业务逻辑）</text>
+  <g text-anchor="middle">
+    <rect x="120" y="592" width="220" height="80" rx="14" fill="url(#g2)"/>
+    <text x="230" y="630" fill="#083344" font-size="24" font-weight="600">Qt (桌面)</text>
+    <text x="230" y="656" fill="#164e63" font-size="16">Windows / macOS / Linux</text>
+    <rect x="420" y="592" width="220" height="80" rx="14" fill="url(#g2)"/>
+    <text x="530" y="630" fill="#083344" font-size="24" font-weight="600">UIKit (iOS)</text>
+    <text x="530" y="656" fill="#164e63" font-size="16">child VC / present VC</text>
+    <rect x="720" y="592" width="220" height="80" rx="14" fill="url(#g2)"/>
+    <text x="830" y="630" fill="#083344" font-size="24" font-weight="600">Compose (Android)</text>
+    <text x="830" y="656" fill="#164e63" font-size="16">JNI side-channel</text>
+    <rect x="1020" y="592" width="180" height="80" rx="14" fill="#334155" stroke="#475569"/>
+    <text x="1110" y="624" fill="#cbd5e1" font-size="22" font-weight="600">Web (HttpAdapter)</text>
+    <text x="1110" y="652" fill="#94a3b8" font-size="15">Aria 已支持 · 本项目未接入</text>
+  </g>
+</svg>
