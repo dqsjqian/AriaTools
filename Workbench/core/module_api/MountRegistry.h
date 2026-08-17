@@ -29,6 +29,8 @@
 
 #include "aria/binding/view_model.hpp"
 
+#include <nlohmann/json.hpp>
+
 #include <functional>
 #include <memory>
 #include <optional>
@@ -46,6 +48,20 @@ class ModuleContext;
 struct Mounted {
     std::string moduleId;
     std::shared_ptr<aria::binding::ViewModel> vm;
+};
+
+/// Optional interface a MOUNTED VM can implement to receive the host's mount
+/// arguments — the extension-point analogue of INavigationTarget::on_navigate.
+/// Called by MountRegistry::Resolve right after the factory builds the VM, so
+/// hosts can parameterize the mounted UI without any coupling to the provider
+/// (the args ride as json; the provider decides how to interpret them).
+class IMountArgs {
+public:
+    virtual ~IMountArgs() = default;
+
+    /// Consume the host-provided mount args. Return false to reject the mount
+    /// (Resolve then reports no mount → host renders the placeholder).
+    virtual bool on_mount(const nlohmann::json& args) = 0;
 };
 
 /// Well-known demo slot ids. Kept here (framework kernel) so both host and
@@ -70,15 +86,42 @@ public:
         return inserted;
     }
 
-    /// Host resolves the slot: builds a fresh VM via the provider's factory
-    /// (each resolution a fresh instance, like NavigatorHost's per-push VMs).
-    /// Returns nullopt when the slot has no enabled provider (graceful
-    /// degradation) — the host renders a placeholder instead.
-    [[nodiscard]] std::optional<Mounted> Resolve(const std::string& slotId) {
+    /// Host resolves the slot: builds the provider VM via its factory, then
+    /// delivers `args` to it through IMountArgs::on_mount (when implemented)
+    /// so hosts can parameterize the mounted UI. The args default to an empty
+    /// object — existing call sites keep working unchanged.
+    /// Returns nullopt when the slot has no enabled provider, or the provider
+    /// rejects the args (graceful degradation — host renders a placeholder).
+    [[nodiscard]] std::optional<Mounted> Resolve(const std::string& slotId,
+                                                 const nlohmann::json& args =
+                                                     nlohmann::json::object()) {
         auto it = slots_.find(slotId);
         if (it == slots_.end() || !it->second.enabled) return std::nullopt;
         auto vm = it->second.factory(ctx_);
         if (!vm) return std::nullopt;
+        if (auto* consumer = dynamic_cast<IMountArgs*>(vm.get())) {
+            if (!consumer->on_mount(args)) return std::nullopt;
+        }
+        return Mounted{it->second.moduleId, std::move(vm)};
+    }
+
+    /// TYPED parameter channel (mirror of navigation's typed Push): the
+    /// caller names the consumer interface `I` — which declares
+    /// `on_mount(const T&)` — and the provider VM implements `I` to receive
+    /// the typed args (e.g. CartArgs). If the VM doesn't implement `I` the
+    /// typed args go unconsumed but the mount still succeeds, matching
+    /// navigation's "json-only target" semantics. Compile-time checked
+    /// struct fields, no json round-trip.
+    template<typename I, typename T>
+    [[nodiscard]] std::optional<Mounted> Resolve(const std::string& slotId,
+                                                 const T& args) {
+        auto it = slots_.find(slotId);
+        if (it == slots_.end() || !it->second.enabled) return std::nullopt;
+        auto vm = it->second.factory(ctx_);
+        if (!vm) return std::nullopt;
+        if (auto* consumer = dynamic_cast<I*>(vm.get())) {
+            if (!consumer->on_mount(args)) return std::nullopt;
+        }
         return Mounted{it->second.moduleId, std::move(vm)};
     }
 

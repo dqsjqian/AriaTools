@@ -13,6 +13,7 @@
 #include "aria/aria.hpp"
 #include "module_api/BaseVm.h"
 #include "module_api/INavigationTarget.h"
+#include "module_api/MountRegistry.h"
 #include "module_api/capabilities/cart/ICartPage.h"
 #include "aria/command.hpp"
 #include "aria/observable_list.hpp"
@@ -28,7 +29,9 @@
 namespace wb::cart {
 
 class CartVm : public wb::core::BaseVm,
-               public wb::module_api::ICartPage {
+               public wb::module_api::ICartPage,
+               public wb::module_api::IMountArgs,
+               public wb::module_api::IMountCartArgs {
 private:
     aria::runtime::EventBus& bus_;
 
@@ -90,6 +93,27 @@ public:
     bool on_navigate(const nlohmann::json& payload) override {
         draftName.set(payload.value(ICartPage::kParamProduct, std::string{}));
         draftPrice.set(payload.value(ICartPage::kParamPrice, 0.0));
+        return true;
+    }
+
+    // ── IMountArgs (extension points) ─────────────────────────────────
+    /// The host parameterized this mount (e.g. dashboard mounted the cart
+    /// pre-filled with a product). Interprets the same json keys as the
+    /// navigation channel — a mounted cart and a pushed cart agree on the
+    /// param vocabulary without sharing headers.
+    bool on_mount(const nlohmann::json& args) override {
+        draftName.set(args.value(ICartPage::kParamProduct, draftName.get()));
+        draftPrice.set(args.value(ICartPage::kParamPrice, draftPrice.get()));
+        return true;
+    }
+
+    // ── IMountCartArgs (extension points, TYPED channel) ──────────────
+    /// The host mounted the cart with a CartArgs struct directly
+    /// (Resolve<IMountCartArgs>(slot, CartArgs{...})) — compile-time checked
+    /// fields, no json round-trip. Mirror of the typed navigation channel.
+    bool on_mount(const wb::module_api::CartArgs& args) override {
+        draftName.set(args.product);
+        draftPrice.set(args.price);
         return true;
     }
 
