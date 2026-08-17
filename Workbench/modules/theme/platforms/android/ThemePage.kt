@@ -72,3 +72,8 @@ private fun ThemeCard(props: Map<String, String>) {
         Text(props["$MOD.card_title"] ?: "Card", color = fg, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(16.dp))
     }
 }
+
+// ── Module self-registration (Android twin of Qt/iOS register_<mod>_view) ──
+fun register_theme_page() {
+    com.dqsjqian.ariatools.ui.ComposeViewFactory.register("theme") { ThemePage(it) }
+}

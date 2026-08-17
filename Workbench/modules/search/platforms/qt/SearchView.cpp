@@ -15,8 +15,8 @@
 namespace wb::search::qtview {
 using namespace wb::ui;
 
-SearchView::SearchView(SearchVmHostVm& host, aria::binding::BindingEngine& be)
-    : root_(new QWidget) {
+QWidget* build_view(SearchVmHostVm& host, aria::binding::BindingEngine& be) {
+    auto* root_ = new QWidget;
     auto& vm = host.inner();
     auto& s_subs = subs_attached_to(root_);
     auto* lay = new QVBoxLayout(root_);
@@ -70,6 +70,7 @@ SearchView::SearchView(SearchVmHostVm& host, aria::binding::BindingEngine& be)
         });
     listView->setModel(model);
     lay->addWidget(listView, 1);
+    return root_;
 }
 
 }  // namespace wb::search::qtview
@@ -80,8 +81,7 @@ void register_search_view() {
         "search",
         [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
             auto& host = static_cast<SearchVmHostVm&>(vm);
-            auto* view = new qtview::SearchView(host, be);
-            return view->widget();
+            return qtview::build_view(host, be);
         });
 }
 }  // namespace wb::search

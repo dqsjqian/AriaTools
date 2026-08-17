@@ -1,32 +1,18 @@
 #pragma once
 //
-// NotesView — Qt view for the "notes" module.
+// NotesView — Qt view for the "notes" module (Aria free-function view).
 //
-// Owns the note list, the editor area, and all subscriptions. The list
-// stores the note id in each item's UserRole to avoid depending on row
-// numbers.
+// build_view() creates the widgets, wires the bindings, and returns the root
+// widget. register_notes_view() registers it with the QtViewFactory.
 //
-#include "support/UiHelpers.h"
 #include "aria/binding/binding_engine.hpp"
 
 #include <QWidget>
-
-class QListWidget;
-class QLineEdit;
-class QPlainTextEdit;
-class QPushButton;
-class QLabel;
 
 namespace wb::notes { class NotesVm; }
 
 namespace wb::notes::qtview {
 
-class NotesView {
-public:
-    NotesView(NotesVm& vm, aria::binding::BindingEngine& be);
-    QWidget* widget() const { return root_; }
-private:
-    QWidget* root_;
-};
+QWidget* build_view(NotesVm& vm, aria::binding::BindingEngine& be);
 
 }  // namespace wb::notes::qtview

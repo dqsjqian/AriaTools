@@ -17,9 +17,11 @@
 namespace wb::chat::qtview {
 using namespace wb::ui;
 
-// ─── PublisherView ────────────────────────────────────────────────────────
-PublisherView::PublisherView(ChatPublisherVm& pub, aria::binding::BindingEngine& be)
-    : row_(new QWidget) {
+namespace {
+
+// ─── Publisher sub-view ───────────────────────────────────────────────────
+QWidget* build_publisher_view(ChatPublisherVm& pub, aria::binding::BindingEngine& be) {
+    auto* row_ = new QWidget;
     auto* row = new QHBoxLayout(row_);
     auto* userEdit = new QLineEdit; userEdit->setPlaceholderText(QString::fromStdString(wb::i18n::str_in("chat", "user")));
     userEdit->setMaximumWidth(100);
@@ -31,11 +33,12 @@ PublisherView::PublisherView(ChatPublisherVm& pub, aria::binding::BindingEngine&
     be.bind_text   (pub.user,  view_for(userEdit));
     be.bind_text   (pub.draft, view_for(draftEdit));
     be.bind_command(pub.send,  view_for(sendBtn));
+    return row_;
 }
 
-// ─── SubscriberView ───────────────────────────────────────────────────────
-SubscriberView::SubscriberView(ChatSubscriberVm& sub, aria::binding::BindingEngine&)
-    : list_(new QListView) {
+// ─── Subscriber sub-view ──────────────────────────────────────────────────
+QWidget* build_subscriber_view(ChatSubscriberVm& sub, aria::binding::BindingEngine&) {
+    auto* list_ = new QListView;
     auto* model = new aria::adapters::qt6::ObservableListModel<ChatMessage>(
         sub.messages,
         {{Qt::DisplayRole, "display"}},
@@ -48,11 +51,14 @@ SubscriberView::SubscriberView(ChatSubscriberVm& sub, aria::binding::BindingEngi
             return {};
         });
     list_->setModel(model);
+    return list_;
 }
 
-// ─── Top-level ChatView ───────────────────────────────────────────────────
-ChatView::ChatView(ChatVm& vm, aria::binding::BindingEngine& be)
-    : root_(new QWidget) {
+}  // namespace
+
+// ─── Top-level build_view ─────────────────────────────────────────────────
+QWidget* build_view(ChatVm& vm, aria::binding::BindingEngine& be) {
+    auto* root_ = new QWidget;
     auto& s_subs = subs_attached_to(root_);
     auto* lay = new QVBoxLayout(root_);
     // Hint banner: VM-owned desc property (i18n, auto-refreshes on language change).
@@ -60,13 +66,14 @@ ChatView::ChatView(ChatVm& vm, aria::binding::BindingEngine& be)
     lay->addWidget(info);
     be.bind_text_oneway(vm.desc, view_for(info));
 
-    publisher_  = std::make_unique<PublisherView>(*vm.publisher, be);
-    subscriber_ = std::make_unique<SubscriberView>(*vm.subscriber, be);
+    auto* publisher  = build_publisher_view(*vm.publisher, be);
+    auto* subscriber = build_subscriber_view(*vm.subscriber, be);
 
     lay->addWidget(new QLabel("<b>Publisher</b>"));
-    lay->addWidget(publisher_->widget());
+    lay->addWidget(publisher);
     lay->addWidget(new QLabel("<b>Subscriber</b>"));
-    lay->addWidget(subscriber_->widget(), 1);
+    lay->addWidget(subscriber, 1);
+    return root_;
 }
 
 }  // namespace wb::chat::qtview
@@ -76,8 +83,7 @@ void register_chat_view() {
     wb::qt::QtViewFactory::instance().register_builder(
         "chat",
         [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            auto* view = new qtview::ChatView(static_cast<ChatVm&>(vm), be);
-            return view->widget();
+            return qtview::build_view(static_cast<ChatVm&>(vm), be);
         });
 }
 }  // namespace wb::chat

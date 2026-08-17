@@ -1,30 +1,19 @@
 #pragma once
 //
-// ThemeView — Qt view for the "theme" module.
+// ThemeView — Qt view for the "theme" module (Aria free-function view).
 //
-// Uses the HostVm pattern: the constructor receives ThemeVmHostVm and
-// derives the inner ThemeVm from it (for currentDisplayName, available_themes,
+// Uses the HostVm pattern: build_view() receives ThemeVmHostVm and derives
+// the inner ThemeVm from it (for currentDisplayName, available_themes,
 // theme(), pick()).
 //
-#include "support/UiHelpers.h"
 #include "aria/binding/binding_engine.hpp"
 
 #include <QWidget>
-
-class QComboBox;
-class QFrame;
-class QLabel;
 
 namespace wb::theme { class ThemeVmHostVm; }
 
 namespace wb::theme::qtview {
 
-class ThemeView {
-public:
-    ThemeView(ThemeVmHostVm& host, aria::binding::BindingEngine& be);
-    QWidget* widget() const { return root_; }
-private:
-    QWidget* root_;
-};
+QWidget* build_view(ThemeVmHostVm& host, aria::binding::BindingEngine& be);
 
 }  // namespace wb::theme::qtview

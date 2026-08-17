@@ -64,3 +64,8 @@ private fun LoginStatus(props: Map<String, String>) {
         Text(props["$MOD.error"] ?: "", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
     }
 }
+
+// ── Module self-registration (Android twin of Qt/iOS register_<mod>_view) ──
+fun register_login_page() {
+    com.dqsjqian.ariatools.ui.ComposeViewFactory.register("login") { LoginPage(it) }
+}

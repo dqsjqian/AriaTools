@@ -1,28 +1,18 @@
 #pragma once
 //
-// SettingsView — Qt view for the "settings" module.
+// SettingsView — Qt view for the "settings" module (Aria free-function view).
 //
-// Owns the language selector + form rows. register_settings_view() is a
-// thin entry point that constructs the view and returns its root widget.
+// build_view() creates the widgets, wires the bindings, and returns the root
+// widget. register_settings_view() registers it with the QtViewFactory.
 //
-#include "support/UiHelpers.h"
 #include "aria/binding/binding_engine.hpp"
 
 #include <QWidget>
-
-class QComboBox;
-class QLabel;
 
 namespace wb::settings { class SettingsVm; }
 
 namespace wb::settings::qtview {
 
-class SettingsView {
-public:
-    SettingsView(SettingsVm& vm, aria::binding::BindingEngine& be);
-    QWidget* widget() const { return root_; }
-private:
-    QWidget* root_;
-};
+QWidget* build_view(SettingsVm& vm, aria::binding::BindingEngine& be);
 
 }  // namespace wb::settings::qtview

@@ -15,8 +15,8 @@
 namespace wb::unitconvert::qtview {
 using namespace wb::ui;
 
-UnitConvertView::UnitConvertView(UnitConvertVmHostVm& host, aria::binding::BindingEngine& be)
-    : root_(new QWidget) {
+QWidget* build_view(UnitConvertVmHostVm& host, aria::binding::BindingEngine& be) {
+    auto* root_ = new QWidget;
     auto& vm = host.inner();
     auto& s_subs = subs_attached_to(root_);
     auto* lay = new QVBoxLayout(root_);
@@ -56,6 +56,7 @@ UnitConvertView::UnitConvertView(UnitConvertVmHostVm& host, aria::binding::Bindi
     s_subs.push_back(vm.fromLabel .on_changed(syncFrom));
     s_subs.push_back(vm.converted .on_changed([syncResult](double){ syncResult(); }));
     s_subs.push_back(vm.toLabel   .on_changed([syncResult](const std::string&){ syncResult(); }));
+    return root_;
 }
 
 }  // namespace wb::unitconvert::qtview
@@ -66,8 +67,7 @@ void register_unitconvert_view() {
         "unitconvert",
         [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
             auto& host = static_cast<UnitConvertVmHostVm&>(vm);
-            auto* view = new qtview::UnitConvertView(host, be);
-            return view->widget();
+            return qtview::build_view(host, be);
         });
 }
 }  // namespace wb::unitconvert

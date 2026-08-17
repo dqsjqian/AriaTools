@@ -98,3 +98,8 @@ private fun MessageList(props: Map<String, String>) {
         }
     }
 }
+
+// ── Module self-registration (Android twin of Qt/iOS register_<mod>_view) ──
+fun register_chat_page() {
+    com.dqsjqian.ariatools.ui.ComposeViewFactory.register("chat") { ChatPage(it) }
+}

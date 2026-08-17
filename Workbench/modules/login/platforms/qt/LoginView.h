@@ -1,12 +1,10 @@
 #pragma once
 //
-// LoginView — Qt view for the "login" module.
+// LoginView — Qt view for the "login" module (Aria free-function view).
 //
-// Owns the login form, the spinner/error/welcome/active status labels,
-// and the hand-wired button enabled/text composition. register_login_view()
-// is a thin entry point that constructs the view and returns its root widget.
+// build_view() creates the widgets, wires the bindings, and returns the root
+// widget. register_login_view() registers it with the QtViewFactory.
 //
-#include "support/UiHelpers.h"
 #include "aria/binding/binding_engine.hpp"
 
 #include <QWidget>
@@ -15,12 +13,6 @@ namespace wb::login { class LoginVm; }
 
 namespace wb::login::qtview {
 
-class LoginView {
-public:
-    LoginView(LoginVm& vm, aria::binding::BindingEngine& be);
-    QWidget* widget() const { return root_; }
-private:
-    QWidget* root_;
-};
+QWidget* build_view(LoginVm& vm, aria::binding::BindingEngine& be);
 
 }  // namespace wb::login::qtview

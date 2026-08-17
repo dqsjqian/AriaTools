@@ -48,8 +48,8 @@ void repopulate_picker(QComboBox* picker, ThemeVm& vm) {
 }
 }  // namespace
 
-ThemeView::ThemeView(ThemeVmHostVm& host, aria::binding::BindingEngine& be)
-    : root_(new QWidget) {
+QWidget* build_view(ThemeVmHostVm& host, aria::binding::BindingEngine& be) {
+    auto* root_ = new QWidget;
     auto& vm = host.inner();
     auto& s_subs = subs_attached_to(root_);
     auto* lay = new QVBoxLayout(root_);
@@ -93,6 +93,7 @@ ThemeView::ThemeView(ThemeVmHostVm& host, aria::binding::BindingEngine& be)
             title->setText(QString::fromStdString(wb::i18n::str_in("theme", "card_title")));
             body ->setText(QString::fromStdString(wb::i18n::str_in("theme", "card_body")));
         }));
+    return root_;
 }
 
 }  // namespace wb::theme::qtview
@@ -103,8 +104,7 @@ void register_theme_view() {
         "theme",
         [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
             auto& host = static_cast<ThemeVmHostVm&>(vm);
-            auto* view = new qtview::ThemeView(host, be);
-            return view->widget();
+            return qtview::build_view(host, be);
         });
 }
 }  // namespace wb::theme
