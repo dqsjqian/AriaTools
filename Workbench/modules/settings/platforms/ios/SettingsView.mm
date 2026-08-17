@@ -11,8 +11,8 @@ static UIViewController* build(SettingsVm& vm, aria::binding::BindingEngine& be)
     UILabel*  title   = wb::ios::ui::make_title(@"");
     UILabel*  hint    = wb::ios::ui::make_label(@"");
     UILabel*  langLbl = wb::ios::ui::make_label(@"");
-    UIButton* zh      = wb::ios::ui::make_button(@"简体中文");
-    UIButton* en      = wb::ios::ui::make_button(@"English");
+    UIButton* zh      = wb::ios::ui::make_button(@"");
+    UIButton* en      = wb::ios::ui::make_button(@"");
 
     auto* vc = wb::ios::ui::make_stack_vc(@[title, hint, langLbl, zh, en]);
 
@@ -20,6 +20,8 @@ static UIViewController* build(SettingsVm& vm, aria::binding::BindingEngine& be)
     be.bind_text_oneway(vm.hint, wb::ios::ui::view_for(hint));
     be.bind_text_oneway(vm.languageLabel, wb::ios::ui::view_for(langLbl));
     // Language switch: pass the language code as a binding parameter to the command.
+    be.bind_text_oneway(vm.zhLabel, wb::ios::ui::view_for(zh));
+    be.bind_text_oneway(vm.enLabel, wb::ios::ui::view_for(en));
     be.bind_command(vm.switchLanguage, wb::ios::ui::view_for(zh), std::string("zh-CN"));
     be.bind_command(vm.switchLanguage, wb::ios::ui::view_for(en), std::string("en"));
     return vc;

@@ -3,9 +3,32 @@
 #include "infra/i18n/I18n.h"
 
 #include <filesystem>
+#include <functional>
 #include <memory>
 
 namespace wb::infra {
+
+namespace {
+
+/// No-op fallback timer: fires immediately, ignoring the delay. Used only
+/// until a platform shell injects a real UI-loop-backed scheduler.
+class InlineTimer final : public aria::IDelayedScheduler {
+public:
+    void post_after(std::chrono::milliseconds, std::function<void()> fn) override {
+        fn();
+    }
+};
+
+}  // namespace
+
+aria::async::IExecutor& ServiceHub::ui_exec() {
+    return ui_exec_ ? *ui_exec_ : inline_exec_;
+}
+
+aria::IDelayedScheduler& ServiceHub::timer() {
+    static InlineTimer fallback;
+    return timer_ ? *timer_ : fallback;
+}
 
 ServiceHub::ServiceHub(std::string i18nBaseDir, std::string initialLang) {
     using namespace wb::services;

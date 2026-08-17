@@ -76,4 +76,10 @@ void NotesVm::refresh_status_() {
     }
 }
 
+
+std::string NotesVm::display_title(const Note& n) const {
+    return n.title.empty() ? wb::i18n::str_in("common", "untitled")
+                           : n.title;
+}
+
 }  // namespace wb::notes

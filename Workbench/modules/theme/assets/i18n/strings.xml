@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">主题切换</string>
+    <string name="desc">DI Container：三个 ITheme 实现，切换时 register_singleton 替换，View 只认 ITheme 抽象。</string>
+    <string name="card_title">Aria 框架</string>
+    <string name="card_body">这是一个示例卡片——切换主题，它的背景/字体/边框都会换。</string>
+    <string name="theme_light">浅色</string>
+    <string name="theme_dark">深色</string>
+    <string name="theme_solarized">Solarized</string>
+</resources>

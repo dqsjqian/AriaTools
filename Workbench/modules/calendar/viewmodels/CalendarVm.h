@@ -45,6 +45,10 @@ public:
     // Weekday header (Mon..Sun)
     aria::Property<std::string> wd1, wd2, wd3, wd4, wd5, wd6, wd7;
 
+    /// Day-cell events text (≤3 titles + ellipsis) — display assembly lives here.
+    [[nodiscard]] std::string display_events(const DayCell& c) const;
+    /// Subscription display name (falls back to URL when unset).
+    [[nodiscard]] std::string display_sub_name(const Subscription& s) const;
     void on_activate() override;
     void on_deactivate() override;
 

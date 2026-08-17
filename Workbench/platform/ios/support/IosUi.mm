@@ -73,4 +73,9 @@ UIViewController* make_stack_vc(NSArray<UIView*>* children) {
     return vc;
 }
 
+std::vector<aria::Subscription>& subs_keepalive() {
+    static std::vector<aria::Subscription> v;
+    return v;
+}
+
 }  // namespace wb::ios::ui

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">Shopping Cart</string>
+    <string name="desc">ObservableList feeds the list; item changes bubble as ItemChanged and totals are incremental Effect sums, all in the VM.</string>
+    <string name="add">Add to cart</string>
+    <string name="name_label">Item</string>
+    <string name="price_label">Price</string>
+    <string name="inc">Qty +1</string>
+    <string name="dec">Qty -1</string>
+    <string name="remove">Remove selected</string>
+    <string name="count">%1 items</string>
+    <string name="subtotal">Subtotal: ¥ %1</string>
+    <string name="tax">Tax (8%): ¥ %1</string>
+    <string name="total">Total: ¥ %1</string>
+</resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">Sign Up Form</string>
+    <string name="desc">Each field is a FormField aggregated by FormValidator; submit enabled binds form.is_valid, cross-field rules recompute automatically.</string>
+    <string name="username">Username</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm">Confirm</string>
+    <string name="submit">Sign up</string>
+    <string name="unregistered">(not registered)</string>
+    <string name="registered_suffix">registered</string>
+    <string name="err_username_short">Username must be at least 3 characters</string>
+    <string name="err_username_long">Username must not exceed 16 characters</string>
+    <string name="err_email_required">Email is required</string>
+    <string name="err_email_invalid">Invalid email format</string>
+    <string name="err_password_short">Password must be at least 6 characters</string>
+    <string name="err_password_no_digit">Password must contain at least one digit</string>
+    <string name="err_password_mismatch">Passwords do not match</string>
+</resources>

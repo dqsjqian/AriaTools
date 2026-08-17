@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">Fake Login</string>
+    <string name="desc">The VM extends ViewModel; submit() only fires while active; ViewModelScope + AsyncCommand cancel pending coroutines on destruction.</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="logging_in">Logging in…</string>
+    <string name="vm_active">VM state: active</string>
+    <string name="vm_inactive">VM state: inactive</string>
+    <string name="not_logged_in">(not logged in)</string>
+    <string name="welcome_prefix">Welcome back, </string>
+    <string name="err_password_empty">Password cannot be empty</string>
+    <string name="err_user_banned">User bob has been banned</string>
+    <string name="err_invalid_credentials">Invalid username or password</string>
+</resources>

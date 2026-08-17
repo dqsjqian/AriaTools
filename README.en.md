@@ -1,0 +1,119 @@
+<div align="center">
+
+# ✦ AriaTools
+
+**Aria's cross-platform MVVM best practice** · plugin-based · modular · zero-logic views
+
+One C++20 core, four platform view shells: Qt / iOS / Android / Web
+
+[![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/20)
+[![Framework](https://img.shields.io/badge/Aria-v1.1.0-blueviolet.svg)](https://github.com/dqsjqian/Aria)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Qt6%20%7C%20iOS%20%7C%20Android%20%7C%20Web-lightgrey.svg)](#)
+
+[English](README.en.md) | [简体中文](README.md)
+
+</div>
+
+---
+
+## 🎯 What is this?
+
+**AriaTools** (formerly AiTools) is the flagship cross-platform example for [Aria](https://github.com/dqsjqian/Aria) (C++20 reactive MVVM framework) — and a **best-practice blueprint** for Aria's cross-platform architecture:
+
+- **One pure-C++ core (Model + ViewModel + Service), four platform view shells** (Qt6 desktop / iOS UIKit / Android Compose / Web HTTP)
+- **Plugin-style modular architecture**: 15 business modules, one static library each (`wb_module_<name>`); adding a module = one directory + one registration line
+- **All logic sinks into the cross-platform layer** (VM/Model/Service); views only bind and render — no business computation, no state juggling, no hard-coded copy in views
+- **Zero-logic views are enforced by architecture**: every platform resolves pages through a registration registry (QtViewFactory / UIViewFactory / ComposeViewFactory) keyed by module id
+
+> In short: **AriaTools demonstrates "one ViewModel, four platforms"** — the ViewModel is a single C++ codebase; Qt / iOS / Android / Web each only write their own view shell.
+
+## ✨ Key Features
+
+- 🧩 **Plugin module architecture** — `IModule` contract + `make_<mod>_module()` factory + explicit `ModulesManifest` registration; modules depend only on core infrastructure (`ModuleContext`), never on each other
+- 📦 **One module, one library** — single-line `wb_add_module()`; SOURCES (cross-platform logic) + QT_SOURCES / IOS_SOURCES / Android pages (platform views) compiled per-platform
+- 🎛 **Strongly-typed MVVM** — View → ViewModel → Model → Service → infrastructure, DI via `ServiceHub`/Container; no Service Locator, no global singletons
+- 🌍 **Internationalization** — XML i18n with runtime language switching; VM text properties auto-refresh (`BaseVm::text()`)
+- 🔌 **Platform service injection** — UI-thread executor / worker pool / delayed scheduler injected by each platform shell into `ServiceHub`; modules get them via `ModuleContext` — business code stays platform-free
+- 🖥 **Four platform shells** — Qt6 (desktop), iOS (UIKit), Android (Compose + JNI side-channel), Web (HTTP adapter, planned)
+
+## 🏗 Architecture
+
+```
+AriaTools/
+├── Workbench/
+│   ├── core/                     # ★ pure C++, zero platform-UI dependency
+│   │   ├── utils/                #   wb_utils
+│   │   ├── infra/                #   wb_infra (i18n/storage/settings/…) + DI + EventBus
+│   │   ├── module_api/           #   wb_module_api (IModule/ModuleContext/BaseVm)
+│   │   └── app/                  #   wb_core_app (AppCore + ModulesManifest)
+│   ├── modules/<mod>/            # ★ business modules, one static lib each
+│   │   ├── viewmodels/           #   VM: all business logic (Property/Computed/Command)
+│   │   ├── models/ services/     #   Model / Service
+│   │   ├── module/               #   IModule + factory
+│   │   ├── platforms/qt/         #   Qt view (QT_SOURCES)
+│   │   ├── platforms/ios/        #   UIKit view (IOS_SOURCES)
+│   │   ├── platforms/android/    #   Compose page (Gradle sourceSets)
+│   │   └── assets/i18n/          #   module strings
+│   └── platform/
+│       ├── qt/                   #   Qt shell (QtViewFactory + UiHelpers)
+│       ├── ios/                  #   iOS shell (UIViewFactory + IosUi)
+│       └── android/              #   Gradle + JNI bridge + ComposeViewFactory
+└── third_party/aria              # Aria framework (submodule)
+```
+
+**Data flow (JNI side-channel; identical shape on every platform)**:
+
+```
+C++ VM (aria::Property) → on_changed → JNI callback → Kotlin StateFlow → Compose recomposition
+```
+
+## 📦 Modules (15)
+
+| Module | Purpose | Aria capabilities demonstrated |
+|---|---|---|
+| dashboard | Home overview | Property / i18n |
+| notes / calendar / tools | Notes / Calendar / Tools | ObservableList / forms |
+| settings / sync | Settings / Sync | service injection / EventBus |
+| tipcalc | Tip calculator | Computed / Command / reactive::batch |
+| unitconvert | Unit converter | auto-tracking Computed |
+| cart | Shopping cart | ObservableList derived collections |
+| signup | Sign-up form | FormField / FormValidator |
+| search | Search box | debounce / delayed scheduling |
+| login | Fake login | AsyncCommand / executor injection |
+| chat | Chat room | EventBus cross-module messaging |
+| theme | Theme switch | Container DI |
+| wizard | Sign-up wizard | multi-step form state machine |
+
+## 🚀 Quick Start
+
+```bash
+git clone --recurse-submodules https://github.com/dqsjqian/AriaTools.git
+cd AriaTools
+
+# Qt desktop (macOS / Linux)
+bash Workbench/scripts/gen-mac.sh            # or gen-win.ps1 / build.ps1 (Windows)
+
+# iOS (needs Xcode)
+bash Workbench/scripts/gen-ios.sh
+
+# Android (needs NDK r26+ / SDK CMake 3.22.1)
+bash Workbench/scripts/gen-android.sh        # core static libs only
+bash Workbench/scripts/gen-android.sh --apk  # core + Gradle APK
+```
+
+## 🛠 Tech Stack
+
+| Area | Technology |
+|---|---|
+| Language | C++20 |
+| Framework | [Aria](https://github.com/dqsjqian/Aria) (vendored, C++20 MVVM) |
+| Desktop | Qt6 (macOS / Windows / Linux) |
+| iOS | UIKit (Xcode project) |
+| Android | Kotlin + Jetpack Compose + NDK/JNI |
+| Web | Aria HTTP adapter (planned) |
+| Build | CMake + Gradle + Xcode |
+
+## 📜 License
+
+MIT © dqsjqian

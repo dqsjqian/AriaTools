@@ -14,9 +14,19 @@ SettingsVm::SettingsVm()
     text(title,         "title");
     text(hint,          "hint");
     text(languageLabel, "language");
+    text(zhLabel,       "lang_zh_CN");
+    text(enLabel,       "lang_en");
 }
 
 void SettingsVm::on_activate() { language.set(wb::i18n::language()); }
 void SettingsVm::on_deactivate() { bag().clear(); }
+
+
+std::vector<SettingsVm::LangEntry> SettingsVm::available_languages() const {
+    return {
+        {"zh-CN", wb::i18n::str_in("common", "lang_zh_CN")},
+        {"en",    wb::i18n::str_in("common", "lang_en")},
+    };
+}
 
 }  // namespace wb::settings

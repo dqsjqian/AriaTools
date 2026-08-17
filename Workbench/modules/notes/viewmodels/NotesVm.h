@@ -39,6 +39,8 @@ public:
     aria::Property<std::string> titlePlaceholder;
     aria::Property<std::string> bodyPlaceholder;
 
+    /// Display title for the list (empty title → localized "untitled").
+    [[nodiscard]] std::string display_title(const Note& n) const;
     void on_activate() override;
     void on_deactivate() override;
 

@@ -71,4 +71,21 @@ void CalendarVm::refresh_month_title_() {
     monthTitle.set(buf);
 }
 
+
+std::string CalendarVm::display_events(const DayCell& c) const {
+    std::string s;
+    int shown = 0;
+    for (const auto& t : c.eventTitles) {
+        if (shown >= 3) { s += "…"; break; }  // …
+        if (!s.empty()) s += "\n";
+        s += t;
+        ++shown;
+    }
+    return s;
+}
+
+std::string CalendarVm::display_sub_name(const Subscription& s) const {
+    return s.name.empty() ? s.url : s.name;
+}
+
 }  // namespace wb::calendar

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">购物车</string>
+    <string name="desc">ObservableList 直接接列表；item 变化冒泡为 ItemChanged，汇总用 Effect 增量求和，全写在 VM 里。</string>
+    <string name="add">加入购物车</string>
+    <string name="name_label">商品</string>
+    <string name="price_label">单价</string>
+    <string name="inc">数量 +1</string>
+    <string name="dec">数量 -1</string>
+    <string name="remove">删除选中</string>
+    <string name="count">共 %1 件商品</string>
+    <string name="subtotal">小计: ¥ %1</string>
+    <string name="tax">税 (8%): ¥ %1</string>
+    <string name="total">总计: ¥ %1</string>
+</resources>

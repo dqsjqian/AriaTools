@@ -7,6 +7,12 @@ CMakeFiles/
 cmake_install.cmake
 compile_commands.json
 
+# Android (Gradle / NDK cache)
+Workbench/platform/android/app/.cxx/
+Workbench/platform/android/app/build/
+Workbench/platform/android/.gradle/
+.gradle/
+
 # IDE
 .vscode/
 .idea/

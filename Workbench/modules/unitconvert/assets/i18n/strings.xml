@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">单位换算</string>
+    <string name="desc">单位换算器。Computed 里用 switch 根据 category 走不同公式——切换类别时 Computed 自动重建依赖集。</string>
+    <string name="cat_temperature">温度  (°C → °F)</string>
+    <string name="cat_length">长度  (m  → ft)</string>
+    <string name="cat_weight">重量  (kg → lb)</string>
+    <string name="input">输入: </string>
+    <string name="equals">= %1 %2</string>
+</resources>
