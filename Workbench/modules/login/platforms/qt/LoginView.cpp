@@ -1,5 +1,4 @@
 #include "LoginView.h"
-#include "support/QtViewFactory.h"
 #include "support/UiHelpers.h"
 #include "viewmodels/LoginVm.h"
 
@@ -15,8 +14,8 @@
 namespace wb::login::qtview {
 using namespace wb::ui;
 
-QWidget* build_view(LoginVm& vm, aria::binding::BindingEngine& be) {
-    auto* root_ = new QWidget;
+LoginView::LoginView(LoginVm& vm, aria::binding::BindingEngine& be)
+    : root_(new QWidget) {
     auto& s_subs = subs_attached_to(root_);
     auto* lay = new QVBoxLayout(root_);
     // Hint banner: VM-owned desc property (i18n, auto-refreshes on language change).
@@ -79,17 +78,6 @@ QWidget* build_view(LoginVm& vm, aria::binding::BindingEngine& be) {
     be.bind_optional_text(vm.login.last_result, view_for(welcome),
         [](const LoginResult& r) { return r.welcome; },
         wb::i18n::str_in("login", "not_logged_in"));
-    return root_;
 }
 
 }  // namespace wb::login::qtview
-
-namespace wb::login {
-void register_login_view() {
-    wb::qt::QtViewFactory::instance().register_builder(
-        "login",
-        [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            return qtview::build_view(static_cast<LoginVm&>(vm), be);
-        });
-}
-}  // namespace wb::login

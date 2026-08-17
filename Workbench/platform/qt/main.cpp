@@ -59,8 +59,9 @@ int main(int argc, char** argv) {
     root->addWidget(stack, 1);
     win.setCentralWidget(central);
 
-    // Nav text refreshes instantly on language change. Subscription is static, lives with the process.
-    static aria::Subscription s_langSub =
+    // Nav text refreshes instantly on language change. Keep the subscription
+    // local so it disconnects before the window, nav, and shell are destroyed.
+    aria::Subscription langSub =
         core.i18n().language().on_changed(
             [&core, nav, &win](const std::string&) {
                 const auto& ms = core.modules();

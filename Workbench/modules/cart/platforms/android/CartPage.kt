@@ -60,7 +60,7 @@ private fun AddItemForm(vm: AppViewModel, props: Map<String, String>) {
 @Composable
 private fun CartList(props: Map<String, String>) {
     val items = (props["$MOD.items"] ?: "").split('\n').filter { it.isNotBlank() }
-    LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
+    LazyColumn(modifier = Modifier.fillMaxWidth()) {
         items(items) { i -> Text(i, style = MaterialTheme.typography.bodySmall) }
     }
 }
@@ -71,9 +71,4 @@ private fun CartTotals(props: Map<String, String>) {
     Text("${props["$MOD.subtotal"] ?: ""}: ${props["$MOD.subtotal"] ?: ""}", style = MaterialTheme.typography.bodyMedium)
     Text("${props["$MOD.tax"] ?: ""}: ${props["$MOD.tax"] ?: ""}", style = MaterialTheme.typography.bodyMedium)
     Text("${props["$MOD.total"] ?: ""}: ${props["$MOD.total"] ?: ""}", style = MaterialTheme.typography.bodyMedium)
-}
-
-// ── Module self-registration (Android twin of Qt/iOS register_<mod>_view) ──
-fun register_cart_page() {
-    com.dqsjqian.ariatools.ui.ComposeViewFactory.register("cart") { CartPage(it) }
 }

@@ -13,6 +13,11 @@ public:
     int order() const override { return 8; }
     std::shared_ptr<aria::binding::ViewModel>
         create_view_model(wb::module_api::ModuleContext& ctx) override;
+
+    /// Registers the cart page as a cross-module navigation target
+    /// (ICartPage). Other modules navigate here via
+    /// `ctx.navigator().Push<ICartPage>(params)`.
+    void register_navigation(wb::module_api::NavigatorHost& nav) override;
 };
 
 }  // namespace wb::cart

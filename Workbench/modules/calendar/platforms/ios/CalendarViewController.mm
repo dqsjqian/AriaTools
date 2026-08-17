@@ -26,7 +26,7 @@
 
 - (void)loadView {
     // Controller creates the View (MVC: Controller owns View).
-    _calendarView = [[CalendarView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    _calendarView = [[CalendarView alloc] initWithFrame:CGRect{}];
     self.view = _calendarView;
 }
 

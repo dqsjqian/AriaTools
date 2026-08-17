@@ -10,6 +10,9 @@
 //
 #include "app/AppCore.h"
 
+#include "aria/async/executor.hpp"
+#include "aria/scheduler.hpp"
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -24,7 +27,10 @@ public:
         std::string title;   // resolved navigation title (current language)
     };
 
-    explicit AndroidShell(std::string i18nBaseDir, std::string initialLang = "zh-CN");
+    AndroidShell(std::string i18nBaseDir,
+                 aria::async::IExecutor& uiExecutor,
+                 aria::IDelayedScheduler& timer,
+                 std::string initialLang = "zh-CN");
     ~AndroidShell();
 
     AndroidShell(const AndroidShell&) = delete;

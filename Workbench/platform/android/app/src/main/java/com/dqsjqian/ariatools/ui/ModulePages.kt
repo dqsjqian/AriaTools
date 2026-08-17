@@ -4,6 +4,7 @@ import com.dqsjqian.ariatools.pages.register_calendar_page
 import com.dqsjqian.ariatools.pages.register_cart_page
 import com.dqsjqian.ariatools.pages.register_chat_page
 import com.dqsjqian.ariatools.pages.register_dashboard_page
+import com.dqsjqian.ariatools.pages.register_echo_page
 import com.dqsjqian.ariatools.pages.register_login_page
 import com.dqsjqian.ariatools.pages.register_notes_page
 import com.dqsjqian.ariatools.pages.register_search_page
@@ -20,13 +21,15 @@ import com.dqsjqian.ariatools.pages.register_wizard_page
  * ModulePages — Android page registration manifest, the twin of
  * QtViewManifest.cpp / IosViewManifest.mm. Called once at startup; every
  * module self-registers its Compose page into ComposeViewFactory via its
- * own register_<mod>_page() function (defined in each module's Page.kt).
+ * own register_<mod>_page() function (defined in each module's PageEntry.kt).
  *
- * To add a module: create modules/<mod>/platforms/android/<Mod>Page.kt with
- * a register_<mod>_page() function, add one import + one call here.
+ * To add a module: create modules/<mod>/platforms/android/<Mod>Page.kt and
+ * <Mod>PageEntry.kt with a register_<mod>_page() function, then add one import
+ * and one call here.
  */
 fun registerAllModulePages() {
     register_dashboard_page()
+    register_echo_page()
     register_notes_page()
     register_calendar_page()
     register_tools_page()

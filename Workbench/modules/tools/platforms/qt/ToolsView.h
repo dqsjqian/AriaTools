@@ -1,6 +1,6 @@
 #pragma once
 //
-// ToolsView — Qt view for the "tools" module (Aria free-function view).
+// ToolsView — Qt view for the "tools" module.
 //
 // Decomposed into sub-views, each owning its own QGroupBox + bindings:
 //   base64 group   — base64 encode/decode
@@ -8,9 +8,8 @@
 //   json group     — JSON format/minify
 //   file crypto    — file encrypt/decrypt
 //
-// The top-level build_view() assembles them into a vertical layout and wires
-// the shared VM. register_tools_view() registers the builder with the
-// QtViewFactory.
+// The top-level ToolsView constructor assembles them into a vertical layout
+// and wires the shared VM.
 //
 #include "aria/binding/binding_engine.hpp"
 
@@ -20,6 +19,12 @@ namespace wb::tools { class ToolsVm; }
 
 namespace wb::tools::qtview {
 
-QWidget* build_view(ToolsVm& vm, aria::binding::BindingEngine& be);
+class ToolsView {
+public:
+    ToolsView(ToolsVm& vm, aria::binding::BindingEngine& be);
+    QWidget* widget() const { return root_; }
+private:
+    QWidget* root_;
+};
 
 }  // namespace wb::tools::qtview

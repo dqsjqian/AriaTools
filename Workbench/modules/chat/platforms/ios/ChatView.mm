@@ -1,5 +1,4 @@
 #include "ChatView.h"
-#include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "infra/i18n/I18n.h"
 #include "viewmodels/ChatVm.h"
@@ -67,13 +66,3 @@ ChatView::ChatView(ChatVm& vm, aria::binding::BindingEngine& be)
 }
 
 }  // namespace wb::chat::iosview
-
-namespace wb::chat {
-void register_chat_view() {
-    wb::ios::UIViewFactory::instance().register_builder(
-        "chat", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            auto* view = new iosview::ChatView(static_cast<ChatVm&>(vm), be);
-            return view->viewController();
-        });
-}
-}  // namespace wb::chat

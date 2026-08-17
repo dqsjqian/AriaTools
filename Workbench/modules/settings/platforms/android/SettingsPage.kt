@@ -50,8 +50,3 @@ private fun LanguageSection(vm: AppViewModel, props: Map<String, String>) {
         Button(onClick = { vm.execute(MOD, "switchLanguage-en") }, modifier = Modifier.weight(1f)) { Text("English") }
     }
 }
-
-// ── Module self-registration (Android twin of Qt/iOS register_<mod>_view) ──
-fun register_settings_page() {
-    com.dqsjqian.ariatools.ui.ComposeViewFactory.register("settings") { SettingsPage(it) }
-}

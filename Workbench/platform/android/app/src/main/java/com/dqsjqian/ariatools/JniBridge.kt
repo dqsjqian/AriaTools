@@ -28,6 +28,12 @@ object JniBridge {
 
     private val mainHandler = Handler(Looper.getMainLooper())
 
+    /** Called from native worker threads to request a graph-thread drain. */
+    @JvmStatic
+    fun postToMain() {
+        mainHandler.post { nativeRunMainTasks() }
+    }
+
     init {
         System.loadLibrary("aria_jni")
     }
@@ -78,6 +84,7 @@ object JniBridge {
 
     @JvmStatic external fun nativeCreateShell(i18nDir: String)
     @JvmStatic external fun nativeDestroyShell()
+    @JvmStatic external fun nativeRunMainTasks()
     @JvmStatic external fun nativeActivateModule(id: String)
     @JvmStatic external fun nativeSetProperty(moduleId: String, propName: String, value: String)
     @JvmStatic external fun nativeExecuteCommand(moduleId: String, cmdName: String)

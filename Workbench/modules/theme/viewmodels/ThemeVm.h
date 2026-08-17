@@ -13,6 +13,7 @@
 #include "aria/aria.hpp"
 #include "aria/command.hpp"
 #include "aria/runtime/container.hpp"
+#include "module_api/BaseVm.h"
 
 #include <memory>
 #include <string>
@@ -36,9 +37,17 @@ struct ThemeOption {
     std::string displayName;
 };
 
-class ThemeVm {
+class ThemeVm final : public wb::core::BaseVm {
 public:
     ThemeVm();
+
+    aria::Property<std::string> title;
+    aria::Property<std::string> desc;
+    aria::Property<std::string> themeLightLabel;
+    aria::Property<std::string> themeDarkLabel;
+    aria::Property<std::string> themeSolarizedLabel;
+    aria::Property<std::string> cardTitleLabel;
+    aria::Property<std::string> cardBodyLabel;
 
     /// Currently selected theme id (stable across languages).
     aria::Property<std::string> currentId{"light"};

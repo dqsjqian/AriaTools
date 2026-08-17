@@ -57,7 +57,6 @@ SyncVm::SyncVm(wb::services::ISyncService& sync,
 }
 
 void SyncVm::on_activate() { load_config_(); }
-void SyncVm::on_deactivate() { bag().clear(); }
 
 void SyncVm::load_config_() {
     const auto& s = settings_.sync();

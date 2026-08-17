@@ -1,5 +1,4 @@
 #include "TipCalcView.h"
-#include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "viewmodels/TipCalcVm.h"
 
@@ -83,23 +82,21 @@ TipCalcView::TipCalcView(TipCalcVm& vm, aria::binding::BindingEngine& be)
 
     // Read-only computed results (captions from i18n + formatted values).
     // Computed<T> is not Property<T>, so BindingEngine has no direct
-    // overload; subscribe via on_changed and keep the subscription alive
-    // via the process-wide keepalive bag (iOS has no per-VC SubscriptionBag).
+    // overload; subscriptions are owned by this View wrapper.
     auto cap = [&vm](aria::Property<std::string>& caption, double v) {
         return caption.get() + ": " + fmt2(v);
     };
-    auto& subs = wb::ios::ui::subs_keepalive();
-    subs.push_back(vm.tipAmount.on_changed(
+    subscriptions_.push_back(vm.tipAmount.on_changed(
         [&vm, cap, tipAmountLbl](const double v) {
             tipAmountLbl.text = [NSString stringWithUTF8String:cap(vm.tipAmountText, v).c_str()];
         }));
     tipAmountLbl.text = [NSString stringWithUTF8String:cap(vm.tipAmountText, vm.tipAmount.get()).c_str()];
-    subs.push_back(vm.total.on_changed(
+    subscriptions_.push_back(vm.total.on_changed(
         [&vm, cap, totalLbl](const double v) {
             totalLbl.text = [NSString stringWithUTF8String:cap(vm.totalText, v).c_str()];
         }));
     totalLbl.text = [NSString stringWithUTF8String:cap(vm.totalText, vm.total.get()).c_str()];
-    subs.push_back(vm.perPerson.on_changed(
+    subscriptions_.push_back(vm.perPerson.on_changed(
         [&vm, cap, perLbl](const double v) {
             perLbl.text = [NSString stringWithUTF8String:cap(vm.perPersonText, v).c_str()];
         }));
@@ -110,13 +107,3 @@ TipCalcView::TipCalcView(TipCalcVm& vm, aria::binding::BindingEngine& be)
 }
 
 }  // namespace wb::tipcalc::iosview
-
-namespace wb::tipcalc {
-void register_tipcalc_view() {
-    wb::ios::UIViewFactory::instance().register_builder(
-        "tipcalc", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            auto* view = new iosview::TipCalcView(static_cast<TipCalcVm&>(vm), be);
-            return view->viewController();
-        });
-}
-}  // namespace wb::tipcalc

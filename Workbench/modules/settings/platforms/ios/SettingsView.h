@@ -15,7 +15,7 @@ public:
     SettingsView(SettingsVm& vm, aria::binding::BindingEngine& be);
     UIViewController* viewController() const { return vc_; }
 private:
-    UIViewController* vc_;
+    UIViewController* __weak vc_;
 };
 
 }  // namespace wb::settings::iosview

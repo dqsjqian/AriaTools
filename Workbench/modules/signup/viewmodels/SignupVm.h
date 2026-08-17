@@ -12,16 +12,19 @@
 #include "aria/aria.hpp"
 #include "aria/binding/form.hpp"
 #include "aria/command.hpp"
-#include "aria/subscription.hpp"
+#include "module_api/BaseVm.h"
 
 #include <string>
 
 namespace wb::signup {
 
-class SignupVm {
+class SignupVm final : public wb::core::BaseVm {
 public:
     SignupVm();
     ~SignupVm();
+
+    aria::Property<std::string> title;
+    aria::Property<std::string> desc;
 
     aria::binding::FormField<std::string> username{"username", ""};
     aria::binding::FormField<std::string> email{"email", ""};
@@ -36,13 +39,9 @@ public:
 
 private:
     /// Re-track the FormValidator aggregate so the cross-field rule's
-    /// message is resolved against the current UI language. Called once
-    /// from the constructor and again whenever the language changes
-    /// (lang_sub_). Per-field rules use localized_rule (lazy evaluation)
-    /// and need no rebuild.
+    /// message is resolved against the current UI language. Per-field rules
+    /// use localized_rule (lazy evaluation) and need no rebuild.
     void wire_form_();
-
-    aria::Subscription lang_sub_;
 };
 
 }  // namespace wb::signup

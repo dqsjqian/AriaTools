@@ -7,4 +7,6 @@
     <string name="no_orders">暂无订单</string>
     <string name="order_placed">已下单</string>
     <string name="qty_changed">数量变更</string>
+    <string name="open_cart">打开购物车</string>
+    <string name="back">返回</string>
 </resources>

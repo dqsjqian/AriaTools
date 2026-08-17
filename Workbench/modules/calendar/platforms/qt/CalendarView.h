@@ -1,6 +1,6 @@
 #pragma once
 //
-// CalendarView — Qt view for the "calendar" module (Aria free-function view).
+// CalendarView — Qt view for the "calendar" module.
 //
 // Decomposed into sub-views, each owning its own widget + subscriptions:
 //   month navigation  — prev/next/today/refresh buttons + month title
@@ -8,9 +8,8 @@
 //   subscription bar  — URL input + subscribe button
 //   subscription list — list of subscribed calendars (double-click remove)
 //
-// The top-level build_view() assembles them into a vertical layout and wires
-// the shared VM. register_calendar_view() registers the builder with the
-// QtViewFactory.
+// The top-level CalendarView constructor assembles them into a vertical
+// layout and wires the shared VM.
 //
 #include "aria/binding/binding_engine.hpp"
 
@@ -20,6 +19,12 @@ namespace wb::calendar { class CalendarVm; }
 
 namespace wb::calendar::qtview {
 
-QWidget* build_view(CalendarVm& vm, aria::binding::BindingEngine& be);
+class CalendarView {
+public:
+    CalendarView(CalendarVm& vm, aria::binding::BindingEngine& be);
+    QWidget* widget() const { return root_; }
+private:
+    QWidget* root_;
+};
 
 }  // namespace wb::calendar::qtview

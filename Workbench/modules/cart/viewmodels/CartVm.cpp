@@ -8,6 +8,16 @@ namespace wb::cart {
 
 CartVm::CartVm(aria::runtime::EventBus& bus)
     : bus_(bus),
+      subtotal([this] {
+          (void)itemsRevision_.get();
+          return compute_subtotal_();
+      }),
+      tax([this] { return subtotal.get() * kTaxRate; }),
+      total([this] { return subtotal.get() + tax.get(); }),
+      itemCount([this] {
+          (void)itemsRevision_.get();
+          return compute_item_count_();
+      }),
       addItem(
           [this] {
               const auto name = draftName.get();
@@ -15,20 +25,14 @@ CartVm::CartVm(aria::runtime::EventBus& bus)
               auto item = std::make_shared<CartItem>(
                   name, draftPrice.get(), 1);
 
-              // ── Model → EventBus: subscribe to this item's qty changes ──
-              // When the user changes the quantity (via the View's +/- buttons),
-              // the CartItem model's qty Property fires, and we forward it as
-              // an ItemQtyChanged event. Multiple modules' VMs receive it:
-              //   - dashboard VM updates the cart badge count
-              //   - chat VM posts a system message
-              //   - notes VM creates an operation-log entry
-              qty_subs_.push_back(item->qty().on_changed(
-                  [this, name](const int /*newQty*/) {
-                      // We don't track oldQty here (Property::on_changed
-                      // only gives the new value); pass 0 as oldQty.
-                      bus_.publish(wb::shared::events::ItemQtyChanged{
-                          name, 0, 0});
-                  }));
+              // The forwarding subscription belongs to CartItem, so removing
+              // the item disconnects it automatically once the item dies.
+              item->forward_qty_changes(
+                  [bus = &bus_, name](const int newQty) {
+                      // Property::on_changed exposes only the new value.
+                      bus->publish(wb::shared::events::ItemQtyChanged{
+                          name, 0, newQty});
+                  });
 
               items.push_back(item);
               // Cross-module: notify other modules that an item was added.
@@ -40,20 +44,20 @@ CartVm::CartVm(aria::runtime::EventBus& bus)
           }),
       checkout(
           [this] {
-              if (items.snapshot().empty()) return;
+              if (items.empty()) return;
               // Cross-module: notify that an order was placed.
               bus_.publish(wb::shared::events::OrderPlaced{
                   "order-" + std::to_string(itemCount.get()),
                   total.get(),
                   itemCount.get()});
-              // Clear the cart after checkout.
-              while (!items.snapshot().empty()) {
-                  items.remove_at(0);
-              }
-              // Drop the qty subscriptions (items are gone).
-              qty_subs_.clear();
+              // A reset is one cart mutation and therefore produces one
+              // CartStateChanged snapshot with itemCount == 0.
+              items.clear();
           },
-          [this] { return !items.snapshot().empty(); })
+          [this] {
+              (void)itemsRevision_.get();
+              return !items.empty();
+          })
 {
     text(title,         "title");
     text(desc,          "desc");
@@ -65,37 +69,29 @@ CartVm::CartVm(aria::runtime::EventBus& bus)
     text(taxLabel,      "tax");
     text(totalLabel,    "total");
     text(checkoutLabel, "checkout");
-}
 
-void CartVm::on_activate() {
-    bag() += items.on_any_change([this] { recompute_(); });
-    recompute_();
-}
-
-void CartVm::on_deactivate() {
-    bag().clear();
-    // qty_subs_ are NOT in bag() — they persist across tab switches so the
-    // model→event forwarding keeps working even when the cart tab is inactive.
-}
-
-void CartVm::recompute_() {
-    double s = 0.0;
-    int    n = 0;
-    for (auto& item : items.snapshot()) {
-        s += item->subtotal();
-        n += item->qty_value();
-    }
-    aria::batch([this, s, n] {
-        subtotal  = s;
-        tax       = s * kTaxRate;
-        total     = s + s * kTaxRate;
-        itemCount = n;
+    // ObservableList is not a reactive graph node. Bridge every structural
+    // or bubbled item change into Computed with a monotonic Property revision.
+    items_sub_ = items.on_any_change([this] {
+        itemsRevision_.set(itemsRevision_.get() + 1);
+        bus_.publish(wb::shared::events::CartStateChanged{itemCount.get()});
     });
-    // Cross-module: on EVERY cart mutation (add/remove/qty/checkout) push the
-    // CURRENT count so subscribers adopt it directly (no stale running sum).
-    // recompute_ fires via items.on_any_change, so removals and qty edits are
-    // covered — not just addItem.
-    bus_.publish(wb::shared::events::CartStateChanged{n});
+}
+
+double CartVm::compute_subtotal_() const {
+    double value = 0.0;
+    for (const auto& item : items.snapshot()) {
+        value += item->subtotal();
+    }
+    return value;
+}
+
+int CartVm::compute_item_count_() const {
+    int value = 0;
+    for (const auto& item : items.snapshot()) {
+        value += item->qty_value();
+    }
+    return value;
 }
 
 }  // namespace wb::cart

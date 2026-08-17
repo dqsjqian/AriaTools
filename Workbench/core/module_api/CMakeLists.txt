@@ -8,6 +8,7 @@ add_library(wb_module_api STATIC
 
 target_include_directories(wb_module_api PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..   # include like "module_api/IModule.h"
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/aria/third_party/nlohmann_json/include
 )
 
 target_link_libraries(wb_module_api PUBLIC

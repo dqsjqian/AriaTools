@@ -14,11 +14,8 @@
 //   - Property / Computed / Command / reactive::batch / Effect
 //
 // Lifecycle
-//   Command<>::CanExecute is now automatically tracked by an internal
-//   Effect that follows whichever Properties the predicate reads, so
-//   on_activate / on_deactivate no longer need to install a manual
-//   Effect to trigger notify_can_execute_changed — the typical case
-//   leaves them empty.
+//   Command<>::CanExecute is automatically tracked by an internal Effect;
+//   no manual activate/deactivate wiring is needed.
 //
 
 #include "aria/aria.hpp"
@@ -51,9 +48,6 @@ public:
     aria::Computed<double> perPerson;
 
     aria::Command<> roundUp;
-
-    void on_activate() override;
-    void on_deactivate() override;
 
 private:
     bool canRoundUp_() const;

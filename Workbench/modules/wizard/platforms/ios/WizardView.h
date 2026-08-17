@@ -57,7 +57,7 @@ public:
     WizardView(WizardVmHostVm& host, aria::binding::BindingEngine& be);
     UIViewController* viewController() const { return vc_; }
 private:
-    UIViewController* vc_;
+    UIViewController* __weak vc_;
 };
 
 }  // namespace wb::wizard::iosview

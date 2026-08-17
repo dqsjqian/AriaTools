@@ -1,12 +1,11 @@
 #include "module/SignupModule.h"
 #include "viewmodels/SignupVm.h"
-#include "viewmodels/SignupVmHostVm.h"
 
 namespace wb::signup {
 
 std::shared_ptr<aria::binding::ViewModel>
 SignupModule::create_view_model(wb::module_api::ModuleContext& ctx) {
-        (void)ctx; return std::make_shared<SignupVmHostVm>();
+        (void)ctx; return std::make_shared<SignupVm>();
 }
 
 std::shared_ptr<wb::module_api::IModule> make_signup_module() {

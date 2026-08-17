@@ -1,5 +1,4 @@
 #include "ChatView.h"
-#include "support/QtViewFactory.h"
 #include "support/UiHelpers.h"
 #include "viewmodels/ChatVm.h"
 #include "models/ChatMessage.h"
@@ -56,9 +55,9 @@ QWidget* build_subscriber_view(ChatSubscriberVm& sub, aria::binding::BindingEngi
 
 }  // namespace
 
-// ─── Top-level build_view ─────────────────────────────────────────────────
-QWidget* build_view(ChatVm& vm, aria::binding::BindingEngine& be) {
-    auto* root_ = new QWidget;
+// ─── Top-level view ────────────────────────────────────────────────────────
+ChatView::ChatView(ChatVm& vm, aria::binding::BindingEngine& be)
+    : root_(new QWidget) {
     auto& s_subs = subs_attached_to(root_);
     auto* lay = new QVBoxLayout(root_);
     // Hint banner: VM-owned desc property (i18n, auto-refreshes on language change).
@@ -73,17 +72,6 @@ QWidget* build_view(ChatVm& vm, aria::binding::BindingEngine& be) {
     lay->addWidget(publisher);
     lay->addWidget(new QLabel("<b>Subscriber</b>"));
     lay->addWidget(subscriber, 1);
-    return root_;
 }
 
 }  // namespace wb::chat::qtview
-
-namespace wb::chat {
-void register_chat_view() {
-    wb::qt::QtViewFactory::instance().register_builder(
-        "chat",
-        [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            return qtview::build_view(static_cast<ChatVm&>(vm), be);
-        });
-}
-}  // namespace wb::chat

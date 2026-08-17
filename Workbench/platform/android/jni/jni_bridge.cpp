@@ -18,36 +18,47 @@
 //  invoked synchronously from Property::set — safe for the current scope.
 //  If a future module pushes from a background thread, marshal through the
 //  main Looper (postToMain + a drain queue, as demo5 does).
+//
+//  Per-module binding logic lives in each module's
+//  platforms/android/<Mod>JniBinding.{h,cpp}; this file only dispatches by
+//  module id through the binding registry (subscribe_<mod>() etc.), so a
+//  module can be added/removed without touching the bridge — the same
+//  registry contract the Qt/iOS ViewEntry pattern follows.
 // ────────────────────────────────────────────────────────────────────────────
 #include <jni.h>
 #include <android/log.h>
 
+#include <chrono>
+#include <functional>
 #include <memory>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "AndroidShell.h"
+#include "JniBind.h"
 #include "app/AppCore.h"
 
-#include "viewmodels/DashboardVm.h"
-#include "viewmodels/NotesVm.h"
-#include "viewmodels/CalendarVm.h"
-#include "viewmodels/ToolsVm.h"
-#include "viewmodels/SettingsVm.h"
-#include "viewmodels/SyncVm.h"
-#include "viewmodels/TipCalcVm.h"
-#include "viewmodels/UnitConvertVm.h"
-#include "viewmodels/CartVm.h"
-#include "viewmodels/SignupVm.h"
-#include "viewmodels/SearchVm.h"
-#include "viewmodels/LoginVm.h"
-#include "viewmodels/ChatVm.h"
-#include "viewmodels/ThemeVm.h"
-#include "viewmodels/WizardVm.h"
-
-#include "module_api/BaseVm.h"
-
+#include "aria/async/executor.hpp"
+#include "aria/scheduler.hpp"
 #include "aria/subscription.hpp"
+
+#include "platforms/android/CalendarJniBinding.h"
+#include "platforms/android/DashboardJniBinding.h"
+#include "platforms/android/CartJniBinding.h"
+#include "platforms/android/ChatJniBinding.h"
+#include "platforms/android/LoginJniBinding.h"
+#include "platforms/android/NotesJniBinding.h"
+#include "platforms/android/SearchJniBinding.h"
+#include "platforms/android/SettingsJniBinding.h"
+#include "platforms/android/SignupJniBinding.h"
+#include "platforms/android/SyncJniBinding.h"
+#include "platforms/android/ThemeJniBinding.h"
+#include "platforms/android/TipCalcJniBinding.h"
+#include "platforms/android/ToolsJniBinding.h"
+#include "platforms/android/UnitConvertJniBinding.h"
+#include "platforms/android/WizardJniBinding.h"
 
 static constexpr const char* kTag = "WbJniBridge";
 static constexpr const char* kBridgeClass = "com/dqsjqian/ariatools/JniBridge";
@@ -60,6 +71,65 @@ static JavaVM* g_jvm = nullptr;
 static jclass g_bridgeClass = nullptr;
 static jmethodID g_onModulesChanged = nullptr;
 static jmethodID g_onPropertyChanged = nullptr;
+static jmethodID g_postToMain = nullptr;
+
+// Work posted from worker threads is parked here, then drained by Kotlin's
+// Handler(Looper.getMainLooper()) through nativeRunMainTasks().
+static std::mutex g_mainQueueMutex;
+static std::vector<std::function<void()>> g_mainQueue;
+
+class AndroidMainScheduler final : public aria::async::IExecutor,
+                                   public aria::IDelayedScheduler {
+public:
+    void bind_main_thread() noexcept {
+        mainThreadId_ = std::this_thread::get_id();
+    }
+
+    void schedule(std::function<void()> fn) override {
+        post(std::move(fn));
+    }
+
+    void post(std::function<void()> fn) override {
+        {
+            std::lock_guard lock(g_mainQueueMutex);
+            g_mainQueue.push_back(std::move(fn));
+        }
+        JNIEnv* env = nullptr;
+        bool attached = false;
+        if (g_jvm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6)
+            == JNI_EDETACHED) {
+            if (g_jvm->AttachCurrentThread(&env, nullptr) != JNI_OK) return;
+            attached = true;
+        }
+        env->CallStaticVoidMethod(g_bridgeClass, g_postToMain);
+        if (attached) g_jvm->DetachCurrentThread();
+    }
+
+    void post_after(std::chrono::milliseconds delay,
+                    std::function<void()> fn) override {
+        std::thread([this, delay, fn = std::move(fn)]() mutable {
+            std::this_thread::sleep_for(delay);
+            post(std::move(fn));
+        }).detach();
+    }
+
+    [[nodiscard]] aria::SchedulerCaps caps() const noexcept override {
+        return aria::SchedulerCaps::Post
+             | aria::SchedulerCaps::Delay
+             | aria::SchedulerCaps::GraphSafe
+             | aria::SchedulerCaps::MainThread
+             | aria::SchedulerCaps::Autonomous;
+    }
+
+    [[nodiscard]] bool is_main_thread() const noexcept override {
+        return std::this_thread::get_id() == mainThreadId_;
+    }
+
+private:
+    std::thread::id mainThreadId_{};
+};
+
+static AndroidMainScheduler g_mainScheduler;
 
 // ── The shell (owned by this bridge) ────────────────────────────────────────
 static std::unique_ptr<wb::android::AndroidShell> g_shell;
@@ -79,8 +149,11 @@ static JNIEnv* env_of() {
 }
 
 /// Push a property change to Kotlin (JniBridge.onPropertyChanged).
-static void push_property(const std::string& moduleId, const std::string& name,
-                          const std::string& value) {
+/// Registered with wb::jni::push_property_fn() from JNI_OnLoad so the module
+/// JniBinding files can push without knowing the Java side.
+static void push_property_impl(const std::string& moduleId,
+                               const std::string& name,
+                               const std::string& value) {
     JNIEnv* env = env_of();
     jstring jm = env->NewStringUTF(moduleId.c_str());
     jstring jn = env->NewStringUTF(name.c_str());
@@ -91,304 +164,43 @@ static void push_property(const std::string& moduleId, const std::string& name,
     env->DeleteLocalRef(jm);
 }
 
-/// Subscribe a string Property and push its current + future values.
-static void bind_str(const std::string& module, const std::string& name,
-                     aria::Property<std::string>& prop) {
-    g_propertySubs.push_back(prop.on_changed(
-        [&module, &name](const std::string& v) { push_property(module, name, v); }));
-    push_property(module, name, prop.get());
-}
+// ── Per-module binding registry ─────────────────────────────────────────────
+//  Each module registers its JNI binding (subscribe / set_text / execute
+//  command) by module id. subscribe_all() and the Android shell look up this
+//  table, so neither side keeps any module-specific if-else.
 
-/// Subscribe a double Property (formatted as string) and push its current + future values.
-static void bind_dbl(const std::string& module, const std::string& name,
-                     aria::Property<double>& prop) {
-    auto fmt = [](double v) {
-        char buf[32]; snprintf(buf, sizeof buf, "%.3f", v);
-        return std::string(buf);
-    };
-    g_propertySubs.push_back(prop.on_changed(
-        [&module, &name, fmt](double v) { push_property(module, name, fmt(v)); }));
-    push_property(module, name, fmt(prop.get()));
+static const wb::jni::BindingTable& module_bindings() {
+    static const wb::jni::BindingTable table = [] {
+        wb::jni::BindingTable t;
+        wb::calendar::register_calendar_binding(t);
+        wb::dashboard::register_dashboard_binding(t);
+        wb::cart::register_cart_binding(t);
+        wb::chat::register_chat_binding(t);
+        wb::login::register_login_binding(t);
+        wb::notes::register_notes_binding(t);
+        wb::search::register_search_binding(t);
+        wb::settings::register_settings_binding(t);
+        wb::signup::register_signup_binding(t);
+        wb::sync::register_sync_binding(t);
+        wb::theme::register_theme_binding(t);
+        wb::tipcalc::register_tipcalc_binding(t);
+        wb::tools::register_tools_binding(t);
+        wb::unitconvert::register_unitconvert_binding(t);
+        wb::wizard::register_wizard_binding(t);
+        return t;
+    }();
+    return table;
 }
-
-/// Subscribe an int Property (formatted as string).
-static void bind_int(const std::string& module, const std::string& name,
-                     aria::Property<int>& prop) {
-    g_propertySubs.push_back(prop.on_changed(
-        [&module, &name](int v) { push_property(module, name, std::to_string(v)); }));
-    push_property(module, name, std::to_string(prop.get()));
-}
-
-// ── Per-module subscription ─────────────────────────────────────────────────
-//  Each module subscribes its headline text + a few key state properties so
-//  the Android Page can render real VM data instead of a placeholder shell.
-//  List-valued modules (cart/chat/search/notes) push a count until a full
-//  list bridge lands; the count alone is enough to prove the VM is live.
 
 static void subscribe_all(wb::core::AppCore& core) {
+    const auto& table = module_bindings();
+    aria::runtime::EventBus& bus = core.services().bus();
     for (auto& entry : core.modules()) {
-        const std::string& id = entry.id;
-        if (id == "dashboard") {
-            auto& vm = static_cast<wb::dashboard::DashboardVm&>(*entry.vm);
-            bind_str(id, "welcome", vm.welcome);
-            bind_str(id, "summary", vm.summary);
-        } else if (id == "notes") {
-            auto& vm = static_cast<wb::notes::NotesVm&>(*entry.vm);
-            bind_str(id, "title", vm.title);
-            bind_str(id, "hint",  vm.hint);
-            bind_str(id, "status", vm.status);
-            bind_int(id, "count", vm.count);
-            bind_str(id, "editTitle", vm.editTitle);
-            bind_str(id, "editBody",  vm.editBody);
-            bind_str(id, "add",   vm.addLabel);
-            bind_str(id, "save",  vm.saveLabel);
-            bind_str(id, "delete",vm.deleteLabel);
-            bind_str(id, "title_placeholder", vm.titlePlaceholder);
-            bind_str(id, "body_placeholder",  vm.bodyPlaceholder);
-            // Note list: push as newline-joined titles.
-            auto sync_notes = [&vm]() {
-                std::string joined;
-                for (const auto& n : vm.notes.snapshot()) {
-                    if (!joined.empty()) joined += "\n";
-                    joined += n->title.empty() ? "(untitled)" : n->title;
-                }
-                push_property("notes", "noteList", joined);
-            };
-            sync_notes();
-            g_propertySubs.push_back(vm.notes.on_any_change(
-                [sync_notes]() { sync_notes(); }));
-        } else if (id == "calendar") {
-            auto& vm = static_cast<wb::calendar::CalendarVm&>(*entry.vm);
-            bind_str(id, "title",      vm.title);
-            bind_str(id, "hint",       vm.hint);
-            bind_str(id, "monthTitle",  vm.monthTitle);
-            bind_str(id, "status",      vm.status);
-            bind_str(id, "subscribeUrl",vm.subscribeUrl);
-            // Labels for nav buttons (i18n).
-            bind_str(id, "prev",      vm.prevLabel);
-            bind_str(id, "next",      vm.nextLabel);
-            bind_str(id, "today",     vm.todayLabel);
-            bind_str(id, "refresh",   vm.refreshLabel);
-            bind_str(id, "subscribe", vm.subscribeLabel);
-            bind_str(id, "url_placeholder", vm.urlPlaceholder);
-            // Events list: join the current month's event titles into a
-            // newline-joined string so the Compose LazyColumn can render.
-            auto sync_events = [&vm]() {
-                std::string joined;
-                for (const auto& day : vm.days.snapshot()) {
-                    if (!day || day->eventTitles.empty()) continue;
-                    for (const auto& t : day->eventTitles) {
-                        if (!joined.empty()) joined += "\n";
-                        joined += day->label + "  " + t;
-                    }
-                }
-                push_property("calendar", "events", joined);
-            };
-            sync_events();
-            g_propertySubs.push_back(vm.days.on_any_change(
-                [sync_events]() { sync_events(); }));
-        } else if (id == "tools") {
-            auto& vm = static_cast<wb::tools::ToolsVm&>(*entry.vm);
-            bind_str(id, "title", vm.title);
-            bind_str(id, "base64Input",  vm.base64Input);
-            bind_str(id, "base64Output", vm.base64Output);
-            bind_str(id, "randomInput",  vm.randomInput);
-            bind_str(id, "randomOutput", vm.randomOutput);
-            bind_str(id, "jsonInput",    vm.jsonInput);
-            bind_str(id, "jsonOutput",   vm.jsonOutput);
-            // Labels (i18n).
-            bind_str(id, "base64_group", vm.base64GroupLabel);
-            bind_str(id, "random_group", vm.randomGroupLabel);
-            bind_str(id, "json_group",   vm.jsonGroupLabel);
-            bind_str(id, "input",  vm.inputLabel);
-            bind_str(id, "output", vm.outputLabel);
-            bind_str(id, "encode", vm.encodeLabel);
-            bind_str(id, "decode", vm.decodeLabel);
-            bind_str(id, "length", vm.lengthLabel);
-            bind_str(id, "generate", vm.generateLabel);
-            bind_str(id, "format", vm.formatLabel);
-            bind_str(id, "minify", vm.minifyLabel);
-        } else if (id == "settings") {
-            auto& vm = static_cast<wb::settings::SettingsVm&>(*entry.vm);
-            bind_str(id, "title",         vm.title);
-            bind_str(id, "hint",          vm.hint);
-            bind_str(id, "language",      vm.language);
-            bind_str(id, "languageLabel", vm.languageLabel);
-        } else if (id == "sync") {
-            auto& vm = static_cast<wb::sync::SyncVm&>(*entry.vm);
-            bind_str(id, "title", vm.title);
-            bind_str(id, "hint",  vm.hint);
-            bind_str(id, "status", vm.status);
-            // Config fields (two-way editable).
-            bind_str(id, "dataDir",   vm.dataDir);
-            bind_str(id, "remote",     vm.remoteUrl);
-            bind_str(id, "branch",     vm.branch);
-            bind_str(id, "username",   vm.username);
-            bind_str(id, "token",      vm.token);
-            // Labels (i18n).
-            bind_str(id, "data_dir",    vm.dataDirLabel);
-            bind_str(id, "remote_label",vm.remoteLabel);
-            bind_str(id, "branch_label",vm.branchLabel);
-            bind_str(id, "username",    vm.usernameLabel);
-            bind_str(id, "token",       vm.tokenLabel);
-            bind_str(id, "save_config", vm.saveLabel);
-            bind_str(id, "sync_now",    vm.syncLabel);
-            bind_str(id, "pull",        vm.pullLabel);
-            bind_str(id, "push",        vm.pushLabel);
-        } else if (id == "tipcalc") {
-            auto& vm = static_cast<wb::tipcalc::TipCalcVm&>(*entry.vm);
-            bind_str(id, "title", vm.title);
-            bind_str(id, "desc",  vm.desc);
-            bind_dbl(id, "bill",       vm.bill);
-            bind_int(id, "tipPercent", vm.tipPercent);
-            bind_int(id, "people",     vm.people);
-            bind_dbl(id, "tipAmount",  vm.tipAmount);
-            bind_dbl(id, "total",      vm.total);
-            bind_dbl(id, "perPerson",  vm.perPerson);
-            // Labels (i18n).
-            bind_str(id, "bill_label",   vm.billLabel);
-            bind_str(id, "tip_label",    vm.tipLabel);
-            bind_str(id, "people_label", vm.peopleLabel);
-            bind_str(id, "tip_amount",   vm.tipAmountText);
-            bind_str(id, "total",        vm.totalText);
-            bind_str(id, "per_person",   vm.perPersonText);
-            bind_str(id, "round_up",     vm.roundUpText);
-        } else if (id == "unitconvert") {
-            auto& host = static_cast<wb::unitconvert::UnitConvertVmHostVm&>(*entry.vm);
-            bind_str(id, "title", host.title);
-            bind_str(id, "desc",  host.desc);
-            bind_dbl(id, "value",     host.inner().value);
-            bind_dbl(id, "converted", host.inner().converted);
-            // Labels (i18n).
-            bind_str(id, "cat_temperature", host.inner().catTemperatureLabel);
-            bind_str(id, "cat_length",      host.inner().catLengthLabel);
-            bind_str(id, "cat_weight",      host.inner().catWeightLabel);
-            bind_str(id, "input",           host.inner().inputLabel);
-            bind_str(id, "equals",          host.inner().equalsLabel);
-        } else if (id == "cart") {
-            auto& vm = static_cast<wb::cart::CartVm&>(*entry.vm);
-            bind_str(id, "title", vm.title);
-            bind_str(id, "desc",  vm.desc);
-            bind_str(id, "draftName",  vm.draftName);
-            bind_dbl(id, "draftPrice", vm.draftPrice);
-            bind_int(id, "itemCount", vm.itemCount);
-            bind_dbl(id, "subtotal",  vm.subtotal);
-            bind_dbl(id, "tax",        vm.tax);
-            bind_dbl(id, "total",      vm.total);
-            // Labels (i18n) — pulled from common i18n at VM construction.
-            bind_str(id, "name_label",  vm.nameLabel);
-            bind_str(id, "price_label", vm.priceLabel);
-            bind_str(id, "add",          vm.addLabel);
-            bind_str(id, "count",        vm.countLabel);
-            bind_str(id, "subtotal",     vm.subtotalLabel);
-            bind_str(id, "tax",           vm.taxLabel);
-            bind_str(id, "total",         vm.totalLabel);
-            // Item list: push as newline-joined string.
-            auto sync_items = [&vm]() {
-                std::string joined;
-                for (const auto& it : vm.items.snapshot()) {
-                    if (!joined.empty()) joined += "\n";
-                    joined += it->name() + " x" + std::to_string(it->qty_value());
-                }
-                push_property("cart", "items", joined);
-            };
-            sync_items();
-            g_propertySubs.push_back(vm.items.on_any_change(
-                [sync_items]() { sync_items(); }));
-        } else if (id == "signup") {
-            auto& host = static_cast<wb::signup::SignupVmHostVm&>(*entry.vm);
-            bind_str(id, "title", host.title);
-            bind_str(id, "desc",  host.desc);
-            bind_str(id, "submittedSummary", host.inner().submittedSummary);
-            // Per-field error messages.
-            bind_str(id, "username_error", host.inner().username.error);
-            bind_str(id, "email_error",    host.inner().email.error);
-            bind_str(id, "password_error", host.inner().password.error);
-            bind_str(id, "confirm_error",  host.inner().confirm.error);
-        } else if (id == "search") {
-            auto& host = static_cast<wb::search::SearchVmHostVm&>(*entry.vm);
-            bind_str(id, "title", host.title);
-            bind_str(id, "desc",  host.desc);
-            bind_str(id, "query", host.inner().query);
-            bind_str(id, "debounced", *host.inner().debounced);
-            bind_str(id, "distinct",  *host.inner().distinct);
-            bind_str(id, "placeholder", host.inner().placeholder);
-            bind_str(id, "searches",   host.inner().searchesLabel);
-            // Hits list: push as newline-joined strings.
-            auto sync_hits = [&host]() {
-                std::string joined;
-                for (const auto& h : host.inner().hits.snapshot()) {
-                    if (!joined.empty()) joined += "\n";
-                    joined += "#" + std::to_string(h.seq) + " " + h.q;
-                }
-                push_property("search", "hits", joined);
-            };
-            sync_hits();
-            g_propertySubs.push_back(host.inner().hits.on_any_change(
-                [sync_hits]() { sync_hits(); }));
-        } else if (id == "login") {
-            auto& vm = static_cast<wb::login::LoginVm&>(*entry.vm);
-            bind_str(id, "title", vm.title);
-            bind_str(id, "desc",  vm.desc);
-            bind_str(id, "username", vm.username);
-            bind_str(id, "welcome",
-                vm.login.last_result.get().has_value()
-                    ? vm.login.last_result.get()->welcome
-                    : std::string{});
-            bind_str(id, "error", vm.login.last_error_message);
-            bind_int(id, "is_executing",
-                vm.login.is_executing.get() ? 1 : 0);
-        } else if (id == "chat") {
-            auto& vm = static_cast<wb::chat::ChatVm&>(*entry.vm);
-            bind_str(id, "title", vm.title);
-            bind_str(id, "desc",  vm.desc);
-            bind_str(id, "user",  vm.publisher->user);
-            bind_str(id, "draft", vm.publisher->draft);
-            // Message list: push as a newline-joined string so the
-            // Compose LazyColumn can render each line. Resync on any
-            // list mutation (Insert/Remove/ItemChanged).
-            auto sync_messages = [&vm]() {
-                std::string joined;
-                for (const auto& m : vm.subscriber->messages.snapshot()) {
-                    if (!joined.empty()) joined += "\n";
-                    joined += m->user + ": " + m->text;
-                }
-                push_property("chat", "messages", joined);
-            };
-            sync_messages();
-            g_propertySubs.push_back(vm.subscriber->messages.on_any_change(
-                [sync_messages]() { sync_messages(); }));
-        } else if (id == "theme") {
-            auto& host = static_cast<wb::theme::ThemeVmHostVm&>(*entry.vm);
-            bind_str(id, "title", host.title);
-            bind_str(id, "desc",  host.desc);
-            bind_str(id, "currentId",          host.inner().currentId);
-            bind_str(id, "currentDisplayName", host.inner().currentDisplayName);
-            // Theme picker labels (i18n).
-            bind_str(id, "theme_light",     host.inner().themeLightLabel);
-            bind_str(id, "theme_dark",      host.inner().themeDarkLabel);
-            bind_str(id, "theme_solarized", host.inner().themeSolarizedLabel);
-            bind_str(id, "card_title",      host.inner().cardTitleLabel);
-            bind_str(id, "card_body",       host.inner().cardBodyLabel);
-        } else if (id == "wizard") {
-            auto& host = static_cast<wb::wizard::WizardVmHostVm&>(*entry.vm);
-            bind_str(id, "title", host.title);
-            bind_str(id, "desc",  host.desc);
-            bind_str(id, "step1",    host.step1Label);
-            bind_str(id, "step2",    host.step2Label);
-            bind_str(id, "step3",    host.step3Label);
-            bind_str(id, "username", host.usernameLabel);
-            bind_str(id, "email",     host.emailLabel);
-            bind_str(id, "finish",    host.finishLabel);
-            bind_str(id, "unfinished",host.unfinishedLabel);
-            bind_str(id, "theme_light",     host.themeLightLabel);
-            bind_str(id, "theme_dark",      host.themeDarkLabel);
-            bind_str(id, "theme_solarized", host.themeSolarizedLabel);
-            bind_str(id, "finishedSummary", host.inner().step3->finishedSummary);
-            bind_str(id, "draftUsername", host.inner().draft->username);
-            bind_str(id, "draftEmail",    host.inner().draft->email);
-            bind_str(id, "draftTheme",     host.inner().draft->theme);
+        auto it = table.find(entry.id);
+        if (it == table.end() || !it->second.subscribe) {
+            continue;
         }
+        it->second.subscribe(bus, *entry.vm, g_propertySubs);
     }
 }
 
@@ -399,14 +211,18 @@ JNIEXPORT void JNICALL
 Java_com_dqsjqian_ariatools_JniBridge_nativeCreateShell(JNIEnv* env, jclass,
                                                       jstring i18nDir) {
     if (g_shell) {
-        g_shell.reset();
+        // Disconnect callbacks while their source VMs still exist.
         g_propertySubs.clear();
+        g_shell.reset();
     }
+    g_mainScheduler.bind_main_thread();
+
     const char* dir = env->GetStringUTFChars(i18nDir, nullptr);
     std::string i18n(dir);
     env->ReleaseStringUTFChars(i18nDir, dir);
 
-    g_shell = std::make_unique<wb::android::AndroidShell>(i18n);
+    g_shell = std::make_unique<wb::android::AndroidShell>(
+        i18n, g_mainScheduler, g_mainScheduler);
 
     // Report the module list to Kotlin (id[] + title[]).
     const auto& mods = g_shell->modules();
@@ -434,6 +250,18 @@ JNIEXPORT void JNICALL
 Java_com_dqsjqian_ariatools_JniBridge_nativeDestroyShell(JNIEnv*, jclass) {
     g_propertySubs.clear();
     g_shell.reset();
+    std::lock_guard lock(g_mainQueueMutex);
+    g_mainQueue.clear();
+}
+
+JNIEXPORT void JNICALL
+Java_com_dqsjqian_ariatools_JniBridge_nativeRunMainTasks(JNIEnv*, jclass) {
+    std::vector<std::function<void()>> tasks;
+    {
+        std::lock_guard lock(g_mainQueueMutex);
+        tasks.swap(g_mainQueue);
+    }
+    for (auto& task : tasks) task();
 }
 
 JNIEXPORT void JNICALL
@@ -500,10 +328,13 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void*) {
     g_onPropertyChanged = env->GetStaticMethodID(
         g_bridgeClass, "onPropertyChanged",
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
-    if (!g_onModulesChanged || !g_onPropertyChanged) {
+    g_postToMain = env->GetStaticMethodID(
+        g_bridgeClass, "postToMain", "()V");
+    if (!g_onModulesChanged || !g_onPropertyChanged || !g_postToMain) {
         __android_log_print(ANDROID_LOG_ERROR, kTag,
                             "JNI_OnLoad: bridge method(s) not found");
         return JNI_ERR;
     }
+    wb::jni::push_property_fn() = &push_property_impl;
     return JNI_VERSION_1_6;
 }

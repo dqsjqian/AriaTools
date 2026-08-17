@@ -12,6 +12,8 @@
 
 #include "aria/aria.hpp"
 #include "module_api/BaseVm.h"
+#include "module_api/INavigationTarget.h"
+#include "module_api/capabilities/cart/ICartPage.h"
 #include "aria/command.hpp"
 #include "aria/observable_list.hpp"
 #include "aria/binding/view_model.hpp"
@@ -19,11 +21,17 @@
 
 #include "models/CartItem.h"
 
+#include <nlohmann/json.hpp>
+
 #include <string>
 
 namespace wb::cart {
 
-class CartVm : public wb::core::BaseVm {
+class CartVm : public wb::core::BaseVm,
+               public wb::module_api::ICartPage {
+private:
+    aria::runtime::EventBus& bus_;
+
 public:
     // UI text (i18n, auto-refresh on language change).
     aria::Property<std::string> title;
@@ -35,10 +43,17 @@ public:
 
     aria::ObservableList<CartItem> items;
 
-    aria::Property<double> subtotal{0.0};
-    aria::Property<double> tax{0.0};
-    aria::Property<double> total{0.0};
-    aria::Property<int>    itemCount{0};
+private:
+    // Declared after items so the subscription disconnects before the list is
+    // destroyed (C++ members are destroyed in reverse declaration order).
+    aria::Property<std::size_t> itemsRevision_{0};
+    aria::Subscription items_sub_;
+
+public:
+    aria::Computed<double> subtotal;
+    aria::Computed<double> tax;
+    aria::Computed<double> total;
+    aria::Computed<int>    itemCount;
 
     aria::Property<std::string> draftName{"Apple"};
     aria::Property<double>      draftPrice{3.5};
@@ -59,15 +74,28 @@ public:
     /// Checkout — publishes OrderPlaced on the EventBus.
     aria::Command<> checkout;
 
-    void on_activate() override;
-    void on_deactivate() override;
+    // ── INavigationTarget (cross-module navigation) ────────────────────
+    /// Strongly-typed channel: caller pushed CartArgs; consume the struct
+    /// directly — compile-time checked fields, no json round-trip. Returns
+    /// true to report the payload was consumed (enables Push success).
+    bool on_navigate(const wb::module_api::CartArgs& args) override {
+        draftName.set(args.product);
+        draftPrice.set(args.price);
+        return true;
+    }
+
+    /// Generic json channel: caller pushed a raw json object; parse freely —
+    /// the payload may carry more fields than this VM needs. Returns true to
+    /// report the payload was consumed.
+    bool on_navigate(const nlohmann::json& payload) override {
+        draftName.set(payload.value(ICartPage::kParamProduct, std::string{}));
+        draftPrice.set(payload.value(ICartPage::kParamPrice, 0.0));
+        return true;
+    }
 
 private:
-    aria::runtime::EventBus& bus_;
-    void recompute_();
-    // Per-item qty subscriptions: each CartItem's qty Property is subscribed
-    // so model-level changes forward to the EventBus as ItemQtyChanged events.
-    std::vector<aria::Subscription> qty_subs_;
+    [[nodiscard]] double compute_subtotal_() const;
+    [[nodiscard]] int compute_item_count_() const;
 };
 
 }  // namespace wb::cart

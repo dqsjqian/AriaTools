@@ -1,5 +1,4 @@
 #include "WizardView.h"
-#include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "infra/i18n/I18n.h"
 #include "viewmodels/WizardVm.h"
@@ -111,14 +110,3 @@ WizardView::WizardView(WizardVmHostVm& host, aria::binding::BindingEngine& be)
 }
 
 }  // namespace wb::wizard::iosview
-
-namespace wb::wizard {
-void register_wizard_view() {
-    wb::ios::UIViewFactory::instance().register_builder(
-        "wizard", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            auto& host = static_cast<WizardVmHostVm&>(vm);
-            auto* view = new iosview::WizardView(host, be);
-            return view->viewController();
-        });
-}
-}  // namespace wb::wizard

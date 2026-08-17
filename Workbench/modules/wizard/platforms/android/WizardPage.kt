@@ -73,8 +73,3 @@ private fun Step3Section(vm: AppViewModel, props: Map<String, String>) {
     Button(onClick = { vm.execute(MOD, "finish") }, modifier = Modifier.fillMaxWidth()) { Text(props["$MOD.finish"] ?: "Finish") }
     Text(props["$MOD.finishedSummary"] ?: (props["$MOD.unfinished"] ?: ""), style = MaterialTheme.typography.bodyMedium)
 }
-
-// ── Module self-registration (Android twin of Qt/iOS register_<mod>_view) ──
-fun register_wizard_page() {
-    com.dqsjqian.ariatools.ui.ComposeViewFactory.register("wizard") { WizardPage(it) }
-}

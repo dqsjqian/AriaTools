@@ -43,7 +43,6 @@ public:
     /// Display title for the list (empty title → localized "untitled").
     [[nodiscard]] std::string display_title(const Note& n) const;
     void on_activate() override;
-    void on_deactivate() override;
 
 private:
     void refresh_status_();

@@ -3,14 +3,27 @@
 #include "infra/i18n/I18n.h"
 #include "events/CrossModuleEvents.h"
 
+#include "module_api/NavigationEntryVm.h"
+
 #include "aria/runtime/event_bus.hpp"
 
 namespace wb::dashboard {
 
-DashboardVm::DashboardVm()
+DashboardVm::DashboardVm(wb::module_api::ModuleContext& ctx)
+    : navigator_(&ctx.navigator()),
+      openCart([this] {
+          // VM-layer routing with a TYPED payload: compile-time field
+          // checking, serialized to json by the navigator. The View only
+          // fires the Command — routing lives here in the VM.
+          navigator_->Push<wb::module_api::ICartPage>(
+              wb::module_api::CartArgs{.product = "Apple", .price = 2.5});
+      }),
+      navBack([this] { navigator_->Pop(); })
 {
     text(welcome, "welcome");
     text(summary, "summary");
+    text(openCartLabel, "open_cart");
+    text(navBackLabel, "back");
     // Seed the badge with zero items.
     cartBadge.set(wb::i18n::str_in("dashboard", "cart_empty"));
     lastOrder.set(wb::i18n::str_in("dashboard", "no_orders"));
@@ -57,9 +70,20 @@ DashboardVm::DashboardVm()
             lastOrder.set(wb::i18n::str_in("dashboard", "qty_changed")
                          + ": " + ev.productName);
         });
-}
 
-void DashboardVm::on_activate() {}
-void DashboardVm::on_deactivate() { bag().clear(); }
+    // Mirror the navigation stack to side-channel platforms (Android).
+    // Subscribe to `depth` (updated *after* `current` in Navigator::publish_)
+    // so both mirrors read fresh values in the same callback.
+    auto& nav = navigator_->current();
+    auto& depth = navigator_->depth();
+    auto sync_nav = [this, &nav, &depth] {
+        auto* cur = nav.get().get();
+        auto* entry = dynamic_cast<wb::module_api::NavigationEntryVm*>(cur);
+        navCurrentModule.set(entry ? entry->module_id() : std::string{});
+        navDepth.set(static_cast<int>(depth.get()));
+    };
+    nav_sync_sub_ = depth.on_changed([sync_nav](const auto&) { sync_nav(); });
+    sync_nav();
+}
 
 }  // namespace wb::dashboard

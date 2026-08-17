@@ -1,5 +1,4 @@
 #include "CalendarView.h"
-#include "support/QtViewFactory.h"
 #include "support/UiHelpers.h"
 #include "viewmodels/CalendarVm.h"
 #include "models/CalendarTypes.h"
@@ -169,9 +168,9 @@ QListWidget* build_subscription_list(CalendarVm& vm, aria::binding::BindingEngin
 
 }  // namespace
 
-// ─── Top-level build_view ──────────────────────────────────────────────────
-QWidget* build_view(CalendarVm& vm, aria::binding::BindingEngine& be) {
-    auto* root_ = new QWidget;
+// ─── Top-level view ────────────────────────────────────────────────────────
+CalendarView::CalendarView(CalendarVm& vm, aria::binding::BindingEngine& be)
+    : root_(new QWidget) {
     auto& subs = wb::ui::subs_attached_to(root_);
     auto* lay = new QVBoxLayout(root_);
 
@@ -193,19 +192,6 @@ QWidget* build_view(CalendarVm& vm, aria::binding::BindingEngine& be) {
     auto* statusLbl = new QLabel;
     lay->addWidget(statusLbl);
     be.bind_text_oneway(vm.status, wb::ui::view_for(statusLbl));
-    return root_;
 }
 
 }  // namespace wb::calendar::qtview
-
-namespace wb::calendar {
-
-void register_calendar_view() {
-    wb::qt::QtViewFactory::instance().register_builder(
-        "calendar",
-        [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            return qtview::build_view(static_cast<CalendarVm&>(vm), be);
-        });
-}
-
-}  // namespace wb::calendar

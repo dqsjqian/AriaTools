@@ -4,5 +4,6 @@ wb_add_module(NAME notes
                 viewmodels/NotesVm.cpp
                 module/NotesModule.cpp
     QT_SOURCES  platforms/qt/NotesView.cpp
-    IOS_SOURCES platforms/ios/NotesView.mm
+                platforms/qt/NotesViewEntry.cpp
+    IOS_SOURCES platforms/ios/NotesView.mm platforms/ios/NotesViewEntry.mm
 )

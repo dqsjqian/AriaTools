@@ -1,9 +1,9 @@
 #pragma once
 //
-// SyncView — Qt view for the "sync" module (Aria free-function view).
+// SyncView — Qt view for the "sync" module.
 //
-// build_view() creates the widgets, wires the bindings, and returns the root
-// widget. register_sync_view() registers it with the QtViewFactory.
+// The constructor creates the widgets, wires the bindings, and the root widget
+// is exposed via widget().
 //
 #include "aria/binding/binding_engine.hpp"
 
@@ -13,6 +13,12 @@ namespace wb::sync { class SyncVm; }
 
 namespace wb::sync::qtview {
 
-QWidget* build_view(SyncVm& vm, aria::binding::BindingEngine& be);
+class SyncView {
+public:
+    SyncView(SyncVm& vm, aria::binding::BindingEngine& be);
+    QWidget* widget() const { return root_; }
+private:
+    QWidget* root_;
+};
 
 }  // namespace wb::sync::qtview

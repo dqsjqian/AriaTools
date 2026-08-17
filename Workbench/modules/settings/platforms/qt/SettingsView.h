@@ -1,9 +1,9 @@
 #pragma once
 //
-// SettingsView — Qt view for the "settings" module (Aria free-function view).
+// SettingsView — Qt view for the "settings" module.
 //
-// build_view() creates the widgets, wires the bindings, and returns the root
-// widget. register_settings_view() registers it with the QtViewFactory.
+// The constructor creates the widgets, wires the bindings, and the root widget
+// is exposed via widget().
 //
 #include "aria/binding/binding_engine.hpp"
 
@@ -13,6 +13,12 @@ namespace wb::settings { class SettingsVm; }
 
 namespace wb::settings::qtview {
 
-QWidget* build_view(SettingsVm& vm, aria::binding::BindingEngine& be);
+class SettingsView {
+public:
+    SettingsView(SettingsVm& vm, aria::binding::BindingEngine& be);
+    QWidget* widget() const { return root_; }
+private:
+    QWidget* root_;
+};
 
 }  // namespace wb::settings::qtview

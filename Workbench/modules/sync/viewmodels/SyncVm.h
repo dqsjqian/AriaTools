@@ -52,7 +52,6 @@ public:
     aria::Command<> pullOnly;
 
     void on_activate() override;
-    void on_deactivate() override;
 
 private:
     wb::services::ISyncService& sync_;

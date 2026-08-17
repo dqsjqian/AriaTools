@@ -27,10 +27,14 @@ public:
     [[nodiscard]] aria::Subscription
     on_changed(std::function<void(const CartItem&)> fn);
 
+    /// Keep model-to-EventBus forwarding scoped to this item's lifetime.
+    void forward_qty_changes(std::function<void(int)> fn);
+
 private:
     std::string         name_;
     double              price_;
     aria::Property<int> qty_;
+    aria::Subscription  qty_forward_sub_;
 };
 
 }  // namespace wb::cart

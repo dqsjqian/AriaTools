@@ -19,7 +19,6 @@ SettingsVm::SettingsVm()
 }
 
 void SettingsVm::on_activate() { language.set(wb::i18n::language()); }
-void SettingsVm::on_deactivate() { bag().clear(); }
 
 
 std::vector<SettingsVm::LangEntry> SettingsVm::available_languages() const {

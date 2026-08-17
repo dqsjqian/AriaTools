@@ -94,7 +94,6 @@ void NotesVm::on_activate() {
     refresh_status_();
 }
 
-void NotesVm::on_deactivate() { bag().clear(); }
 
 void NotesVm::load_selection_into_editor_() {
     editTitle.set(model_->draftTitle.get());

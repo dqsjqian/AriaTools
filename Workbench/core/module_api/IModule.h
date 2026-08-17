@@ -6,6 +6,7 @@
 //
 #include "aria/binding/view_model.hpp"
 #include "module_api/ModuleContext.h"
+#include "module_api/NavigatorHost.h"
 
 #include <memory>
 #include <string>
@@ -28,6 +29,12 @@ public:
     /// Create this module's ViewModel (injecting services / event bus).
     [[nodiscard]] virtual std::shared_ptr<aria::binding::ViewModel>
         create_view_model(ModuleContext& ctx) = 0;
+
+    /// Cross-module navigation capabilities. A module overrides this to
+    /// register its pages as navigation targets (e.g.
+    /// `nav.Register<ICartPage>("cart", [&ctx]{ return create_view_model(ctx); })`).
+    /// Called once by AppCore during load_modules; default is no targets.
+    virtual void register_navigation(NavigatorHost& nav) { (void)nav; }
 };
 
 }  // namespace wb::module_api

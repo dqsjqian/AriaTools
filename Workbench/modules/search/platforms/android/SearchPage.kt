@@ -69,12 +69,7 @@ private fun SearchDebug(props: Map<String, String>) {
 private fun SearchHistory(props: Map<String, String>) {
     Text(props["$MOD.searches"] ?: "History", style = MaterialTheme.typography.titleSmall)
     val hits = (props["$MOD.hits"] ?: "").split('\n').filter { it.isNotBlank() }
-    LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
+    LazyColumn(modifier = Modifier.fillMaxWidth()) {
         items(hits) { h -> Text(h, style = MaterialTheme.typography.bodySmall) }
     }
-}
-
-// ── Module self-registration (Android twin of Qt/iOS register_<mod>_view) ──
-fun register_search_page() {
-    com.dqsjqian.ariatools.ui.ComposeViewFactory.register("search") { SearchPage(it) }
 }

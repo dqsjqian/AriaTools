@@ -7,6 +7,7 @@
 #include "infra/ServiceHub.h"
 #include "module_api/ModuleRegistry.h"
 #include "module_api/ModuleContext.h"
+#include "module_api/NavigatorHost.h"
 
 #include <memory>
 #include <string>
@@ -52,10 +53,23 @@ public:
     /// Get a module's navigation title (current language, from the common module's nav_ key).
     [[nodiscard]] std::string nav_title(const std::string& navKey);
 
+    /// Create a *fresh* ViewModel instance of `moduleId` (cross-module
+    /// navigation). Each call builds a new instance via the module factory,
+    /// so pushed pages never share state with the main-tab module VM.
+    /// Returns nullptr if the module id is unknown.
+    [[nodiscard]] std::shared_ptr<aria::binding::ViewModel>
+    create_module_vm(const std::string& moduleId);
+
+    /// Cross-module navigator (owns the module→page registry; modules
+    /// registered their targets via IModule::register_navigation during
+    /// load_modules).
+    [[nodiscard]] wb::module_api::NavigatorHost& navigator() { return *navigator_; }
+
 private:
     wb::infra::ServiceHub                     hub_;
     wb::module_api::ModuleRegistry            registry_;
     wb::module_api::ModuleContext             ctx_;
+    std::shared_ptr<wb::module_api::NavigatorHost> navigator_;
     std::vector<ModuleEntry>                  entries_;
     bool                                      loaded_ = false;
 };

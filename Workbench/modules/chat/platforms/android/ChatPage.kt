@@ -90,16 +90,11 @@ private fun MessageList(props: Map<String, String>) {
     // line is "<user>: <text>"). A LazyColumn renders each line.
     val messages = (props["$MOD.messages"] ?: "").split('\n').filter { it.isNotBlank() }
     LazyColumn(
-        modifier = Modifier.fillMaxWidth().weight(1f),
+        modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         items(messages) { line ->
             Text(line, style = MaterialTheme.typography.bodyMedium)
         }
     }
-}
-
-// ── Module self-registration (Android twin of Qt/iOS register_<mod>_view) ──
-fun register_chat_page() {
-    com.dqsjqian.ariatools.ui.ComposeViewFactory.register("chat") { ChatPage(it) }
 }
