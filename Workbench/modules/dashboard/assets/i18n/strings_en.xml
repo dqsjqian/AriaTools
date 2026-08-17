@@ -6,4 +6,5 @@
     <string name="cart_items">Cart</string>
     <string name="no_orders">No orders yet</string>
     <string name="order_placed">Order placed</string>
+    <string name="qty_changed">Qty changed</string>
 </resources>

@@ -8,10 +8,15 @@
 // via ModuleContext::bus()), so a publish in module A can be received
 // by a subscription in module B — no direct coupling between the two.
 //
-// Demo scenario:
-//   cart module      → publishes ItemAddedToCart when user adds an item
-//   dashboard module → subscribes, shows a "cart: N items" badge
-//   chat module      → subscribes, auto-posts a system message
+// Demo scenario (3 modules reacting to cart operations):
+//   cart module      → publishes ItemAddedToCart / ItemQtyChanged / OrderPlaced
+//   dashboard module → subscribes, shows a live "cart: N items" badge
+//   chat module      → subscribes, auto-posts system messages
+//   notes module     → subscribes, auto-creates operation-log notes
+//
+// The ItemQtyChanged event demonstrates Model → EventBus propagation:
+// when a CartItem's qty Property changes, CartVm forwards it as an event,
+// and multiple modules' VMs receive the notification simultaneously.
 //
 #include <string>
 
@@ -22,6 +27,15 @@ struct ItemAddedToCart {
     std::string productName;
     double     price = 0.0;
     int        qty = 1;
+};
+
+/// Fired when an existing cart item's quantity changes (model → event).
+/// Demonstrates that a Model-level change (CartItem::qty) propagates to
+/// multiple modules' VMs via the EventBus.
+struct ItemQtyChanged {
+    std::string productName;
+    int        oldQty = 0;
+    int        newQty = 0;
 };
 
 /// Fired when the user places an order (checkout).

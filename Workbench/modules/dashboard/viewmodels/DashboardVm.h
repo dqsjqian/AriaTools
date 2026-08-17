@@ -36,6 +36,7 @@ private:
     aria::Subscription lang_sub_;
     aria::Subscription cart_sub_;
     aria::Subscription order_sub_;
+    aria::Subscription qty_sub_;
 };
 
 }  // namespace wb::dashboard

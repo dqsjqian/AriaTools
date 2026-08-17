@@ -1,6 +1,9 @@
 #include "viewmodels/NotesVm.h"
 
 #include "infra/i18n/I18n.h"
+#include "events/CrossModuleEvents.h"
+
+#include "aria/runtime/event_bus.hpp"
 
 namespace wb::notes {
 
@@ -50,6 +53,38 @@ NotesVm::NotesVm(std::shared_ptr<NotesModel> model)
     localize([this] { refresh_status_(); });
     track(notes.on_any_change([this]() { refresh_status_(); }));
 
+    // ── Cross-module: subscribe to cart events ────────────────────────
+    // When the user operates the cart module (add item / change qty /
+    // checkout), notes automatically creates an operation-log entry.
+    // This demonstrates Model → EventBus → multi-module VM notification:
+    // the cart module has NO direct reference to the notes module.
+    auto& bus = aria::runtime::EventBus::global();
+    cart_add_sub_ = bus.subscribe<wb::shared::events::ItemAddedToCart>(
+        [this](const wb::shared::events::ItemAddedToCart& ev) {
+            (void)model_->create_note();
+            model_->set_title("[cart] " + ev.productName);
+            model_->set_body("Added " + ev.productName
+                           + " (price: " + std::to_string(ev.price)
+                           + ", qty: " + std::to_string(ev.qty) + ")");
+            (void)model_->save_current();
+        });
+    cart_qty_sub_ = bus.subscribe<wb::shared::events::ItemQtyChanged>(
+        [this](const wb::shared::events::ItemQtyChanged& ev) {
+            (void)model_->create_note();
+            model_->set_title("[cart] qty changed: " + ev.productName);
+            model_->set_body("Quantity for " + ev.productName + " changed.");
+            (void)model_->save_current();
+        });
+    cart_order_sub_ = bus.subscribe<wb::shared::events::OrderPlaced>(
+        [this](const wb::shared::events::OrderPlaced& ev) {
+            (void)model_->create_note();
+            model_->set_title("[cart] order placed: " + ev.orderId);
+            model_->set_body("Order " + ev.orderId
+                           + " (" + std::to_string(ev.itemCount)
+                           + " items, total: " + std::to_string(ev.total) + ")");
+            (void)model_->save_current();
+        });
+
     load_selection_into_editor_();
 }
 
@@ -62,7 +97,6 @@ void NotesVm::on_activate() {
 void NotesVm::on_deactivate() { bag().clear(); }
 
 void NotesVm::load_selection_into_editor_() {
-    // Sync from the Model draft to the editor Properties; this only mirrors, it does not write back to the Model.
     editTitle.set(model_->draftTitle.get());
     editBody.set(model_->draftBody.get());
 }

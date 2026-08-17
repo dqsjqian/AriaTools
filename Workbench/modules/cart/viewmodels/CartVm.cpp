@@ -12,8 +12,25 @@ CartVm::CartVm(aria::runtime::EventBus& bus)
           [this] {
               const auto name = draftName.get();
               if (name.empty() || draftPrice.get() <= 0) return;
-              items.push_back(std::make_shared<CartItem>(
-                  name, draftPrice.get(), 1));
+              auto item = std::make_shared<CartItem>(
+                  name, draftPrice.get(), 1);
+
+              // ── Model → EventBus: subscribe to this item's qty changes ──
+              // When the user changes the quantity (via the View's +/- buttons),
+              // the CartItem model's qty Property fires, and we forward it as
+              // an ItemQtyChanged event. Multiple modules' VMs receive it:
+              //   - dashboard VM updates the cart badge count
+              //   - chat VM posts a system message
+              //   - notes VM creates an operation-log entry
+              qty_subs_.push_back(item->qty().on_changed(
+                  [this, name](const int /*newQty*/) {
+                      // We don't track oldQty here (Property::on_changed
+                      // only gives the new value); pass 0 as oldQty.
+                      bus_.publish(wb::shared::events::ItemQtyChanged{
+                          name, 0, 0});
+                  }));
+
+              items.push_back(item);
               // Cross-module: notify other modules that an item was added.
               bus_.publish(wb::shared::events::ItemAddedToCart{
                   name, draftPrice.get(), 1});
@@ -33,6 +50,8 @@ CartVm::CartVm(aria::runtime::EventBus& bus)
               while (!items.snapshot().empty()) {
                   items.remove_at(0);
               }
+              // Drop the qty subscriptions (items are gone).
+              qty_subs_.clear();
           },
           [this] { return !items.snapshot().empty(); })
 {
@@ -55,6 +74,8 @@ void CartVm::on_activate() {
 
 void CartVm::on_deactivate() {
     bag().clear();
+    // qty_subs_ are NOT in bag() — they persist across tab switches so the
+    // model→event forwarding keeps working even when the cart tab is inactive.
 }
 
 void CartVm::recompute_() {
