@@ -38,6 +38,15 @@ struct ItemQtyChanged {
     int        newQty = 0;
 };
 
+/// Fired on EVERY cart mutation (add / remove / qty change / checkout).
+/// Carries the CURRENT item count so subscribers can adopt it directly
+/// instead of maintaining their own running sum (which goes stale when
+/// items are removed — the counting bug we fixed). Subscribers that need
+/// richer detail also listen to ItemAddedToCart / ItemQtyChanged.
+struct CartStateChanged {
+    int itemCount = 0;
+};
+
 /// Fired when the user places an order (checkout).
 struct OrderPlaced {
     std::string orderId;

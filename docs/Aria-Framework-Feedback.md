@@ -370,6 +370,56 @@ cartBadgeLbl->setStyleSheet(
 
 ---
 
+## 五点九、跨模块数据同步：不要在订阅者做累加器
+
+### 5.9.1 现象
+
+购物车模块发布 `ItemAddedToCart{qty}` 事件，dashboard 首页订阅后 `count += qty` 累加。结果：**购物车删除商品后，首页数字不变**（只增不减）。
+
+### 5.9.2 根因（经典错误模式）
+
+订阅者用"累加器"维护跨模块共享状态：
+
+```cpp
+// ❌ 订阅者自己累加 —— 只能加、不能减
+cart_sub_ = bus.subscribe<ItemAddedToCart>([this](const auto& ev) {
+    cartItemCount.set(cartItemCount.get() + ev.qty);   // 删除时怎么办？
+});
+```
+
+问题链：
+1. 发布者只发"增量"事件（加了一个），订阅者维护累计值
+2. 删除/改数量没有对应的事件，或即使有，订阅者的累加逻辑也容易漏
+3. 两处状态（cart 的 itemCount、dashboard 的 cartItemCount）**本质是同一份数据**，却各自维护 → 必然漂移
+
+### 5.9.3 正确模式：发布者携带「当前完整状态」，订阅者直接采用
+
+```cpp
+// ✅ 发布者在每次变更时发"当前状态"
+void CartVm::recompute_() {   // items.on_any_change 统一触发（加/删/改数量都走这）
+    ...
+    bus_.publish(CartStateChanged{itemCount.get()});  // 携带当前真实计数
+}
+
+// ✅ 订阅者直接采用，不做累加
+cart_sub_ = bus.subscribe<CartStateChanged>([this](const auto& ev) {
+    cartItemCount.set(ev.itemCount);   // 直接采用
+});
+```
+
+### 5.9.4 经验总结
+
+- **跨模块共享数据**：发布者每次变更发"完整状态快照"，订阅者采用（state-snapshot 模式）
+- **增量事件**（ItemAddedToCart）只适合"通知发生了什么"（日志/消息），不适合"维护计数"
+- 如果确实需要订阅者聚合，确保发布者对**每个**变更（增/删/改）都有对应事件，且订阅者处理完整
+
+### 5.9.5 建议
+
+- **P1**：Aria 文档/示例应展示"跨模块共享状态的正确姿势"（state-snapshot vs 增量事件），这是 EventBus 使用最常见的坑
+- **P2**：框架可考虑提供"派生状态"帮助（如订阅者声明 `DerivedFrom<CartStateChanged>` 自动同步），减少手写同步代码
+
+---
+
 ## 六、基于框架的二次封装：哪些本该是框架内建的
 
 作为业务开发者，我被迫在业务层打了这些补丁（都源自框架能力缺失）：

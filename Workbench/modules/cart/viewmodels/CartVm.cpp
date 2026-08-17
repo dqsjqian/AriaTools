@@ -91,6 +91,11 @@ void CartVm::recompute_() {
         total     = s + s * kTaxRate;
         itemCount = n;
     });
+    // Cross-module: on EVERY cart mutation (add/remove/qty/checkout) push the
+    // CURRENT count so subscribers adopt it directly (no stale running sum).
+    // recompute_ fires via items.on_any_change, so removals and qty edits are
+    // covered — not just addItem.
+    bus_.publish(wb::shared::events::CartStateChanged{n});
 }
 
 }  // namespace wb::cart
