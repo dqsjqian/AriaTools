@@ -1,0 +1,214 @@
+# Aria 框架使用反馈
+
+**—— 基于 AriaTools 15 模块 × 4 平台实战，写给 Aria 维护者的评估建议**
+
+> 作者：AriaTools 业务应用开发者（基于 Aria v1.1.0）
+> 日期：2026-08-17
+> 范围：Qt6 桌面 / iOS UIKit / Android Compose+JNI / 多语言 i18n / 模块化插件化
+
+---
+
+## 一、背景
+
+我用 Aria 框架从零构建了 **AriaTools**：一个 16 个业务模块（dashboard / notes / calendar / tools / settings / sync / tipcalc / unitconvert / cart / signup / search / login / chat / theme / wizard / echo）的跨平台示例应用，每模块一套 VM + Model + Service，Qt / iOS / Android 三端 View 壳，中英双语 i18n，模块热插拔。
+
+这份文档是我作为**业务应用开发者**（而非框架作者）的真实体会：哪些地方让开发顺畅、哪些地方卡了我很久、哪些是我被迫在业务层打补丁的。每条都给出具体建议，供维护者评估取舍。
+
+---
+
+## 二、先肯定：Aria 的内核是对的
+
+1. **VM 层声明式体验极佳**——`Property / Computed / Command` 配合响应式图自动依赖追踪，写业务逻辑不需要手写 notify/observer。15 个模块的 VM 全部零平台依赖，一份 C++ 代码跑三端，这是最核心的价值。
+2. **生命周期级联**——`ViewModel::add_child()` + activate/deactivate 级联，chat 的 Publisher/Subscriber 子 VM 随父 VM 自动激活/停用，订阅自动清理，这个设计非常优雅。
+3. **编译期类型安全**——绑定类型错误直接编译失败，不会运行时崩。
+4. **adapter 抽象正确**——`IView` 类型擦除 + 平台 adapter，让 BindingEngine 不依赖任何平台类型，这是跨端统一的关键。
+
+---
+
+## 三、模块化 / 插件化：编译期解耦做到了，运行时动态还缺
+
+### 3.1 现状
+
+- 每模块一个静态库（`wb_module_<name>.a`），`wb_add_module()` 单行声明
+- CMake 用 `file(GLOB)` 自动扫描 `modules/*/CMakeLists.txt`，生成 `GeneratedModuleList.h`，`ModulesManifest.cpp` 和 Qt/iOS `ViewManifest` 用宏展开自动注册
+- **热插拔验证通过**：新增模块只加目录、删除模块只删目录，核心文件零改动，编译不报错
+- 模块间通信走 `EventBus`（进程级单例），cart 模块 publish `ItemAddedToCart`，dashboard / chat / notes 三个模块的 VM 同时收到——**无直接耦合**，已验证
+
+### 3.2 痛点
+
+1. **没有真正的运行时动态加载**。目前是编译期静态链接 + 自动发现，做不到 dlopen/运行时装卸。对"插件市场""运行时升级模块"这类场景（Aria 的 `plugin-property-demo` 展示了 ABI 插件能力）缺一个标准的 `IModuleLoader` 入口，业务层想用还得自己造轮子。
+2. **模块间隐式耦合点残留**。删掉一个模块后，虽然编译通过，但这些地方可能残留脏引用：
+   - Android `JniBridge` / `AndroidShell` 的 `subscribe_all` / `set_text` / `execute_command` 是按模块 id 硬路由的（`if (id == "sync") ...`）——删模块必须同步改这个文件，**违背了"只删目录"的承诺**
+   - `_shared/events/CrossModuleEvents.h` 里的事件定义是全局共享的，模块删了事件还在
+   - i18n 资源是按模块目录收集的（这个没问题，但 View 里直接 `wb::i18n::str_in("mod","key")` 的调用没有编译期校验，key 拼错不报错）
+3. **新增模块的样板代码仍偏多**：CMakeLists + Module.h/.cpp + VM.h/.cpp + 3 平台 View + i18n XML × 2 +（Android 还要改 ModulePages.kt / JniBridge 路由）。虽然核心文件不用改，但**没有一个脚手架工具**。
+
+### 3.3 建议
+
+- **P1**：提供 `IModuleLoader`（参考 plugin-property-demo 的 ABI 方案），让模块可编译为 `.so/.dylib/.dll` 动态加载，热插拔从"编译期"升级为"运行时"
+- **P1**：把 Android 的 JNI 路由（subscribe_all / set_text / execute_command）改成**注册表驱动**而非 if-else 硬路由，和 Qt/iOS 的 ViewManifest 一样自动发现
+- **P2**：提供脚手架 CLI（`wb new-module <name>`），生成完整模块模板
+- **P2**：模块依赖显式声明（`MODULE_DEPS`），编译期检测循环依赖
+
+---
+
+## 四、View ↔ VM 绑定：自由度是双刃剑，API 覆盖不全是大坑
+
+### 4.1 最疼的坑：`Computed<T>` 不能进绑定 API
+
+```cpp
+// ❌ 编译失败！bind_text_projected 只接受 Property<T>&，不接受 Computed<T>
+be.bind_text_projected(vm.tipAmount, view_for(label), [](const double& v){...});
+
+// ✅ 被迫退化为手写 on_changed + 手动管理订阅袋
+auto& subs = wb::ios::ui::subs_keepalive();   // 这是我 Hack 的全局订阅袋
+subs.push_back(vm.tipAmount.on_changed([label](const double v){ ... }));
+```
+
+`Computed` 是最常用的响应式值，但绑定 API 不覆盖它。tipcalc（3 个 Computed）、unitconvert（3 个 Computed）都踩了。**对新人这是第一个劝退坑**。
+
+### 4.2 enum Property 绑定要靠绕路
+
+```cpp
+aria::Property<Category> category{Category::Temperature};  // enum
+
+// ❌ adapter 的 set_int/get_int 只支持 int，enum 不能直接绑 UIStepper/ComboBox
+// ✅ 被迫在 VM 里加 3 个 Command：
+aria::Command<> selectTemperature{[this]{ category.set(Category::Temperature); }};
+aria::Command<> selectLength{...};
+aria::Command<> selectWeight{...};
+```
+
+一个分类选择器要写 3 个 Command 才能让三端统一驱动——认知负担明显。
+
+### 4.3 平台订阅生命周期不对称（iOS 无 subs_attached_to）
+
+- Qt 有 `subs_attached_to(QObject*)`——订阅挂到 widget 上，widget 销毁自动断开
+- iOS **没有等价物**——我被迫 Hack 了一个**进程级全局订阅袋** `subs_keepalive()`：
+
+```cpp
+std::vector<aria::Subscription>& subs_keepalive() {
+    static std::vector<aria::Subscription> v;
+    return v;  // 进程存活期间永不释放，只适合 demo，正式 App 是泄漏
+}
+```
+
+这是最让我不舒服的地方：**同一个框架，两端的订阅生命周期管理能力不对称**。iOS View 一旦要绑 Computed 或手动订阅，就没有干净的生命周期归属。
+
+### 4.4 bind API 太多太杂，命名不统一
+
+实际用到的绑定入口：`bind_text / bind_text_oneway / bind_text_converted / bind_text_projected / bind_optional_text / bind_double / bind_int / bind_bool / bind_command / bind_visible` ——
+
+- `oneway` 后缀 vs 无后缀（双向）的含义靠猜
+- `converted`（带 Converter）vs `projected`（带投影函数）语义接近但不同
+- 没有一份 API 清单/速查表，全靠读源码
+
+### 4.5 "绑定过于自由"——谦哥的原话，我认同
+
+View 可以绑任何 Property 的任何方向（VM→View / View→VM / 双向），没有任何约束。好处是灵活；坏处是：
+- 新人不知道"该绑哪个方向"（oneway vs 双向）
+- 同一个 Property 被多个 View 绑定/解绑的时机难追踪
+- 没有"约定式"的绑定 schema，团队协作时各自为政
+
+### 4.6 建议
+
+- **P0**：`binding_engine` 为 `Computed<T>` 增加绑定重载（或提供 `to_property(computed)` 适配器）——这是最高频需求
+- **P0**：iOS 提供 per-Controller 的订阅袋（等价于 Qt 的 `subs_attached_to`），消灭全局 keepalive Hack
+- **P1**：提供 `enum → int` 的绑定适配（Converter 支持枚举，或 Property<Enum> 自动转 int）
+- **P1**：写一份绑定 API 速查表（README 或 docs），标注每个 API 的语义、方向、适用类型
+- **P2**：设计"约定式绑定"（如 VM 声明 `BINDINGS` 元数据，View 按声明绑定），降低自由度的认知成本
+
+---
+
+## 五、i18n 多语言：`BaseVm::text()` 很好，但覆盖面不全
+
+### 5.1 好的部分
+
+`BaseVm::text(prop, "key")` 声明式绑定 i18n key，语言切换时 VM 文案属性自动刷新，View 无需感知。这比传统 gettext 在 MVVM 里自然得多。
+
+### 5.2 痛点
+
+1. **非 BaseVm 的模块享受不到**。`UnitConvertVm` 是普通类（不是 BaseVm），被迫用 `UnitConvertVmHostVm` 包一层才能进 IModule 契约——i18n 也得手动在 HostVm 里 `text()` 一遍。**两种 VM 写法并存，新人会困惑"我该继承谁"**。
+2. **Android 端无法直接调 i18n**（JNI 桥接限制），View 渲染 label 只能靠 VM 暴露 Property。结果 CartVm 被迫加了 9 个 label Property（nameLabel/priceLabel/addLabel/countLabel/subtotalLabel/taxLabel/totalLabel/...），全部只是为了喂给 Android View：
+   ```cpp
+   // CartVm.h —— 纯为了 Android 渲染 label 而加的一堆冗余 Property
+   aria::Property<std::string> nameLabel;
+   aria::Property<std::string> priceLabel;
+   aria::Property<std::string> addLabel;
+   aria::Property<std::string> countLabel;
+   ...
+   ```
+   这在 Qt/iOS 端根本用不上（它们直接 `wb::i18n::str_in()`）。**业务 VM 被平台能力短板污染了**。
+3. i18n key 无编译期校验，拼错静默显示空串。
+
+### 5.3 建议
+
+- **P1**：统一所有模块 VM 继承 BaseVm（消灭 HostVm 双轨制），或让普通类也能享受 `text()`
+- **P1**：i18n 提供 C 导出（`extern "C"`）+ JNI 直读，让 Android View 能直接取文案，VM 不用为平台加冗余 label Property
+- **P2**：i18n key 编译期生成枚举或宏，拼错直接编译失败
+
+---
+
+## 六、基于框架的二次封装：哪些本该是框架内建的
+
+作为业务开发者，我被迫在业务层打了这些补丁（都源自框架能力缺失）：
+
+| 我的封装 | 弥补的缺口 | 应该归位 |
+|---|---|---|
+| `IosUi::view_for` / `make_stack_vc` / `make_label`... | iOS 控件创建 + IView 包装的样板 | 框架内建 UIKit 控件工厂 |
+| `IosUi::subs_keepalive()` | iOS 无 per-View 订阅袋（4.3） | 框架内建 per-Controller 订阅袋 |
+| `UiHelpers::bind_editable_text` | 文本双向绑定的"只回写不反向刷新"场景 | 框架内建 `bind_text` 变体 |
+| `Converter<double,string>` 工厂（三处重复定义） | 数值↔字符串转换的标准写法 | 框架内建常用 Converter |
+| `HostVm` 包装（5 个模块） | 普通类 VM 进不了 IModule 契约 | 框架统一 VM 基类 |
+| CMake 自动发现 + GeneratedModuleList | 模块注册硬编码问题 | 框架提供标准模块发现机制 |
+
+**判断**：如果这些能力内建到框架（或至少有一份官方样板目录），业务层就不用各自造轮子。AriaTools 的 `platform/ios/support/` 和 `platform/qt/support/` 现在承担了"框架半成品补丁"的角色。
+
+---
+
+## 七、构建与工具链
+
+1. 三平台构建脚本（gen-mac.sh / gen-ios.sh / gen-win.ps1 / gen-android.sh）能跑通，但：
+   - iOS 需要 `xcode-select` 切换（Xcode-beta 与 CommandLineTools），脚本里临时用 `DEVELOPER_DIR` 绕过——对 CI 不友好
+   - Android JNI 桥接是**全手写**（jni_bridge.cpp 一个文件 400+ 行，按模块 if-else 路由），工作量大且易错，`Aria demo5` 只演示了单模块
+2. **建议 P2**：提供统一构建 CLI（`wb build --platform qt|ios|android`），自动探测工具链（vswhere / xcode-select / SDK 路径）
+
+---
+
+## 八、文档：最大的痛
+
+我所有 API 知识都来自**读 Aria 源码**（grep `bind_` 看签名、看 demo1~5 猜用法）。没有任何 API 文档、没有核心概念教程。具体缺失：
+
+- 绑定 API 清单（4.4）
+- 生命周期语义（activate/deactivate/child 级联何时触发）
+- EventBus 使用模式（demo1 chat 有，但没有文档说明"跨模块通信的标准姿势"）
+- i18n 接入指南（text() / str() / str_in() 的区别与场景）
+- "写一个新模块"的端到端教程
+
+**建议 P0**：doxygen + 每核心概念一页教程。否则每个新人都要重踩 AriaTools 踩过的坑。
+
+---
+
+## 九、优先级汇总
+
+| 优先级 | 项 | 价值 |
+|---|---|---|
+| **P0** | `Computed<T>` 绑定重载 | 最高频坑，新人劝退点 |
+| **P0** | iOS per-Controller 订阅袋 | 消灭全局 keepalive Hack，正式 App 必需 |
+| **P0** | API 文档 + 绑定速查表 | 降低学习曲线 |
+| **P1** | 统一 VM 基类（消灭 HostVm） | 消灭双轨制 |
+| **P1** | enum 绑定适配 | 减少绕路 |
+| **P1** | i18n C 导出（Android 直读） | 业务 VM 不再被平台污染 |
+| **P1** | Android JNI 路由注册表化 | 热插拔承诺在 Android 兑现 |
+| **P2** | 动态模块加载（IModuleLoader） | 运行时热插拔 |
+| **P2** | 脚手架 CLI / 统一构建 CLI | 开发者体验 |
+
+---
+
+## 十、结语
+
+Aria 的**内核设计是对的**（响应式图 + 类型安全 + 生命周期级联 + adapter 抽象），它让我能用一份 C++ 代码跑三端，这是 Qt/原生/iOS 单独做都做不到的。但**"框架"到"产品"之间还差最后一公里**：绑定 API 覆盖不全、平台订阅生命周期不对称、文档缺位、模块系统只有编译期解耦。
+
+如果维护者能优先解决 P0 三项（Computed 绑定、iOS 订阅袋、文档），Aria 从"优秀框架"到"开发者友好框架"的跨越就完成了。
+
+—— 期待 Aria 变得更好。有任何需要我补充细节或提供复现代码的，随时联系。
