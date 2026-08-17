@@ -53,6 +53,13 @@ void ChatSubscriberVm::on_activate() {
                     "Order " + ev.orderId + " placed ("
                     + std::to_string(ev.itemCount) + " items)"}));
         });
+    // Model → EventBus → chat: a cart item's qty changed.
+    bag() += bus_.subscribe<wb::shared::events::ItemQtyChanged>(
+        [this](const wb::shared::events::ItemQtyChanged& ev) {
+            messages.push_back(std::make_shared<ChatMessage>(
+                ChatMessage{"[system]",
+                    ev.productName + " qty changed"}));
+        });
 }
 
 void ChatSubscriberVm::on_deactivate() { bag().clear(); }

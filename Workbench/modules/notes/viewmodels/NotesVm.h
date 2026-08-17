@@ -5,6 +5,7 @@
 //
 #include "aria/aria.hpp"
 #include "module_api/BaseVm.h"
+#include "aria/subscription.hpp"
 #include "models/NotesModel.h"
 
 #include <memory>
@@ -49,6 +50,11 @@ private:
     void load_selection_into_editor_();
 
     std::shared_ptr<NotesModel> model_;
+
+    // Cross-module subscriptions (persist for the VM's lifetime, not in bag()).
+    aria::Subscription cart_add_sub_;
+    aria::Subscription cart_qty_sub_;
+    aria::Subscription cart_order_sub_;
 };
 
 }  // namespace wb::notes

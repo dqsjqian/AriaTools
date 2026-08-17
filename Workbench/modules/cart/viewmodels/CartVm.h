@@ -65,6 +65,9 @@ public:
 private:
     aria::runtime::EventBus& bus_;
     void recompute_();
+    // Per-item qty subscriptions: each CartItem's qty Property is subscribed
+    // so model-level changes forward to the EventBus as ItemQtyChanged events.
+    std::vector<aria::Subscription> qty_subs_;
 };
 
 }  // namespace wb::cart

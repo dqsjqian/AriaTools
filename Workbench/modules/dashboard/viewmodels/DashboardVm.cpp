@@ -45,6 +45,17 @@ DashboardVm::DashboardVm()
             cartItemCount.set(0);
             cartBadge.set(wb::i18n::str_in("dashboard", "cart_empty"));
         });
+    qty_sub_ = bus.subscribe<wb::shared::events::ItemQtyChanged>(
+        [this](const wb::shared::events::ItemQtyChanged& ev) {
+            // Model → EventBus → dashboard VM: a cart item's qty changed.
+            // Update the badge to reflect the latest count.
+            int n = cartItemCount.get();
+            // qty change doesn't change total count (it's a swap, not add)
+            // but we log it for the demo.
+            lastOrder.set(wb::i18n::str_in("dashboard", "qty_changed")
+                         + ": " + ev.productName);
+            (void)n;
+        });
 }
 
 void DashboardVm::on_activate() {}
