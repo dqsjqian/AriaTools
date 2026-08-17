@@ -14,6 +14,15 @@ AppCore::AppCore(std::string i18nBaseDir, std::string initialLang)
     // pages are independent of the main-tab module VMs.
     ctx_.set_vm_factory(
         [this](const std::string& id) { return create_module_vm(id); });
+    // Primary-VM resolver for extension points: providers mount the module's
+    // main-tab instance so mounted UI shares state with the tab (Android
+    // side-channel command routing then needs no mount-aware dispatch).
+    ctx_.set_primary_vm([this](const std::string& id) {
+        for (const auto& e : entries_) {
+            if (e.id == id) return e.vm;
+        }
+        return std::shared_ptr<aria::binding::ViewModel>{};
+    });
     ctx_.set_navigator(navigator_);
     ctx_.set_mounts(mounts_);
 

@@ -75,6 +75,13 @@ int main() {
         }
         return std::shared_ptr<aria::binding::ViewModel>{};
     });
+    // Primary-VM resolver (as AppCore installs): extension points mount the
+    // module's main-tab instance so mounted UI shares state with the tab.
+    auto mainCartVm = wb::cart::make_cart_module()->create_view_model(ctx);
+    ctx.set_primary_vm([&](const std::string& id) {
+        if (id == "cart") return mainCartVm;
+        return std::shared_ptr<aria::binding::ViewModel>{};
+    });
     // Modules register their navigation targets + extension points
     // (as AppCore::load_modules does).
     for (const auto& m : reg.all()) {
@@ -226,6 +233,11 @@ int main() {
     check(vm2->mountedModule.get() == "cart", "dashboard sees the mounted provider");
     check(vm2->mountedVm.get() != nullptr, "dashboard holds the mounted VM");
     check(!vm2->mountStatus.get().empty(), "mount status is set");
+    // Shared-instance semantics: the mounted VM is the provider's PRIMARY
+    // (main-tab) VM, so Android command routing needs no mount-aware
+    // dispatch — typing / addItem on the mounted cart edits the same VM.
+    check(vm2->mountedVm.get() == mainCartVm,
+          "mounted VM is the provider's primary (shared) instance");
 
     vm2->mountToggle.execute();  // disable the extension
     check(vm2->mountedModule.get().empty(), "toggle off clears the mounted module");
@@ -234,6 +246,8 @@ int main() {
     vm2->mountToggle.execute();  // re-enable
     check(vm2->mountedModule.get() == "cart", "toggle on restores the mounted module");
     check(vm2->mountedVm.get() != nullptr, "toggle on restores the mounted VM");
+    check(vm2->mountedVm.get() == mainCartVm,
+          "toggle re-mounts the shared primary instance");
 
     std::filesystem::remove_all(tmp);
 

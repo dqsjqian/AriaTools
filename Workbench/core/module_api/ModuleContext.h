@@ -23,6 +23,14 @@ namespace wb::module_api {
 using ModuleVmFactory =
     std::function<std::shared_ptr<aria::binding::ViewModel>(const std::string&)>;
 
+/// Resolver for a module's PRIMARY (main-tab) ViewModel instance. Backed by
+/// AppCore. Extension-point providers use this to mount the SAME instance
+/// the module's tab shows, so mounted UI and the tab share state — and
+/// side-channel command/text routing needs no mount-aware dispatch layer
+/// (Android's mounted cart edits the same VM the main cart tab does).
+using PrimaryVmFn =
+    std::function<std::shared_ptr<aria::binding::ViewModel>(const std::string&)>;
+
 class ModuleContext {
 public:
     explicit ModuleContext(wb::infra::ServiceHub& hub) : hub_(hub) {}
@@ -49,6 +57,17 @@ public:
     [[nodiscard]] std::shared_ptr<aria::binding::ViewModel>
     create_module_vm(const std::string& moduleId) const {
         return vmFactory_ ? vmFactory_(moduleId) : nullptr;
+    }
+
+    /// Install the primary-VM resolver (set by AppCore once).
+    void set_primary_vm(PrimaryVmFn f) { primaryVm_ = std::move(f); }
+
+    /// The module's PRIMARY (main-tab) ViewModel instance (may be null
+    /// before load_modules / for unknown ids). Extension-point providers
+    /// return this to share state with the module's own tab.
+    [[nodiscard]] std::shared_ptr<aria::binding::ViewModel>
+    primary_vm(const std::string& moduleId) const {
+        return primaryVm_ ? primaryVm_(moduleId) : nullptr;
     }
 
     /// Install the cross-module navigator (set by AppCore once). The
@@ -78,6 +97,7 @@ public:
 private:
     wb::infra::ServiceHub& hub_;
     ModuleVmFactory vmFactory_;
+    PrimaryVmFn primaryVm_;
     std::shared_ptr<NavigatorHost> navigator_;
     std::shared_ptr<MountRegistry> mounts_;
 };
