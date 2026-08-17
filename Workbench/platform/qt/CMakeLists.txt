@@ -36,20 +36,21 @@ set_target_properties(workbench PROPERTIES
 )
 
 # -- macOS: copy i18n / assets into the .app bundle Resources so it is self-contained --
-# See the matching comment in the top-level CMakeLists.txt; POST_BUILD copy must live
-# in the same directory as the workbench target. The i18n content is guaranteed ready
-# by the wb_i18n_* dependencies added to workbench in the top-level CMakeLists.txt.
+# See the matching comment in the top-level CMakeLists.txt. Uses a dedicated
+# ALL custom target (not POST_BUILD) so i18n content changes are re-staged on
+# every build even when the workbench binary itself is not relinked. POST_BUILD
+# only fires on relink, so editing a strings.xml alone would leave the bundle
+# stale — a real trap that cost a debug session.
 if(APPLE)
     set(_bundle_res "$<TARGET_BUNDLE_CONTENT_DIR:workbench>/Resources")
-    add_custom_command(TARGET workbench POST_BUILD
+    add_custom_target(wb_stage_bundle ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
                 "${WB_RUNTIME_I18N_DIR}" "${_bundle_res}/i18n"
-        VERBATIM)
-    add_custom_command(TARGET workbench POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${WB_RUNTIME_ASSETS_DIR}"
         COMMAND ${CMAKE_COMMAND} -E copy_directory
                 "${WB_RUNTIME_ASSETS_DIR}" "${_bundle_res}/assets"
         VERBATIM)
+    add_dependencies(wb_stage_bundle workbench)
 endif()
 
 # -- Windows: deploy runtime deps next to workbench.exe so it runs by double-click --

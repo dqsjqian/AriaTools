@@ -276,12 +276,23 @@ Aria 的 `demo1-qt-showcase` 有这个 wrapper（`Executors.h`），但 Aria 框
 
 **建议**：把 `DispatcherExec` / `DispatcherDelay` 提到 Aria Qt adapter 里作为官方 helper（命名空间 `aria::adapters::qt6`），demo1 也能简化。
 
-### 5.6.5 建议汇总
+### 5.6.5 陷阱 5：i18n 资源 POST_BUILD 拷贝——改文案不触发，bundle 陈旧
+
+macOS app 的 i18n 资源通过 `add_custom_command(TARGET workbench POST_BUILD copy_directory)` 拷进 `.app` bundle。**POST_BUILD 只在 workbench 二进制重链时执行**——如果只改了 `strings.xml`（内容变了但二进制没变），bundle 里的资源保持旧版，UI 继续显示 `[module/key]` fallback。
+
+**症状**：改完 i18n 重启 app，文案不变（或仍是 key 原文）。要 clean 重建才生效，非常坑。
+
+**修复**：把 bundle staging 改成独立的 `ALL` custom target（`add_custom_target(wb_stage_bundle ALL ...)` + `add_dependencies(wb_stage_bundle workbench)`），每次 build 都重新拷贝，不依赖重链。
+
+**建议**：Aria 文档应提醒"运行时资源（i18n/assets）不要用 POST_BUILD 拷贝，用独立 ALL target 或 install(CODE) 依赖文件变更"。
+
+### 5.6.6 建议汇总
 
 - **P0**：在 Aria 文档加"集成时序检查表"（ServiceHub 注入 → AppCore 构造 → load_modules → 注册 View），每个平台 demo 都遵守
 - **P0**：错误信息改进——AsyncCommand / ObservableList 等常见错误给出修复方向
 - **P1**：Qt adapter 提供 `DispatcherExec` / `DispatcherDelay` 官方 helper
 - **P1**：文档化"自动生成头不要 #pragma once"（X-Macro 模式陷阱）
+- **P1**：文档化"运行时资源不要 POST_BUILD 拷贝"（i18n 文案修改不触发，bundle 陈旧）
 
 ---
 
