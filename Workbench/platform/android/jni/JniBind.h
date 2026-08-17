@@ -117,4 +117,12 @@ struct ModuleBinding {
 
 using BindingTable = std::unordered_map<std::string, ModuleBinding>;
 
+/// Bridge a VM's properties onto the side-channel via the module binding
+/// table (e.g. cart's subscribe_cart pushes "cart.*" props). Used by host
+/// modules to render a MOUNTED provider's VM (extension points) on Compose.
+/// Implemented in jni_bridge.cpp where the full table is assembled; returns
+/// false when the module has no registered binding.
+bool bridge_vm(const std::string& moduleId, aria::binding::ViewModel& vm,
+               std::vector<aria::Subscription>& subs);
+
 }  // namespace wb::jni

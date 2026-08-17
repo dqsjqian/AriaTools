@@ -46,12 +46,22 @@ fun DashboardPage(vm: AppViewModel) {
         SummaryText(props)
 
         // ── Extension point (mount) state ───────────────────────────────
-        val mounted = props["$MOD.mountedModule"] ?: ""
+        val mountedModule = props["$MOD.mountedModule"] ?: ""
         Text(
             props["$MOD.mount_status"] ?: "",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.primary,
         )
+
+        // The mounted provider's UI (e.g. cart) renders here — its "cart.*"
+        // props were bridged onto the side-channel by the JNI layer.
+        if (mountedModule.isNotEmpty()) {
+            val mountPage = ComposeViewFactory.build(mountedModule, vm)
+            if (mountPage != null) {
+                HorizontalDivider()
+                mountPage()
+            }
+        }
 
         // ── Buttons: navigation + extension toggle ──────────────────────
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

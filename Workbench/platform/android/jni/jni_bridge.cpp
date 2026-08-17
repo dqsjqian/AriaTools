@@ -204,6 +204,16 @@ static void subscribe_all(wb::core::AppCore& core) {
     }
 }
 
+// ── Extension-point bridging ────────────────────────────────────────────────
+bool wb::jni::bridge_vm(const std::string& moduleId, aria::binding::ViewModel& vm,
+                        std::vector<aria::Subscription>& subs) {
+    const auto& table = module_bindings();
+    auto it = table.find(moduleId);
+    if (it == table.end() || !it->second.subscribe) return false;
+    it->second.subscribe(aria::runtime::EventBus::global(), vm, subs);
+    return true;
+}
+
 // ── Native entry points (mirrored by Kotlin JniBridge) ──────────────────────
 extern "C" {
 
