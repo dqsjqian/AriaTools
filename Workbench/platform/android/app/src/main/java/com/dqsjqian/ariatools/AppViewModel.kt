@@ -70,4 +70,19 @@ class AppViewModel : ViewModel() {
         _current.value = id
         JniBridge.activateModule(id)
     }
+
+    // ── Kotlin → C++ (bidirectional bridge) ────────────────────────────────
+
+    /** Write a string property on the current module's VM (View→VM). */
+    fun setText(moduleId: String, propName: String, value: String) {
+        JniBridge.setProperty(moduleId, propName, value)
+        // Optimistic local update so the UI feels responsive before the
+        // C++ on_changed round-trip arrives (which confirms the write).
+        onPropertyChanged(moduleId, propName, value)
+    }
+
+    /** Execute a parameterless command on the current module's VM (View→VM). */
+    fun execute(moduleId: String, cmdName: String) {
+        JniBridge.executeCommand(moduleId, cmdName)
+    }
 }

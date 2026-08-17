@@ -7,8 +7,6 @@ namespace wb::cart {
 CartVm::CartVm()
     : addItem(
           [this] {
-    text(title, "title");
-    text(desc, "desc");
               const auto name = draftName.get();
               if (name.empty() || draftPrice.get() <= 0) return;
               items.push_back(std::make_shared<CartItem>(
@@ -17,7 +15,17 @@ CartVm::CartVm()
           [this] {
               return !draftName.get().empty() && draftPrice.get() > 0;
           })
-{}
+{
+    text(title,         "title");
+    text(desc,          "desc");
+    text(nameLabel,     "name_label");
+    text(priceLabel,    "price_label");
+    text(addLabel,      "add");
+    text(countLabel,    "count");
+    text(subtotalLabel, "subtotal");
+    text(taxLabel,      "tax");
+    text(totalLabel,    "total");
+}
 
 void CartVm::on_activate() {
     // Any list mutation (Insert / Remove / Replace / ItemChanged)

@@ -3,6 +3,8 @@
     <string name="title">Chat</string>
     <string name="desc">Composite VM: ChatVm is the parent, Publisher/Subscriber are children; leaving the tab cascades deactivate — tree-like ViewModel lifecycle.</string>
     <string name="user">User</string>
+    <string name="user_label">User</string>
     <string name="draft">Type a message…</string>
+    <string name="draft_label">Type a message…</string>
     <string name="send">Send</string>
 </resources>

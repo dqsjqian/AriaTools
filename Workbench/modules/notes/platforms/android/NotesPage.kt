@@ -1,11 +1,17 @@
 package com.dqsjqian.ariatools.pages
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -14,23 +20,46 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dqsjqian.ariatools.AppViewModel
 
+private const val MOD = "notes"
+
 /**
  * NotesPage — Android (Compose) view for the "notes" module.
- * Renders the C++ VM's headline properties pushed over JNI.
+ * Editable title + body (two-way bound), add/save/delete buttons,
+ * and a note list rendered from VM state.
  */
 @Composable
 fun NotesPage(vm: AppViewModel) {
     val props by vm.props.collectAsState()
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp)
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(props["notes.title"] ?: "notes", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(8.dp))
-        Text(props["notes.desc"] ?: props["notes.hint"] ?: "", style = MaterialTheme.typography.bodyMedium)
-        Spacer(Modifier.height(16.dp))
-        Text("title: ${props["notes.title"] ?: ""}", style = MaterialTheme.typography.bodyLarge)
-        Text("hint: ${props["notes.hint"] ?: ""}", style = MaterialTheme.typography.bodyLarge)
-        Text("status: ${props["notes.status"] ?: ""}", style = MaterialTheme.typography.bodyLarge)
-        Text("count: ${props["notes.count"] ?: ""}", style = MaterialTheme.typography.bodyLarge)
+        Text(props["$MOD.title"] ?: "notes", style = MaterialTheme.typography.headlineSmall)
+        Text(props["$MOD.hint"] ?: "", style = MaterialTheme.typography.bodySmall)
+        Text(props["$MOD.status"] ?: "", style = MaterialTheme.typography.bodyMedium)
+
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { vm.execute(MOD, "addNote") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.add"] ?: "Add") }
+            Button(onClick = { vm.execute(MOD, "saveNote") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.save"] ?: "Save") }
+            Button(onClick = { vm.execute(MOD, "deleteSelected") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.delete"] ?: "Delete") }
+        }
+        OutlinedTextField(
+            value = props["$MOD.editTitle"] ?: "",
+            onValueChange = { vm.setText(MOD, "editTitle", it) },
+            label = { Text(props["$MOD.title_placeholder"] ?: "Title") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedTextField(
+            value = props["$MOD.editBody"] ?: "",
+            onValueChange = { vm.setText(MOD, "editBody", it) },
+            label = { Text(props["$MOD.body_placeholder"] ?: "Body") },
+            modifier = Modifier.fillMaxWidth().weight(1f),
+        )
+        HorizontalDivider()
+        val list = (props["$MOD.noteList"] ?: "").split('\n').filter { it.isNotBlank() }
+        LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            items(list) { t -> Text(t, style = MaterialTheme.typography.bodySmall) }
+        }
     }
 }

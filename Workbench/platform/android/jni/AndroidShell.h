@@ -1,12 +1,12 @@
 #pragma once
 //
 // AndroidShell — Android-side shell. Owns the pure-C++ wb::core::AppCore and
-// exposes module metadata + activation to the JNI bridge. The view layer is
-// native Kotlin/Compose talking over the JNI side-channel (Property → on_changed
-// → JNI → StateFlow → recomposition), symmetric with the Qt/iOS shells.
+// exposes module metadata + activation + bidirectional property/command
+// bridge to the JNI layer.
 //
-// No BindingEngine here: Compose has no traditional View objects to bind, so
-// the bridge pushes property values instead (same pattern as Aria demo5).
+// The view layer is native Kotlin/Compose talking over the JNI side-channel:
+//   C++ → Kotlin : Property::on_changed → JNI onPropertyChanged → StateFlow
+//   Kotlin → C++ : nativeSetProperty / nativeExecuteCommand → this
 //
 #include "app/AppCore.h"
 
@@ -37,6 +37,15 @@ public:
 
     /// Activate the VM of the given module id (deactivating the previous one).
     void activate_module(const std::string& id);
+
+    /// Kotlin→C++: set a string Property on the given module's VM.
+    /// Routes by (moduleId, propName) to the underlying Property<string>::set.
+    void set_text(const std::string& moduleId, const std::string& propName,
+                  const std::string& value);
+
+    /// Kotlin→C++: execute a parameterless Command on the given module's VM.
+    /// Routes by (moduleId, cmdName) to the underlying Command<>::execute.
+    void execute_command(const std::string& moduleId, const std::string& cmdName);
 
 private:
     wb::core::AppCore              core_;
