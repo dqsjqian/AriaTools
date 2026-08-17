@@ -23,6 +23,8 @@
 3. **编译期类型安全**——绑定类型错误直接编译失败，不会运行时崩。
 4. **adapter 抽象正确**——`IView` 类型擦除 + 平台 adapter，让 BindingEngine 不依赖任何平台类型，这是跨端统一的关键。
 
+> **Aria 没有 BaseVm、没有 `text()` 自动 i18n 机制**——这些是 **AriaTools 项目自己封装的**（见 `core/module_api/BaseVm.h`），不是 Aria 框架的一部分。原反馈文档（早期版本）误把 BaseVm::text() 列为"框架优点"，这里**严格修正**：Aria 框架本身没有 i18n 自动刷新能力，开发者要自己在 Aria 之上封装。
+
 ---
 
 ## 三、模块化 / 插件化：编译期解耦做到了，运行时动态还缺
@@ -120,32 +122,38 @@ View 可以绑任何 Property 的任何方向（VM→View / View→VM / 双向�
 
 ---
 
-## 五、i18n 多语言：`BaseVm::text()` 很好，但覆盖面不全
+## 五、i18n 多语言：框架没内建能力，业务项目自封装
 
-### 5.1 好的部分
+### 5.1 现状
 
-`BaseVm::text(prop, "key")` 声明式绑定 i18n key，语言切换时 VM 文案属性自动刷新，View 无需感知。这比传统 gettext 在 MVVM 里自然得多。
+**Aria 框架本身没有 i18n 能力**。`Property<std::string>` 只是一个 string 容器，文本翻译要自己用 `tr("module", "key")` 之类的函数查表。
 
-### 5.2 痛点
+`BaseVm::text()` 和 `localize()` 是 **AriaTools 项目自封装的**（`core/module_api/BaseVm.h`），做的事：
+- `text(prop, key)` — 绑定 Property 到 i18n key（用 `std::source_location` 从调用点文件名自动推断 module id）
+- `localize(fn)` — 注册语言切换时重跑的闭包
+- 自动订阅 `wb::i18n::on_language_changed`，所有 localizer 在切语言时自动重跑
 
-1. **非 BaseVm 的模块享受不到**。`UnitConvertVm` 是普通类（不是 BaseVm），被迫用 `UnitConvertVmHostVm` 包一层才能进 IModule 契约——i18n 也得手动在 HostVm 里 `text()` 一遍。**两种 VM 写法并存，新人会困惑"我该继承谁"**。
+这套封装确实好用——比手写"每加一个 property 都要在 language change handler 里手动 set"干净得多。**但这是我们自己的补丁，不是 Aria 框架的**。如果 Aria 框架内建这个能力，业务层不用各自造。
+
+### 5.2 痛点（即使有了 BaseVm 封装）
+
+1. **非 BaseVm 的模块享受不到**。`UnitConvertVm` 是普通类（继承 `ViewModel` 而不是 `BaseVm`），被迫用 `UnitConvertVmHostVm` 包一层才能进 IModule 契约——i18n 也得手动在 HostVm 里 `text()` 一遍。**两种 VM 写法并存，新人会困惑"我该继承谁"**。
 2. **Android 端无法直接调 i18n**（JNI 桥接限制），View 渲染 label 只能靠 VM 暴露 Property。结果 CartVm 被迫加了 9 个 label Property（nameLabel/priceLabel/addLabel/countLabel/subtotalLabel/taxLabel/totalLabel/...），全部只是为了喂给 Android View：
    ```cpp
    // CartVm.h —— 纯为了 Android 渲染 label 而加的一堆冗余 Property
    aria::Property<std::string> nameLabel;
    aria::Property<std::string> priceLabel;
-   aria::Property<std::string> addLabel;
-   aria::Property<std::string> countLabel;
    ...
    ```
    这在 Qt/iOS 端根本用不上（它们直接 `wb::i18n::str_in()`）。**业务 VM 被平台能力短板污染了**。
-3. i18n key 无编译期校验，拼错静默显示空串。
+3. i18n key 无编译期校验，拼错**显示丑陋的 fallback**（`[common/key]`）——而不是空串或错误。echo 模块的 `nav_echo` 就被误放到了 echo 模块的 i18n（应该放 common，因为 `nav_title()` 只查 common），结果 UI 显示 `[common/nav_echo]`，调试时容易困惑。
 
 ### 5.3 建议
 
-- **P1**：统一所有模块 VM 继承 BaseVm（消灭 HostVm 双轨制），或让普通类也能享受 `text()`
+- **P0**：把 i18n 能力内建到 Aria 框架（参考 BaseVm::text 模式）——ViewModel 派生类直接获得 `text()` / `localize()`，并通过 `SourceLocation` 自动推断 module id
 - **P1**：i18n 提供 C 导出（`extern "C"`）+ JNI 直读，让 Android View 能直接取文案，VM 不用为平台加冗余 label Property
 - **P2**：i18n key 编译期生成枚举或宏，拼错直接编译失败
+- **P2**：i18n fallback 机制改进——key 找不到时，框架应明确报错（log + 抛异常）而不是静默返回 `[common/key]`（开发期容易漏看）
 
 ---
 
@@ -222,6 +230,61 @@ val props: StateFlow<Map<String, String>> = _props.asStateFlow()
 
 ---
 
+## 五点六、工程集成陷阱：Aria 假设与实际工程约束的冲突
+
+调试 macOS app 启动时连续踩了 4 个工程集成坑——这些是 **Aria 框架假设与实际多模块项目约束不匹配** 的真实案例，建议维护者考虑提供更明确的"集成检查表"或文档化"启动时序约束"。
+
+### 5.6.1 陷阱 1：`GeneratedModuleList.h` 用 `#pragma once` 导致宏不重展开
+
+CMake 自动发现模块并生成 `GeneratedModuleList.h`（每个模块一行 `WB_MODULE_ENTRY(mod, Mod)`）。`ModulesManifest.cpp` 想用它做两件事：
+- Phase 1：forward-declare 各模块的 `make_xxx_module()`
+- Phase 2：调各模块的 `registry.add(make_xxx_module())`
+
+**问题**：第二次 `#include "app/GeneratedModuleList.h"` 因为 `#pragma once` 整个文件被跳过——**宏根本不展开**。结果 `populate_modules` 注册了 0 个模块，nav 列表空、stack 空。
+
+**症状**：macOS app 启动后 UI 完全空。诊断 `core.modules().size() == 0`。
+
+**修复**：CMake 生成时**不写 `#pragma once`**（让宏每次 include 都重展开）。但 Aria 框架本身如果用 X-Macro 模式生成模块注册表，这个坑会复现——建议**文档化"自动生成头不要 #pragma once"**或者提供官方 helper 宏。
+
+### 5.6.2 陷阱 2：ServiceHub 注入时序与 AppCore 构造耦合
+
+`AppCore` 构造函数里**直接** `populate_modules + create_view_model`（同步创建所有 VM）。但 `AsyncCommand` VM（如 login）构造时要求 `IExecutor&` 不能是 `InlineExecutor`（graph thread-affinity）——**必须**在 VM 创建前注入真线程 executor。
+
+**问题**：`AppCore` 不知道有"先注入 executor 再构造 VM"的时序要求；平台壳（QtAppShell）也不知道需要在 AppCore 构造完**立刻**注入。
+
+**症状**：`std::invalid_argument: AsyncCommand: cannot use InlineExecutor as the graph-thread executor when worker runs on a different thread.`
+
+**修复**：把 `populate_modules` 从构造函数移到显式 `load_modules()` 方法；AppCore 加 `set_ui_executor()` / `set_timer()` 转发到 ServiceHub；平台壳在 AppCore 构造后**先注入**再 `load_modules()`。
+
+**建议**：
+- Aria 的 `AppCore`（或等价组装类）应**明确文档化**："构造不会自动创建 VM，需要先注入 platform executors 再调 load_modules()"
+- 或框架提供一个"标准启动协议"类（如 `CoreBootstrap`）封装这一套时序
+
+### 5.6.3 陷阱 3：`AsyncCommand` 错误信息不友好
+
+错误 `cannot use InlineExecutor as the graph-thread executor when worker runs on a different thread` 提到了"graph-thread executor"和"worker"——但**没明确告诉开发者要做什么**。第一次看这错误会困惑 5 分钟。
+
+**建议**：
+- 错误信息直接给出修复方向：例如 `Pass the UI thread executor (e.g. main-thread IExecutor wrapped from QtDispatcher) to set_ui_executor() before creating AsyncCommand VMs`
+- 提供 std::source_location 或 context 注明错误触发位置
+
+### 5.6.4 陷阱 4：`QtDispatcher` 不是 `IExecutor`
+
+`QtDispatcher` 继承 `IDispatcher`（post/post_delayed），但 ServiceHub `set_ui_executor()` 收 `IExecutor*`——需要**自己写 wrapper**（`DispatcherExec` + `DispatcherDelay`）才能注入。
+
+Aria 的 `demo1-qt-showcase` 有这个 wrapper（`Executors.h`），但 Aria 框架本身**没提供**——每个 Qt 业务项目都要自己写一遍（或者从 demo 复制）。
+
+**建议**：把 `DispatcherExec` / `DispatcherDelay` 提到 Aria Qt adapter 里作为官方 helper（命名空间 `aria::adapters::qt6`），demo1 也能简化。
+
+### 5.6.5 建议汇总
+
+- **P0**：在 Aria 文档加"集成时序检查表"（ServiceHub 注入 → AppCore 构造 → load_modules → 注册 View），每个平台 demo 都遵守
+- **P0**：错误信息改进——AsyncCommand / ObservableList 等常见错误给出修复方向
+- **P1**：Qt adapter 提供 `DispatcherExec` / `DispatcherDelay` 官方 helper
+- **P1**：文档化"自动生成头不要 #pragma once"（X-Macro 模式陷阱）
+
+---
+
 ## 六、基于框架的二次封装：哪些本该是框架内建的
 
 作为业务开发者，我被迫在业务层打了这些补丁（都源自框架能力缺失）：
@@ -270,12 +333,16 @@ val props: StateFlow<Map<String, String>> = _props.asStateFlow()
 | **P0** | iOS per-Controller 订阅袋 | 消灭全局 keepalive Hack，正式 App 必需 |
 | **P0** | **Android 绑定引擎**（类型化 JNI，消灭 String 协议） | Android 端最大短板，差一个适配层 |
 | **P0** | **Android 列表模型绑定** | ObservableList → LazyColumn，而非 "\n" 拼接 |
+| **P0** | **i18n 能力内建到 Aria**（参考 BaseVm::text） | 业务层不再各自造轮子 |
+| **P0** | **集成时序检查表 + AsyncCommand 错误信息改进** | 4 个真实工程陷阱（#2585、ServiceHub 时序、错误信息、Dispatcher 包装） |
 | **P0** | API 文档 + 绑定速查表 | 降低学习曲线 |
 | **P1** | 统一 VM 基类（消灭 HostVm） | 消灭双轨制 |
 | **P1** | enum 绑定适配 | 减少绕路 |
 | **P1** | i18n C 导出（Android 直读） | 业务 VM 不再被平台污染 |
 | **P1** | Android JNI 路由注册表化 | 热插拔承诺在 Android 兑现 |
 | **P1** | Android 订阅生命周期 / 命令类型化 | 对齐 Qt/iOS 体验 |
+| **P1** | Qt adapter 提供 `DispatcherExec` / `DispatcherDelay` | 消除 Qt 项目必写的 wrapper |
+| **P1** | 文档化 X-Macro 模式 #pragma once 陷阱 | 防重犯 |
 | **P2** | 动态模块加载（IModuleLoader） | 运行时热插拔 |
 | **P2** | 脚手架 CLI / 统一构建 CLI | 开发者体验 |
 | **P2** | demo5 升级为多模块双向类型化示例 | 官方样板对齐业务需求 |
