@@ -1,40 +1,32 @@
 #include "app/ModulesManifest.h"
 
-// Each module's factory declaration (module self-exports). Add a module = add one include + one add line.
-#include "module/DashboardModule.h"
-#include "module/NotesModule.h"
-#include "module/CalendarModule.h"
-#include "module/ToolsModule.h"
-#include "module/SettingsModule.h"
-#include "module/SyncModule.h"
-#include "module/TipcalcModule.h"
-#include "module/UnitConvertModule.h"
-#include "module/CartModule.h"
-#include "module/SignupModule.h"
-#include "module/SearchModule.h"
-#include "module/LoginModule.h"
-#include "module/ChatModule.h"
-#include "module/ThemeModule.h"
-#include "module/WizardModule.h"
+// ModulesManifest.cpp — auto-generated registration.
+//
+// The CMake configure step scans modules/ for subdirectories and generates
+// GeneratedModuleList.h with one WB_MODULE_ENTRY(mod, Mod) per discovered
+// module. This file expands each entry into a forward-declaration of
+// make_<mod>_module() + a registry.add() call.
+//
+// To add a module: create modules/<name>/CMakeLists.txt using wb_add_module.
+// To remove a module: delete its directory. No changes to this file or any
+// core file are needed — CMake re-scans on the next configure.
+
+// ── Phase 1: forward-declare each module factory (global scope) ────────
+#define WB_MODULE_ENTRY(mod, Mod) \
+    namespace wb::mod { \
+        std::shared_ptr<wb::module_api::IModule> make_##mod##_module(); \
+    }
+#include "app/GeneratedModuleList.h"
+#undef WB_MODULE_ENTRY
 
 namespace wb::app {
 
 void populate_modules(wb::module_api::ModuleRegistry& registry) {
-    registry.add(wb::dashboard::make_dashboard_module());
-    registry.add(wb::notes::make_notes_module());
-    registry.add(wb::calendar::make_calendar_module());
-    registry.add(wb::tools::make_tools_module());
-    registry.add(wb::settings::make_settings_module());
-    registry.add(wb::sync::make_sync_module());
-    registry.add(wb::tipcalc::make_tipcalc_module());
-    registry.add(wb::unitconvert::make_unitconvert_module());
-    registry.add(wb::cart::make_cart_module());
-    registry.add(wb::signup::make_signup_module());
-    registry.add(wb::search::make_search_module());
-    registry.add(wb::login::make_login_module());
-    registry.add(wb::chat::make_chat_module());
-    registry.add(wb::theme::make_theme_module());
-    registry.add(wb::wizard::make_wizard_module());
+// ── Phase 2: register each module ───────────────────────────────────────
+#define WB_MODULE_ENTRY(mod, Mod) \
+    registry.add(wb::mod::make_##mod##_module());
+#include "app/GeneratedModuleList.h"
+#undef WB_MODULE_ENTRY
 }
 
 }  // namespace wb::app
