@@ -34,6 +34,9 @@ SignupVm::SignupVm()
               wb::i18n::str_in("signup", "registered_suffix"));
       })
 {
+    text(title, "title");
+    text(desc, "desc");
+
     // ── Per-field rules (messages resolved at evaluate time via
     //    localized_rule, so language switches refresh them with no
     //    rebuild) ──────────────────────────────────────────────────
@@ -72,14 +75,9 @@ SignupVm::SignupVm()
     // confirm has no per-field rule of its own — the password-match
     // check is a cross-field rule on the FormValidator below.
 
-    wire_form_();
-
-    // Re-wire the FormValidator aggregate whenever the UI language
-    // changes so the cross-field "passwords match" message is resolved
-    // against the new language. Per-field rules above use localized_rule
-    // (lazy evaluation) and need no rebuild.
-    lang_sub_ = wb::i18n::on_language_changed(
-        [this](const std::string&) { wire_form_(); });
+    // Re-wire the aggregate whenever the UI language changes so the
+    // cross-field message is resolved against the new language.
+    localize([this] { wire_form_(); });
 }
 
 SignupVm::~SignupVm() = default;

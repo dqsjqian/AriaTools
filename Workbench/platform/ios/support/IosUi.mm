@@ -1,24 +1,60 @@
 #include "support/IosUi.h"
 
+#import <objc/runtime.h>
+
+#include <cstdint>
 #include <memory>
-#include <vector>
+#include <unordered_map>
+#include <utility>
+
+@interface WbIosCppOwnerLifetime : NSObject
+- (instancetype)initWithOwner:(std::shared_ptr<void>)owner;
+@end
+
+@implementation WbIosCppOwnerLifetime {
+    std::shared_ptr<void> owner_;
+}
+- (instancetype)initWithOwner:(std::shared_ptr<void>)owner {
+    if ((self = [super init])) owner_ = std::move(owner);
+    return self;
+}
+@end
+
+@interface WbIosUIKitViewStore : NSObject
+- (aria::adapters::uikit::UIKitView&)viewFor:(UIView*)view;
+@end
+
+@implementation WbIosUIKitViewStore {
+    std::unordered_map<std::uintptr_t,
+        std::shared_ptr<aria::adapters::uikit::UIKitView>> views_;
+}
+- (aria::adapters::uikit::UIKitView&)viewFor:(UIView*)view {
+    const auto key = reinterpret_cast<std::uintptr_t>((__bridge void*)view);
+    auto [it, inserted] = views_.try_emplace(key);
+    if (inserted) {
+        it->second = std::make_shared<aria::adapters::uikit::UIKitView>(view);
+    }
+    return *it->second;
+}
+@end
 
 namespace wb::ios::ui {
 
 using aria::adapters::uikit::UIKitView;
 
-namespace {
-std::vector<std::shared_ptr<UIKitView>>& keepalive() {
-    static std::vector<std::shared_ptr<UIKitView>> v;
-    return v;
-}
-}  // namespace
-
 UIKitView& view_for(UIView* v) {
-    auto p = std::make_shared<UIKitView>(v);
-    auto& ref = *p;
-    keepalive().push_back(std::move(p));
-    return ref;
+    static char store_key;
+    UIView* root = v;
+    while (root.superview) root = root.superview;
+
+    auto* store = static_cast<WbIosUIKitViewStore*>(
+        objc_getAssociatedObject(root, &store_key));
+    if (!store) {
+        store = [[WbIosUIKitViewStore alloc] init];
+        objc_setAssociatedObject(root, &store_key, store,
+                                 OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+    return [store viewFor:v];
 }
 
 UILabel* make_label(NSString* text) {
@@ -73,9 +109,13 @@ UIViewController* make_stack_vc(NSArray<UIView*>* children) {
     return vc;
 }
 
-std::vector<aria::Subscription>& subs_keepalive() {
-    static std::vector<aria::Subscription> v;
-    return v;
+void attach_owner_erased(UIViewController* vc, std::shared_ptr<void> owner) {
+    static char owner_key;
+    objc_setAssociatedObject(
+        vc,
+        &owner_key,
+        [[WbIosCppOwnerLifetime alloc] initWithOwner:std::move(owner)],
+        OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 }  // namespace wb::ios::ui

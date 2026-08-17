@@ -74,19 +74,14 @@ private fun NoteEditor(vm: AppViewModel, props: Map<String, String>) {
         value = props["$MOD.editBody"] ?: "",
         onValueChange = { vm.setText(MOD, "editBody", it) },
         label = { Text(props["$MOD.body_placeholder"] ?: "Body") },
-        modifier = Modifier.fillMaxWidth().weight(1f),
+        modifier = Modifier.fillMaxWidth(),
     )
 }
 
 @Composable
 private fun NoteList(props: Map<String, String>) {
     val list = (props["$MOD.noteList"] ?: "").split('\n').filter { it.isNotBlank() }
-    LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
+    LazyColumn(modifier = Modifier.fillMaxWidth()) {
         items(list) { t -> Text(t, style = MaterialTheme.typography.bodySmall) }
     }
-}
-
-// ── Module self-registration (Android twin of Qt/iOS register_<mod>_view) ──
-fun register_notes_page() {
-    com.dqsjqian.ariatools.ui.ComposeViewFactory.register("notes") { NotesPage(it) }
 }

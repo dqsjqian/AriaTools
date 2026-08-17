@@ -1,18 +1,23 @@
 #pragma once
 //
-// SignupView — Qt view for the "signup" module (Aria free-function view).
+// SignupView — Qt view for the "signup" module.
 //
-// Uses the HostVm pattern: build_view() receives SignupVmHostVm (so it can
-// read host.desc) and derives the inner SignupVm from it.
+// Binds directly to SignupVm.
 //
 #include "aria/binding/binding_engine.hpp"
 
 #include <QWidget>
 
-namespace wb::signup { class SignupVmHostVm; }
+namespace wb::signup { class SignupVm; }
 
 namespace wb::signup::qtview {
 
-QWidget* build_view(SignupVmHostVm& host, aria::binding::BindingEngine& be);
+class SignupView {
+public:
+    SignupView(SignupVm& host, aria::binding::BindingEngine& be);
+    QWidget* widget() const { return root_; }
+private:
+    QWidget* root_;
+};
 
 }  // namespace wb::signup::qtview

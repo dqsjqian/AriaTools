@@ -33,7 +33,6 @@ public:
     aria::Command<std::string> switchLanguage;
 
     void on_activate() override;
-    void on_deactivate() override;
 };
 
 }  // namespace wb::settings

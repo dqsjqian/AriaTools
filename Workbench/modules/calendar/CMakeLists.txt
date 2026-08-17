@@ -4,7 +4,8 @@ wb_add_module(NAME calendar
                 viewmodels/CalendarVm.cpp
                 module/CalendarModule.cpp
     QT_SOURCES  platforms/qt/CalendarView.cpp
+                platforms/qt/CalendarViewEntry.cpp
     IOS_SOURCES platforms/ios/CalendarView.mm
                 platforms/ios/CalendarViewController.mm
-                platforms/ios/CalendarModule.mm
+                platforms/ios/CalendarViewEntry.mm
 )

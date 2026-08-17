@@ -46,6 +46,7 @@ android {
     // IOS_SOURCES — the Android twin of the per-platform View layout.
     sourceSets["main"].java.srcDirs(
         "$wbNativeRoot/Workbench/modules/dashboard/platforms/android",
+        "$wbNativeRoot/Workbench/modules/echo/platforms/android",
         "$wbNativeRoot/Workbench/modules/notes/platforms/android",
         "$wbNativeRoot/Workbench/modules/calendar/platforms/android",
         "$wbNativeRoot/Workbench/modules/tools/platforms/android",

@@ -5,6 +5,9 @@
 #import <UIKit/UIKit.h>
 
 #include "aria/binding/binding_engine.hpp"
+#include "aria/subscription.hpp"
+
+#include <vector>
 
 namespace wb::cart { class CartVm; }
 
@@ -15,7 +18,8 @@ public:
     CartView(CartVm& vm, aria::binding::BindingEngine& be);
     UIViewController* viewController() const { return vc_; }
 private:
-    UIViewController* vc_;
+    UIViewController* __weak vc_;
+    std::vector<aria::Subscription> subscriptions_;
 };
 
 }  // namespace wb::cart::iosview

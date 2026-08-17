@@ -1,5 +1,4 @@
 #include "WizardView.h"
-#include "support/QtViewFactory.h"
 #include "support/UiHelpers.h"
 #include "infra/i18n/I18n.h"
 #include "viewmodels/WizardVm.h"
@@ -121,9 +120,9 @@ QWidget* build_step3(Step3Vm& vm, aria::binding::BindingEngine& be) {
 
 }  // namespace
 
-// ─── Top-level build_view ──────────────────────────────────────────────────
-QWidget* build_view(WizardVmHostVm& host, aria::binding::BindingEngine& be) {
-    auto* root_ = new QWidget;
+// ─── Top-level view ────────────────────────────────────────────────────────
+WizardView::WizardView(WizardVmHostVm& host, aria::binding::BindingEngine& be)
+    : root_(new QWidget) {
     auto& vm = host.inner();
     auto& s_subs = subs_attached_to(root_);
     auto* lay = new QVBoxLayout(root_);
@@ -175,18 +174,6 @@ QWidget* build_view(WizardVmHostVm& host, aria::binding::BindingEngine& be) {
                               .arg(vm.nav->depth.get()));
         }));
     depthLbl->setText(QString("Navigator current depth = %1").arg(vm.nav->depth.get()));
-    return root_;
 }
 
 }  // namespace wb::wizard::qtview
-
-namespace wb::wizard {
-void register_wizard_view() {
-    wb::qt::QtViewFactory::instance().register_builder(
-        "wizard",
-        [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            auto& host = static_cast<WizardVmHostVm&>(vm);
-            return qtview::build_view(host, be);
-        });
-}
-}  // namespace wb::wizard

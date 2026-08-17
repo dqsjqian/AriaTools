@@ -72,8 +72,3 @@ private fun SubmitSection(vm: AppViewModel, props: Map<String, String>) {
     Button(onClick = { vm.execute(MOD, "submit") }, modifier = Modifier.fillMaxWidth()) { Text(props["$MOD.submit"] ?: "Submit") }
     Text(props["$MOD.submittedSummary"] ?: props["$MOD.unregistered"] ?: "", style = MaterialTheme.typography.bodyMedium)
 }
-
-// ── Module self-registration (Android twin of Qt/iOS register_<mod>_view) ──
-fun register_signup_page() {
-    com.dqsjqian.ariatools.ui.ComposeViewFactory.register("signup") { SignupPage(it) }
-}

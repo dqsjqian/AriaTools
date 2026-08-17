@@ -50,10 +50,10 @@ AriaTools/
 │   ├── modules/<mod>/            # ★ business modules, one static lib each
 │   │   ├── viewmodels/           #   VM: all business logic (Property/Computed/Command)
 │   │   ├── models/ services/     #   Model / Service
-│   │   ├── module/               #   IModule + factory
-│   │   ├── platforms/qt/         #   Qt view (QT_SOURCES)
-│   │   ├── platforms/ios/        #   UIKit view (IOS_SOURCES)
-│   │   ├── platforms/android/    #   Compose page (Gradle sourceSets)
+│   │   ├── module/               #   business entry: IModule + VM factory
+│   │   ├── platforms/qt/         #   View + separate ViewEntry (QT_SOURCES)
+│   │   ├── platforms/ios/        #   UIKit View + separate ViewEntry (IOS_SOURCES)
+│   │   ├── platforms/android/    #   Compose Page + separate PageEntry
 │   │   └── assets/i18n/          #   module strings
 │   └── platform/
 │       ├── qt/                   #   Qt shell (QtViewFactory + UiHelpers)
@@ -68,7 +68,7 @@ AriaTools/
 C++ VM (aria::Property) → on_changed → JNI callback → Kotlin StateFlow → Compose recomposition
 ```
 
-## 📦 Modules (15)
+## 📦 Modules (16)
 
 | Module | Purpose | Aria capabilities demonstrated |
 |---|---|---|
@@ -84,23 +84,61 @@ C++ VM (aria::Property) → on_changed → JNI callback → Kotlin StateFlow →
 | chat | Chat room | EventBus cross-module messaging |
 | theme | Theme switch | Container DI |
 | wizard | Sign-up wizard | multi-step form state machine |
+| echo | Hot-plug template | minimal module skeleton |
+
+### Platform View contract
+
+Every platform separates page implementation from platform registration:
+
+| Platform | UI implementation | Registration entry |
+|---|---|---|
+| Qt | `<Mod>View.h/.cpp` | `<Mod>ViewEntry.cpp` |
+| iOS | `<Mod>View.h/.mm` or ViewController | `<Mod>ViewEntry.mm` |
+| Android | `<Mod>Page.kt` | `<Mod>PageEntry.kt` |
+
+The business `module/<Mod>Module.cpp`, UI implementation, and platform Entry are three distinct layers. View/Page files must not register themselves with a Factory.
 
 ## 🚀 Quick Start
 
 ```bash
 git clone --recurse-submodules https://github.com/dqsjqian/AriaTools.git
 cd AriaTools
+```
 
-# Qt desktop (macOS / Linux)
-bash Workbench/scripts/gen-mac.sh            # or gen-win.ps1 / build.ps1 (Windows)
+### Qt desktop (macOS / Linux)
 
-# iOS (needs Xcode)
-bash Workbench/scripts/gen-ios.sh
+```bash
+bash Workbench/scripts/gen-mac.sh            # configure + build (Release)
+bash Workbench/scripts/gen-mac.sh run        # build and launch
+```
 
-# Android (needs NDK r26+ / SDK CMake 3.22.1)
+### Qt desktop (Windows, MSVC + Qt6)
+
+```powershell
+pwsh Workbench/scripts/gen-win.ps1           # configure + build (Release)
+pwsh Workbench/scripts/gen-win.ps1 run       # build and launch
+pwsh Workbench/scripts/gen-win.ps1 tests     # build + run module tests
+```
+
+Toolchain auto-detection: vswhere probes the Visual Studio install (2022/2026), Windows Kits path is read from the registry, and Qt6 is auto-detected (e.g. `D:\worksoft\Qt`). Optional env vars: `$env:QT_DIR` to pin the Qt prefix, `$env:ARIA_VS_GENERATOR` to override the CMake generator.
+
+### iOS (needs Xcode)
+
+```bash
+bash Workbench/scripts/gen-ios.sh            # generate Xcode project
+bash Workbench/scripts/gen-ios.sh build      # generate + build simulator
+```
+
+### Android (needs NDK r26+ / SDK CMake 3.22.1)
+
+```bash
 bash Workbench/scripts/gen-android.sh        # core static libs only
 bash Workbench/scripts/gen-android.sh --apk  # core + Gradle APK
 ```
+
+### Web (planned)
+
+`gen-web.sh` is a placeholder for now: the Web shape is a C++ backend exposing the ViewModel via the Aria HTTP adapter (REST+SSE) plus a thin browser client; not yet wired.
 
 ## 🛠 Tech Stack
 

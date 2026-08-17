@@ -26,17 +26,42 @@ set(WB_LIB   "${WB_NATIVE_ROOT}/build/platforms/android/lib")
 add_library(aria_jni SHARED
     "${WB_ROOT}/platform/android/jni/jni_bridge.cpp"
     "${WB_ROOT}/platform/android/jni/AndroidShell.cpp"
+    "${WB_ROOT}/modules/calendar/platforms/android/CalendarJniBinding.cpp"
+    "${WB_ROOT}/modules/cart/platforms/android/CartJniBinding.cpp"
+    "${WB_ROOT}/modules/chat/platforms/android/ChatJniBinding.cpp"
+    "${WB_ROOT}/modules/dashboard/platforms/android/DashboardJniBinding.cpp"
+    "${WB_ROOT}/modules/login/platforms/android/LoginJniBinding.cpp"
+    "${WB_ROOT}/modules/notes/platforms/android/NotesJniBinding.cpp"
+    "${WB_ROOT}/modules/search/platforms/android/SearchJniBinding.cpp"
+    "${WB_ROOT}/modules/settings/platforms/android/SettingsJniBinding.cpp"
+    "${WB_ROOT}/modules/signup/platforms/android/SignupJniBinding.cpp"
+    "${WB_ROOT}/modules/sync/platforms/android/SyncJniBinding.cpp"
+    "${WB_ROOT}/modules/theme/platforms/android/ThemeJniBinding.cpp"
+    "${WB_ROOT}/modules/tipcalc/platforms/android/TipCalcJniBinding.cpp"
+    "${WB_ROOT}/modules/tools/platforms/android/ToolsJniBinding.cpp"
+    "${WB_ROOT}/modules/unitconvert/platforms/android/UnitConvertJniBinding.cpp"
+    "${WB_ROOT}/modules/wizard/platforms/android/WizardJniBinding.cpp"
 )
 
 # ── Include directories (mirror the core build's set) ────────────────────
 target_include_directories(aria_jni PRIVATE
     ${WB_ROOT}/core
+    ${WB_ROOT}/platform/android
     ${WB_ROOT}/modules/dashboard
     ${WB_ROOT}/modules/notes
     ${WB_ROOT}/modules/calendar
     ${WB_ROOT}/modules/tools
     ${WB_ROOT}/modules/settings
     ${WB_ROOT}/modules/sync
+    ${WB_ROOT}/modules/tipcalc
+    ${WB_ROOT}/modules/unitconvert
+    ${WB_ROOT}/modules/cart
+    ${WB_ROOT}/modules/signup
+    ${WB_ROOT}/modules/search
+    ${WB_ROOT}/modules/login
+    ${WB_ROOT}/modules/chat
+    ${WB_ROOT}/modules/theme
+    ${WB_ROOT}/modules/wizard
     ${ARIA_ROOT}/third_party/nlohmann_json/include
     ${ARIA_ROOT}/modules/abi/include
     ${ARIA_ROOT}/modules/adapters/jni/include
@@ -52,6 +77,7 @@ target_include_directories(aria_jni PRIVATE
 target_link_libraries(aria_jni
     ${WB_LIB}/libwb_core_app.a
     ${WB_LIB}/libwb_module_dashboard.a
+    ${WB_LIB}/libwb_module_echo.a
     ${WB_LIB}/libwb_module_notes.a
     ${WB_LIB}/libwb_module_calendar.a
     ${WB_LIB}/libwb_module_tools.a

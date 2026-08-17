@@ -34,8 +34,6 @@ public:
 
     explicit ChatPublisherVm(aria::runtime::EventBus& bus);
 
-    void on_activate() override;
-    void on_deactivate() override;
 };
 
 class ChatSubscriberVm : public wb::core::BaseVm {
@@ -45,8 +43,6 @@ public:
 
     explicit ChatSubscriberVm(aria::runtime::EventBus& bus);
 
-    void on_activate() override;
-    void on_deactivate() override;
 };
 
 class ChatVm : public wb::core::BaseVm {

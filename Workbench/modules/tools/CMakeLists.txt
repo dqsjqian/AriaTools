@@ -5,7 +5,8 @@ wb_add_module(NAME tools
         viewmodels/ToolsVm.cpp
         module/ToolsModule.cpp
     QT_SOURCES  platforms/qt/ToolsView.cpp
-    IOS_SOURCES platforms/ios/ToolsView.mm
+                platforms/qt/ToolsViewEntry.cpp
+    IOS_SOURCES platforms/ios/ToolsView.mm platforms/ios/ToolsViewEntry.mm
 )
 
 target_include_directories(wb_module_tools PRIVATE

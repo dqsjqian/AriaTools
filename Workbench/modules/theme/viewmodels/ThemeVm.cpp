@@ -53,6 +53,17 @@ const char* i18n_key_for(const std::string& id) {
 }  // namespace
 
 ThemeVm::ThemeVm() : container_(std::make_shared<aria::runtime::Container>()) {
+    text(title, "title");
+    text(desc, "desc");
+    text(themeLightLabel, "theme_light");
+    text(themeDarkLabel, "theme_dark");
+    text(themeSolarizedLabel, "theme_solarized");
+    text(cardTitleLabel, "card_title");
+    text(cardBodyLabel, "card_body");
+    localize([this] {
+        currentDisplayName.set(display_name(currentId.get()));
+    });
+
     container_->register_singleton<ITheme, LightTheme>();
 }
 

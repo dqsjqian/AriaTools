@@ -1,5 +1,4 @@
 #include "SettingsView.h"
-#include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "viewmodels/SettingsVm.h"
 
@@ -30,13 +29,3 @@ SettingsView::SettingsView(SettingsVm& vm, aria::binding::BindingEngine& be)
 }
 
 }  // namespace wb::settings::iosview
-
-namespace wb::settings {
-void register_settings_view() {
-    wb::ios::UIViewFactory::instance().register_builder(
-        "settings", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            auto* view = new iosview::SettingsView(static_cast<SettingsVm&>(vm), be);
-            return view->viewController();
-        });
-}
-}  // namespace wb::settings

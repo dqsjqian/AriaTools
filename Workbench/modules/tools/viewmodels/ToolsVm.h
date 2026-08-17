@@ -62,9 +62,6 @@ public:
     aria::Property<std::string> encryptFileLabel;
     aria::Property<std::string> decryptFileLabel;
 
-    void on_activate() override;
-    void on_deactivate() override;
-
 private:
     std::shared_ptr<ToolsModel> model_;
     void apply_json_result_(const ToolResult& result);

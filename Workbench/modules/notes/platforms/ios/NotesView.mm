@@ -1,5 +1,4 @@
 #include "NotesView.h"
-#include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "viewmodels/NotesVm.h"
 
@@ -35,13 +34,3 @@ NotesView::NotesView(NotesVm& vm, aria::binding::BindingEngine& be)
 }
 
 }  // namespace wb::notes::iosview
-
-namespace wb::notes {
-void register_notes_view() {
-    wb::ios::UIViewFactory::instance().register_builder(
-        "notes", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            auto* view = new iosview::NotesView(static_cast<NotesVm&>(vm), be);
-            return view->viewController();
-        });
-}
-}  // namespace wb::notes

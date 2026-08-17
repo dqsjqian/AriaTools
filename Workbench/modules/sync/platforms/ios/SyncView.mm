@@ -1,5 +1,4 @@
 #include "SyncView.h"
-#include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "viewmodels/SyncVm.h"
 
@@ -50,13 +49,3 @@ SyncView::SyncView(SyncVm& vm, aria::binding::BindingEngine& be)
 }
 
 }  // namespace wb::sync::iosview
-
-namespace wb::sync {
-void register_sync_view() {
-    wb::ios::UIViewFactory::instance().register_builder(
-        "sync", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            auto* view = new iosview::SyncView(static_cast<SyncVm&>(vm), be);
-            return view->viewController();
-        });
-}
-}  // namespace wb::sync

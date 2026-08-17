@@ -73,7 +73,4 @@ void ToolsVm::apply_file_result_(const ToolResult& result, std::string_view succ
     }
 }
 
-void ToolsVm::on_activate() {}
-void ToolsVm::on_deactivate() { bag().clear(); }
-
 }  // namespace wb::tools

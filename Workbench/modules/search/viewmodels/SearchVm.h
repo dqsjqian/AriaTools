@@ -7,6 +7,7 @@
 #include "aria/aria.hpp"
 #include "aria/observable_list.hpp"
 #include "aria/property_ops.hpp"
+#include "module_api/BaseVm.h"
 
 #include <memory>
 #include <string>
@@ -18,10 +19,14 @@ struct SearchHit {
     int         seq = 0;
 };
 
-class SearchVm {
+class SearchVm final : public wb::core::BaseVm {
 public:
     explicit SearchVm(aria::IDelayedScheduler& timer);
 
+    aria::Property<std::string> title;
+    aria::Property<std::string> desc;
+    aria::Property<std::string> placeholder;
+    aria::Property<std::string> searchesLabel;
     aria::Property<std::string>                  query{""};
     aria::ObservableList<SearchHit>              hits;
 
@@ -29,8 +34,7 @@ public:
     std::shared_ptr<aria::Property<std::string>> distinct;
 
 private:
-    aria::Subscription sub_;
-    int                seq_ = 0;
+    int seq_ = 0;
 };
 
 }  // namespace wb::search

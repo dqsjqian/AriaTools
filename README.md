@@ -52,10 +52,10 @@ AriaTools/
 │   ├── modules/<mod>/            # ★ 业务模块，每个一个静态库
 │   │   ├── viewmodels/           #   VM：全部业务逻辑（Property/Computed/Command）
 │   │   ├── models/ services/     #   Model / Service
-│   │   ├── module/               #   IModule 实现 + 工厂
-│   │   ├── platforms/qt/         #   Qt View（QT_SOURCES）
-│   │   ├── platforms/ios/        #   UIKit View（IOS_SOURCES）
-│   │   ├── platforms/android/    #   Compose 页面（Gradle sourceSets 引入）
+│   │   ├── module/               #   业务入口：IModule 实现 + VM 工厂
+│   │   ├── platforms/qt/         #   View 实现 + 独立 ViewEntry（QT_SOURCES）
+│   │   ├── platforms/ios/        #   UIKit 实现 + 独立 ViewEntry（IOS_SOURCES）
+│   │   ├── platforms/android/    #   Compose Page + 独立 PageEntry
 │   │   └── assets/i18n/          #   模块文案
 │   └── platform/
 │       ├── qt/                   #   Qt 壳（shell + QtViewFactory + UiHelpers）
@@ -70,7 +70,7 @@ AriaTools/
 C++ VM（aria::Property）→ on_changed → JNI 回调 → Kotlin StateFlow → Compose 重组
 ```
 
-## 📦 模块清单（15）
+## 📦 模块清单（16）
 
 | 模块 | 说明 | 演示的 Aria 能力 |
 |---|---|---|
@@ -92,24 +92,45 @@ C++ VM（aria::Property）→ on_changed → JNI 回调 → Kotlin StateFlow →
 
 AriaTools 的模块系统支持**热插拔**——新增、删除模块**不需要修改任何核心文件**。
 
-**CMake 自动发现**：`Workbench/CMakeLists.txt` 用 `file(GLOB)` 扫描 `modules/*/CMakeLists.txt`，自动生成 `GeneratedModuleList.h`，`ModulesManifest.cpp` 和各平台 `ViewManifest` 通过宏展开自动注册。
+**CMake 自动发现**：`Workbench/CMakeLists.txt` 用 `file(GLOB)` 扫描 `modules/*/CMakeLists.txt`，自动生成 `GeneratedModuleList.h`，`ModulesManifest.cpp` 和 Qt/iOS `ViewManifest` 通过宏展开自动注册；Android 由 `ModulePages.kt` 维护 Compose 入口清单。
+
+### 平台 View 目录契约
+
+每个平台都严格分离“页面实现”和“平台注册入口”：
+
+| 平台 | 页面实现 | 注册入口 |
+|---|---|---|
+| Qt | `<Mod>View.h/.cpp` | `<Mod>ViewEntry.cpp` |
+| iOS | `<Mod>View.h/.mm` 或 ViewController | `<Mod>ViewEntry.mm` |
+| Android | `<Mod>Page.kt` | `<Mod>PageEntry.kt` |
+
+- `module/<Mod>Module.cpp` 只负责平台无关的业务模块与 VM 工厂。
+- `View` / `Page` 只负责 UI、布局和 binding，不引用平台 Factory。
+- `ViewEntry` / `PageEntry` 只负责把 builder 注册到平台 Factory，不写 UI。
+- 平台入口禁止命名为 `<Mod>Module`，避免与业务 Module 混淆。
 
 ### 新增模块
 
 ```bash
 # 1. 创建模块目录
-mkdir -p Workbench/modules/mymod/{module,viewmodels,platforms/qt,assets/i18n}
+mkdir -p Workbench/modules/mymod/{module,viewmodels,platforms/{qt,ios,android},assets/i18n}
 
-# 2. 写 CMakeLists.txt（单行声明）
+# 2. 写 CMakeLists.txt
 cat > Workbench/modules/mymod/CMakeLists.txt << 'EOF'
 wb_add_module(NAME mymod
     SOURCES module/MyModModule.cpp
-    QT_SOURCES platforms/qt/MyModView.cpp
+    QT_SOURCES
+        platforms/qt/MyModView.cpp
+        platforms/qt/MyModViewEntry.cpp
+    IOS_SOURCES
+        platforms/ios/MyModView.mm
+        platforms/ios/MyModViewEntry.mm
 )
 EOF
 
-# 3. 写 IModule + VM + View（参考 modules/echo/ 最小模板）
-# 4. 重新构建——CMake 自动发现，无需改 ModulesManifest / ViewManifest / CMakeLists
+# 3. 写 IModule + VM + 三端 View/Page + 独立 Entry（参考 modules/echo/）
+# 4. Qt/iOS 重新构建即可自动发现；Android 另在 ModulePages.kt 加一条入口
+# 5. 业务 Module、View/Page、平台 Entry 三层不得合并
 ```
 
 ### 删除模块
@@ -141,17 +162,42 @@ bus.subscribe<wb::shared::events::ItemAddedToCart>([](const auto& ev) {
 # 克隆（含 Aria submodule）
 git clone --recurse-submodules https://github.com/dqsjqian/AriaTools.git
 cd AriaTools
+```
 
-# Qt 桌面（macOS / Linux）
-bash Workbench/scripts/gen-mac.sh            # 或 gen-win.ps1 / build.ps1（Windows）
+### Qt 桌面（macOS / Linux）
 
-# iOS（需 Xcode）
-bash Workbench/scripts/gen-ios.sh
+```bash
+bash Workbench/scripts/gen-mac.sh            # configure + build（Release）
+bash Workbench/scripts/gen-mac.sh run        # 构建后直接启动
+```
 
-# Android（需 NDK r26+ / SDK CMake 3.22.1）
+### Qt 桌面（Windows，MSVC + Qt6）
+
+```powershell
+pwsh Workbench/scripts/gen-win.ps1           # configure + build（Release）
+pwsh Workbench/scripts/gen-win.ps1 run       # 构建后直接启动
+pwsh Workbench/scripts/gen-win.ps1 tests     # 构建 + 跑模块测试
+```
+
+工具链自动探测：vswhere 定位 VS（2022/2026 均支持）、注册表读 Windows Kits 路径、Qt6 自动检测（`D:\worksoft\Qt` 等）。可选环境变量：`$env:QT_DIR` 指定 Qt 前缀、`$env:ARIA_VS_GENERATOR` 覆盖 CMake 生成器。
+
+### iOS（需 Xcode）
+
+```bash
+bash Workbench/scripts/gen-ios.sh            # 生成 Xcode 工程
+bash Workbench/scripts/gen-ios.sh build      # 生成 + 构建模拟器
+```
+
+### Android（需 NDK r26+ / SDK CMake 3.22.1）
+
+```bash
 bash Workbench/scripts/gen-android.sh        # 仅核心静态库
 bash Workbench/scripts/gen-android.sh --apk  # 核心 + Gradle 打包 APK
 ```
+
+### Web（规划中）
+
+`gen-web.sh` 目前是占位脚本：Web 形态为"C++ 后端经 Aria HTTP adapter 暴露 VM（REST+SSE）+ 浏览器薄客户端"，尚未接入。
 
 ## 🛠 技术栈
 

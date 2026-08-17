@@ -1,8 +1,6 @@
 #include "UnitConvertView.h"
-#include "support/QtViewFactory.h"
 #include "support/UiHelpers.h"
 #include "viewmodels/UnitConvertVm.h"
-#include "viewmodels/UnitConvertVmHostVm.h"
 
 #include "aria/binding/binding_engine.hpp"
 
@@ -15,9 +13,9 @@
 namespace wb::unitconvert::qtview {
 using namespace wb::ui;
 
-QWidget* build_view(UnitConvertVmHostVm& host, aria::binding::BindingEngine& be) {
-    auto* root_ = new QWidget;
-    auto& vm = host.inner();
+UnitConvertView::UnitConvertView(UnitConvertVm& host, aria::binding::BindingEngine& be)
+    : root_(new QWidget) {
+    auto& vm = host;
     auto& s_subs = subs_attached_to(root_);
     auto* lay = new QVBoxLayout(root_);
     // Hint banner: VM-owned desc property (i18n, auto-refreshes on language change).
@@ -56,18 +54,6 @@ QWidget* build_view(UnitConvertVmHostVm& host, aria::binding::BindingEngine& be)
     s_subs.push_back(vm.fromLabel .on_changed(syncFrom));
     s_subs.push_back(vm.converted .on_changed([syncResult](double){ syncResult(); }));
     s_subs.push_back(vm.toLabel   .on_changed([syncResult](const std::string&){ syncResult(); }));
-    return root_;
 }
 
 }  // namespace wb::unitconvert::qtview
-
-namespace wb::unitconvert {
-void register_unitconvert_view() {
-    wb::qt::QtViewFactory::instance().register_builder(
-        "unitconvert",
-        [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            auto& host = static_cast<UnitConvertVmHostVm&>(vm);
-            return qtview::build_view(host, be);
-        });
-}
-}  // namespace wb::unitconvert

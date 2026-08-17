@@ -1,9 +1,7 @@
 #include "ThemeView.h"
-#include "support/QtViewFactory.h"
 #include "support/UiHelpers.h"
 #include "infra/i18n/I18n.h"
 #include "viewmodels/ThemeVm.h"
-#include "viewmodels/ThemeVmHostVm.h"
 
 #include "aria/binding/binding_engine.hpp"
 
@@ -48,9 +46,9 @@ void repopulate_picker(QComboBox* picker, ThemeVm& vm) {
 }
 }  // namespace
 
-QWidget* build_view(ThemeVmHostVm& host, aria::binding::BindingEngine& be) {
-    auto* root_ = new QWidget;
-    auto& vm = host.inner();
+ThemeView::ThemeView(ThemeVm& host, aria::binding::BindingEngine& be)
+    : root_(new QWidget) {
+    auto& vm = host;
     auto& s_subs = subs_attached_to(root_);
     auto* lay = new QVBoxLayout(root_);
     // Hint banner: VM-owned desc property (i18n, auto-refreshes on language change).
@@ -84,8 +82,8 @@ QWidget* build_view(ThemeVmHostVm& host, aria::binding::BindingEngine& be) {
             repopulate_picker(picker, vm);
             apply_theme(card, title, body, *vm.theme());
         }));
-    // Language change already re-resolves currentDisplayName via the
-    // HostVm's localize() hook; we also need to refresh the picker
+    // Language change re-resolves currentDisplayName via the VM's
+    // localize() hook; we also need to refresh the picker
     // labels and card text.
     s_subs.push_back(vm.currentDisplayName.on_changed(
         [picker, &vm, title, body](const std::string&) {
@@ -93,18 +91,6 @@ QWidget* build_view(ThemeVmHostVm& host, aria::binding::BindingEngine& be) {
             title->setText(QString::fromStdString(wb::i18n::str_in("theme", "card_title")));
             body ->setText(QString::fromStdString(wb::i18n::str_in("theme", "card_body")));
         }));
-    return root_;
 }
 
 }  // namespace wb::theme::qtview
-
-namespace wb::theme {
-void register_theme_view() {
-    wb::qt::QtViewFactory::instance().register_builder(
-        "theme",
-        [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            auto& host = static_cast<ThemeVmHostVm&>(vm);
-            return qtview::build_view(host, be);
-        });
-}
-}  // namespace wb::theme

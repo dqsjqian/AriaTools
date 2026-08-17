@@ -5,10 +5,22 @@
 // they never new services themselves and don't know concrete implementations.
 //
 #include "infra/ServiceHub.h"
+#include "module_api/NavigatorHost.h"
+#include "aria/binding/view_model.hpp"
 #include "aria/runtime/event_bus.hpp"
 #include "aria/scheduler.hpp"
 
+#include <functional>
+#include <memory>
+#include <string>
+
 namespace wb::module_api {
+
+/// Factory for creating a *fresh* ViewModel instance of another module.
+/// Backed by AppCore::create_module_vm — each call builds a new instance so
+/// navigation pages never share state with the main-tab module VM.
+using ModuleVmFactory =
+    std::function<std::shared_ptr<aria::binding::ViewModel>(const std::string&)>;
 
 class ModuleContext {
 public:
@@ -28,8 +40,32 @@ public:
     template <typename I>
     [[nodiscard]] I& service() { return hub_.service<I>(); }
 
+    /// Install the cross-module ViewModel factory (set by AppCore once).
+    void set_vm_factory(ModuleVmFactory f) { vmFactory_ = std::move(f); }
+
+    /// Create a fresh ViewModel instance of `moduleId` (cross-module
+    /// navigation). Returns nullptr if the module id is unknown.
+    [[nodiscard]] std::shared_ptr<aria::binding::ViewModel>
+    create_module_vm(const std::string& moduleId) const {
+        return vmFactory_ ? vmFactory_(moduleId) : nullptr;
+    }
+
+    /// Install the cross-module navigator (set by AppCore once). The
+    /// navigator owns the module→page registry; VMs navigate via
+    /// `ctx.navigator().Push<I>(params)`.
+    void set_navigator(std::shared_ptr<NavigatorHost> nav) {
+        navigator_ = std::move(nav);
+    }
+
+    /// Cross-module navigator (may be null before AppCore installs it).
+    [[nodiscard]] NavigatorHost& navigator() {
+        return *navigator_;
+    }
+
 private:
     wb::infra::ServiceHub& hub_;
+    ModuleVmFactory vmFactory_;
+    std::shared_ptr<NavigatorHost> navigator_;
 };
 
 }  // namespace wb::module_api

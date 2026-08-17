@@ -50,7 +50,6 @@ public:
     /// Subscription display name (falls back to URL when unset).
     [[nodiscard]] std::string display_sub_name(const Subscription& s) const;
     void on_activate() override;
-    void on_deactivate() override;
 
 private:
     void refresh_month_title_();

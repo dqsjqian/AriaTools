@@ -1,17 +1,15 @@
 #include "ThemeView.h"
-#include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "infra/i18n/I18n.h"
 #include "viewmodels/ThemeVm.h"
-#include "viewmodels/ThemeVmHostVm.h"
 
 #include "aria/binding/binding_engine.hpp"
 
 namespace wb::theme::iosview {
 
-ThemeView::ThemeView(ThemeVmHostVm& host, aria::binding::BindingEngine& be)
+ThemeView::ThemeView(ThemeVm& host, aria::binding::BindingEngine& be)
     : vc_(nil) {
-    auto& vm = host.inner();
+    auto& vm = host;
 
     UILabel*  title   = wb::ios::ui::make_title(@"");
     UILabel*  desc    = wb::ios::ui::make_label(@"");
@@ -46,14 +44,3 @@ ThemeView::ThemeView(ThemeVmHostVm& host, aria::binding::BindingEngine& be)
 }
 
 }  // namespace wb::theme::iosview
-
-namespace wb::theme {
-void register_theme_view() {
-    wb::ios::UIViewFactory::instance().register_builder(
-        "theme", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            auto& host = static_cast<ThemeVmHostVm&>(vm);
-            auto* view = new iosview::ThemeView(host, be);
-            return view->viewController();
-        });
-}
-}  // namespace wb::theme

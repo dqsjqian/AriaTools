@@ -66,8 +66,3 @@ private fun SyncActions(vm: AppViewModel, props: Map<String, String>) {
         Button(onClick = { vm.execute(MOD, "push") }, modifier = Modifier.weight(1f)) { Text(props["$MOD.push"] ?: "Push") }
     }
 }
-
-// ── Module self-registration (Android twin of Qt/iOS register_<mod>_view) ──
-fun register_sync_page() {
-    com.dqsjqian.ariatools.ui.ComposeViewFactory.register("sync") { SyncPage(it) }
-}

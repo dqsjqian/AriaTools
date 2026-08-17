@@ -63,7 +63,6 @@ void CalendarVm::on_activate() {
     refresh_month_title_();
 }
 
-void CalendarVm::on_deactivate() { bag().clear(); }
 
 void CalendarVm::refresh_month_title_() {
     char buf[16];

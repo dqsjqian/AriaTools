@@ -46,11 +46,8 @@ class BaseVm : public aria::binding::ViewModel {
 public:
     BaseVm() {
         // Language change -> re-run all localization closures.
-        // Note: this subscription must live for the entire VM lifetime; it must NOT
-        // go into track()/bag() — bag() is cleared during on_deactivate()'s
-        // bag().clear() (e.g. when a tab is switched away), which would stop text
-        // from refreshing on language change after returning. So use a standalone
-        // member, released on VM destruction.
+        // This subscription lives for the entire VM lifetime and is released on
+        // VM destruction.
         lang_sub_ = wb::i18n::on_language_changed(
             [this](const std::string&) { relocalize_all_(); });
     }

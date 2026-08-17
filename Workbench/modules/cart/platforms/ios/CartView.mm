@@ -1,5 +1,4 @@
 #include "CartView.h"
-#include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "infra/i18n/I18n.h"
 #include "viewmodels/CartVm.h"
@@ -58,32 +57,35 @@ CartView::CartView(CartVm& vm, aria::binding::BindingEngine& be)
     be.bind_text_converted(vm.draftPrice, wb::ios::ui::view_for(priceField), make_dbl_conv());
     be.bind_command(vm.addItem, wb::ios::ui::view_for(addBtn));
 
-    // Summary: count / subtotal / tax / total — projected from VM Properties.
-    be.bind_text_projected(vm.itemCount, wb::ios::ui::view_for(countLbl),
-        [](const int n) {
-            return wb::i18n::str_in("cart", "count")
-                 + " " + std::to_string(n);
-        });
-    auto fmt_money = [](const char* key, double v) {
-        char buf[32]; snprintf(buf, sizeof buf, "%.2f", v);
+    // Summary values are Computed<T>; keep the manual subscriptions scoped
+    // to this View wrapper until BindingEngine gains read-only source support.
+    auto sync_count = [countLbl](int value) {
+        const auto text = wb::i18n::str_in("cart", "count")
+                        + " " + std::to_string(value);
+        countLbl.text = [NSString stringWithUTF8String:text.c_str()];
+    };
+    auto fmt_money = [](const char* key, double value) {
+        char buf[32];
+        snprintf(buf, sizeof buf, "%.2f", value);
         return wb::i18n::str_in("cart", key) + std::string(buf);
     };
-    be.bind_text_projected(vm.subtotal, wb::ios::ui::view_for(subLbl),
-        [fmt_money](const double v) { return fmt_money("subtotal", v); });
-    be.bind_text_projected(vm.tax,      wb::ios::ui::view_for(taxLbl),
-        [fmt_money](const double v) { return fmt_money("tax", v); });
-    be.bind_text_projected(vm.total,    wb::ios::ui::view_for(totalLbl),
-        [fmt_money](const double v) { return fmt_money("total", v); });
+    auto sync_money = [fmt_money](UILabel* label, const char* key, double value) {
+        const auto text = fmt_money(key, value);
+        label.text = [NSString stringWithUTF8String:text.c_str()];
+    };
+
+    sync_count(vm.itemCount.get());
+    subscriptions_.push_back(vm.itemCount.on_changed(
+        [sync_count](int value) { sync_count(value); }));
+    sync_money(subLbl, "subtotal", vm.subtotal.get());
+    subscriptions_.push_back(vm.subtotal.on_changed(
+        [sync_money, subLbl](double value) { sync_money(subLbl, "subtotal", value); }));
+    sync_money(taxLbl, "tax", vm.tax.get());
+    subscriptions_.push_back(vm.tax.on_changed(
+        [sync_money, taxLbl](double value) { sync_money(taxLbl, "tax", value); }));
+    sync_money(totalLbl, "total", vm.total.get());
+    subscriptions_.push_back(vm.total.on_changed(
+        [sync_money, totalLbl](double value) { sync_money(totalLbl, "total", value); }));
 }
 
 }  // namespace wb::cart::iosview
-
-namespace wb::cart {
-void register_cart_view() {
-    wb::ios::UIViewFactory::instance().register_builder(
-        "cart", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            auto* view = new iosview::CartView(static_cast<CartVm&>(vm), be);
-            return view->viewController();
-        });
-}
-}  // namespace wb::cart

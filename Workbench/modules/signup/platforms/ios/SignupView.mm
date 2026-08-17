@@ -1,17 +1,15 @@
 #include "SignupView.h"
-#include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "infra/i18n/I18n.h"
 #include "viewmodels/SignupVm.h"
-#include "viewmodels/SignupVmHostVm.h"
 
 #include "aria/binding/binding_engine.hpp"
 
 namespace wb::signup::iosview {
 
-SignupView::SignupView(SignupVmHostVm& host, aria::binding::BindingEngine& be)
+SignupView::SignupView(SignupVm& host, aria::binding::BindingEngine& be)
     : vc_(nil) {
-    auto& vm = host.inner();
+    auto& vm = host;
 
     UILabel*     title    = wb::ios::ui::make_title(@"");
     UILabel*     desc     = wb::ios::ui::make_label(@"");
@@ -68,14 +66,3 @@ SignupView::SignupView(SignupVmHostVm& host, aria::binding::BindingEngine& be)
 }
 
 }  // namespace wb::signup::iosview
-
-namespace wb::signup {
-void register_signup_view() {
-    wb::ios::UIViewFactory::instance().register_builder(
-        "signup", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            auto& host = static_cast<SignupVmHostVm&>(vm);
-            auto* view = new iosview::SignupView(host, be);
-            return view->viewController();
-        });
-}
-}  // namespace wb::signup

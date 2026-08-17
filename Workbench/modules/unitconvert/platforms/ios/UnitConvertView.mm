@@ -1,9 +1,7 @@
 #include "UnitConvertView.h"
-#include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "infra/i18n/I18n.h"
 #include "viewmodels/UnitConvertVm.h"
-#include "viewmodels/UnitConvertVmHostVm.h"
 
 #include "aria/binding/binding_engine.hpp"
 #include "aria/binding/converter.hpp"
@@ -28,9 +26,9 @@ aria::binding::Converter<double, std::string> make_dbl_conv() {
 
 }  // namespace
 
-UnitConvertView::UnitConvertView(UnitConvertVmHostVm& host, aria::binding::BindingEngine& be)
+UnitConvertView::UnitConvertView(UnitConvertVm& host, aria::binding::BindingEngine& be)
     : vc_(nil) {
-    auto& vm = host.inner();
+    auto& vm = host;
 
     UILabel*     title   = wb::ios::ui::make_title(@"");
     UILabel*     desc    = wb::ios::ui::make_label(@"");
@@ -60,33 +58,21 @@ UnitConvertView::UnitConvertView(UnitConvertVmHostVm& host, aria::binding::Bindi
     be.bind_text_converted(vm.value, wb::ios::ui::view_for(valField), make_dbl_conv());
 
     // fromLabel / toLabel / converted are Computed<T>, not Property<T>,
-    // so BindingEngine has no direct overload. Subscribe via on_changed
-    // and keep subscriptions alive via the process-wide keepalive bag.
-    auto& subs = wb::ios::ui::subs_keepalive();
+    // so BindingEngine has no direct overload. Subscriptions are owned by
+    // this View wrapper.
     auto syncFrom = [fromLbl, &vm]() {
         fromLbl.text = [NSString stringWithUTF8String:vm.fromLabel.get().c_str()];
     };
     syncFrom();
-    subs.push_back(vm.fromLabel.on_changed([syncFrom](const std::string&){ syncFrom(); }));
+    subscriptions_.push_back(vm.fromLabel.on_changed([syncFrom](const std::string&){ syncFrom(); }));
     auto syncOut = [outLbl, &vm]() {
         char buf[64];
         snprintf(buf, sizeof buf, "%.3f", vm.converted.get());
         outLbl.text = [NSString stringWithUTF8String:(std::string(buf) + " " + vm.toLabel.get()).c_str()];
     };
     syncOut();
-    subs.push_back(vm.converted.on_changed([syncOut](double){ syncOut(); }));
-    subs.push_back(vm.toLabel  .on_changed([syncOut](const std::string&){ syncOut(); }));
+    subscriptions_.push_back(vm.converted.on_changed([syncOut](double){ syncOut(); }));
+    subscriptions_.push_back(vm.toLabel  .on_changed([syncOut](const std::string&){ syncOut(); }));
 }
 
 }  // namespace wb::unitconvert::iosview
-
-namespace wb::unitconvert {
-void register_unitconvert_view() {
-    wb::ios::UIViewFactory::instance().register_builder(
-        "unitconvert", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            auto& host = static_cast<UnitConvertVmHostVm&>(vm);
-            auto* view = new iosview::UnitConvertView(host, be);
-            return view->viewController();
-        });
-}
-}  // namespace wb::unitconvert

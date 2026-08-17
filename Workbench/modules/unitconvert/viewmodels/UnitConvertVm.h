@@ -17,6 +17,7 @@
 
 #include "aria/aria.hpp"
 #include "aria/command.hpp"
+#include "module_api/BaseVm.h"
 
 #include <string>
 
@@ -24,8 +25,26 @@ namespace wb::unitconvert {
 
 enum class Category { Temperature, Length, Weight };
 
-class UnitConvertVm {
+class UnitConvertVm final : public wb::core::BaseVm {
 public:
+    UnitConvertVm() {
+        text(title, "title");
+        text(desc, "desc");
+        text(catTemperatureLabel, "cat_temperature");
+        text(catLengthLabel, "cat_length");
+        text(catWeightLabel, "cat_weight");
+        text(inputLabel, "input");
+        text(equalsLabel, "equals");
+    }
+
+    aria::Property<std::string> title;
+    aria::Property<std::string> desc;
+    aria::Property<std::string> catTemperatureLabel;
+    aria::Property<std::string> catLengthLabel;
+    aria::Property<std::string> catWeightLabel;
+    aria::Property<std::string> inputLabel;
+    aria::Property<std::string> equalsLabel;
+
     aria::Property<Category> category{Category::Temperature};
     aria::Property<double>   value{25.0};
 

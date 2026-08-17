@@ -5,9 +5,9 @@
 #import <UIKit/UIKit.h>
 
 #include "aria/adapters/uikit/UIKitAdapter.hpp"
-#include "aria/subscription.hpp"
 
-#include <vector>
+#include <memory>
+#include <utility>
 
 namespace wb::ios::ui {
 
@@ -22,11 +22,13 @@ UITextField* make_field(NSString* placeholder);
 /// Host child views in a vertical UIStackView + UIScrollView; returns a VC.
 UIViewController* make_stack_vc(NSArray<UIView*>* children);
 
-/// Process-wide keepalive bag for subscriptions that have no natural owner
-/// (e.g. Computed::on_changed in iOS views, where there is no per-VC
-/// SubscriptionBag like Qt's subs_attached_to). Subscriptions pushed here
-/// live until the process exits; acceptable for a demo app where module
-/// VMs outlive views anyway.
-std::vector<aria::Subscription>& subs_keepalive();
+/// Keep a C++ owner alive exactly as long as the view controller.
+/// The owner must not retain the controller; use weak storage for back-pointers.
+void attach_owner_erased(UIViewController* vc, std::shared_ptr<void> owner);
+
+template<class T>
+void attach_owner(UIViewController* vc, std::shared_ptr<T> owner) {
+    attach_owner_erased(vc, std::move(owner));
+}
 
 }  // namespace wb::ios::ui

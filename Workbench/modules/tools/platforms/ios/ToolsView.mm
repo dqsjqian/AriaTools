@@ -1,5 +1,4 @@
 #include "ToolsView.h"
-#include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "viewmodels/ToolsVm.h"
 
@@ -35,13 +34,3 @@ ToolsView::ToolsView(ToolsVm& vm, aria::binding::BindingEngine& be)
 }
 
 }  // namespace wb::tools::iosview
-
-namespace wb::tools {
-void register_tools_view() {
-    wb::ios::UIViewFactory::instance().register_builder(
-        "tools", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            auto* view = new iosview::ToolsView(static_cast<ToolsVm&>(vm), be);
-            return view->viewController();
-        });
-}
-}  // namespace wb::tools

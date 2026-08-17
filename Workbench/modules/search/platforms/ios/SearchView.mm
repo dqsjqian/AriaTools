@@ -1,17 +1,15 @@
 #include "SearchView.h"
-#include "support/UIViewFactory.h"
 #include "support/IosUi.h"
 #include "infra/i18n/I18n.h"
 #include "viewmodels/SearchVm.h"
-#include "viewmodels/SearchVmHostVm.h"
 
 #include "aria/binding/binding_engine.hpp"
 
 namespace wb::search::iosview {
 
-SearchView::SearchView(SearchVmHostVm& host, aria::binding::BindingEngine& be)
+SearchView::SearchView(SearchVm& host, aria::binding::BindingEngine& be)
     : vc_(nil) {
-    auto& vm = host.inner();
+    auto& vm = host;
 
     UILabel*     title   = wb::ios::ui::make_title(@"");
     UILabel*     desc    = wb::ios::ui::make_label(@"");
@@ -33,14 +31,3 @@ SearchView::SearchView(SearchVmHostVm& host, aria::binding::BindingEngine& be)
 }
 
 }  // namespace wb::search::iosview
-
-namespace wb::search {
-void register_search_view() {
-    wb::ios::UIViewFactory::instance().register_builder(
-        "search", [](aria::binding::ViewModel& vm, aria::binding::BindingEngine& be) {
-            auto& host = static_cast<SearchVmHostVm&>(vm);
-            auto* view = new iosview::SearchView(host, be);
-            return view->viewController();
-        });
-}
-}  // namespace wb::search
