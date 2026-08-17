@@ -39,6 +39,7 @@
 - 🔌 **平台服务注入** —— UI 线程 executor / 工作线程池 / 延时调度器由各平台壳注入 `ServiceHub`，模块经 `ModuleContext` 获取，业务代码零平台依赖
 - 🖥 **四平台 View 壳** —— Qt6（桌面）、iOS（UIKit）、Android（Compose + JNI side-channel）、Web（HTTP adapter，规划中）
 - 🧭 **路由呈现方式（presentation）** —— `NavigatorHost::Push<I>(payload, NavOptions)` 一次调用指定目标**如何呈现**：`Push`（栈内嵌）/ `Modal`（模态对话框）/ `Window`（独立顶层窗口）；三端 View 各自映射原生呈现（Qt QStackedWidget / QDialog / 顶层窗口，iOS child VC / present VC，Android 内嵌 / Compose Dialog），关闭模态或窗口自动 Pop 栈条目
+- 🧩 **拓展点（MountRegistry）** —— `IModule::register_mounts` 让一个模块把 UI 挂载到另一个模块声明的槽位（VS Code `contributes.views` / Eclipse extension-point 模式）：`Provide(slotId, moduleId, factory)` / `Resolve(slotId)`；宿主与提供者**零耦合**（宿主只认槽位 id，提供者不知宿主）；`SetEnabled` 热切换、无填充物显示占位（优雅降级）；挂载的是提供者**主 VM**（与模块 tab 共享数据，三端交互一致）
 
 ## 🏗 架构分层
 
@@ -75,7 +76,7 @@ C++ VM（aria::Property）→ on_changed → JNI 回调 → Kotlin StateFlow →
 
 | 模块 | 说明 | 演示的 Aria 能力 |
 |---|---|---|
-| dashboard | 首页概览 | Property / i18n / 跨模块导航（接口路由 + 三种呈现方式） |
+| dashboard | 首页概览 | Property / i18n / 拓展点宿主（挂载 cart，可热切换）+ 跨模块导航（模态 / 窗口） |
 | notes / calendar / tools | 记事 / 日历 / 小工具 | ObservableList / 表单 |
 | settings / sync | 设置 / 同步 | 服务注入 / EventBus |
 | tipcalc | 小费计算器 | Computed / Command / reactive::batch |
@@ -156,6 +157,30 @@ bus.subscribe<wb::shared::events::ItemAddedToCart>([](const auto& ev) {
 ```
 
 演示链：cart 加商品 → dashboard 徽章刷新 + chat 系统消息 + notes 自动创建日志。
+
+### 跨模块拓展点（MountRegistry）
+
+除了"导航"（把另一个模块的页面推入栈），模块还可以把 UI **挂载**到另一个模块声明的槽位——这是 VS Code `contributes.views` / Eclipse extension-point 模式的 C++ 实现，宿主与提供者零耦合：
+
+```cpp
+// 提供者（cart 模块，register_mounts 里）
+mounts.Provide(wb::module_api::slots::kDashboardContent, id(),
+               [](ModuleContext& ctx) {
+                   return ctx.primary_vm("cart");  // 共享主 VM：与 tab 数据一致
+               });
+
+// 宿主（dashboard 模块）
+if (auto m = ctx.mounts().Resolve(slots::kDashboardContent)) {
+    // 渲染 m->moduleId 的 UI（按 ViewFactory），数据来自 m->vm
+} else {
+    render_placeholder();  // 无填充物 → 占位（优雅降级）
+}
+```
+
+- **零耦合**：宿主只认识槽位 id（`slots::kDashboardContent`），提供者不知道谁在消费；删掉提供者模块 → 槽位自动空置，不崩
+- **热切换**：`SetEnabled(slotId, bool)` 保留提供者 factory 只切换开关——dashboard 的"切换拓展挂载"按钮即演示
+- **共享实例**：挂载的是提供者**主 VM**，挂载 UI 与模块 tab 显示/编辑同一份数据；Android side-channel 命令路由因此零改动即可交互
+- **与导航正交**：导航 = 推入新页面实例（可返回）；挂载 = 常驻共享面板。dashboard 同时演示两者（挂载 cart + 模态/窗口导航）
 
 ## 🚀 快速开始
 
