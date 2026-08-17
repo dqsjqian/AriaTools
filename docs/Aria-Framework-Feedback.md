@@ -296,6 +296,80 @@ macOS app 的 i18n 资源通过 `add_custom_command(TARGET workbench POST_BUILD 
 
 ---
 
+## 五点七、EventBus 双实例陷阱：跨模块事件静默丢失
+
+**这是最隐蔽的坑**——跨模块通信的代码写了、编译通过、运行无错，但事件就是收不到。
+
+### 5.7.1 现象
+
+购物车模块 addItem 时 publish `ItemAddedToCart`，dashboard 模块订阅了它——但首页徽章永远不更新。
+
+### 5.7.2 根因
+
+`EventBus` 有两种获取方式：
+
+```cpp
+// 方式 A：ServiceHub 持有私有成员
+class ServiceHub {
+    aria::runtime::EventBus bus_;          // 私有实例
+    EventBus& bus() { return bus_; }       // ctx.bus() 拿到它
+};
+
+// 方式 B：进程级单例
+aria::runtime::EventBus& EventBus::global();
+
+// cart 模块：ctx.bus() → ServiceHub 私有实例
+bus_.publish(ItemAddedToCart{...});        // 发到 A 总线
+
+// dashboard 模块：EventBus::global() → 单例
+EventBus::global().subscribe<ItemAddedToCart>(...);  // 听 B 总线
+```
+
+**两个不是同一个对象**——cart 发到 A，dashboard 听 B，永远收不到。无编译错误、无运行时错误、无日志，纯静默。
+
+chat 模块内部能通是因为 publisher/subscriber **都通过 ctx.bus() 拿到同一个引用**；跨模块只要有一方改用 `global()` 就断了。
+
+### 5.7.3 修复（AriaTools）
+
+`ServiceHub::bus()` 改为直接返回 `EventBus::global()`，删除私有 `bus_` 成员——所有 `ctx.bus()` 和 `EventBus::global()` 归一到同一个单例。
+
+### 5.7.4 建议（给 Aria 维护者）
+
+- **P0**：`EventBus` 应该**只有单例一种获取方式**（要么全局唯一，要么构造注入），并**禁止/警告成员持有**——两种方式并存是 API 设计缺陷
+- **P0**：若保留成员持有能力，`EventBus` 内部应校验"全局实例"（如 `assert(this == &global())`）或提供 `is_global()` 检测，跨模块误用早期暴露
+- **P1**：文档明确「跨模块通信必须用同一个 bus，推荐一律 `EventBus::global()`」
+
+---
+
+## 五点八、深色主题下的文字色陷阱
+
+### 5.8.1 现象
+
+Qt 应用在**深色系统主题**下运行时，QLabel 若只设置了 `background`（浅色）而**没显式设 `color`**，文字色继承系统主题的浅色（白）——浅色背景 + 白字，完全看不清。
+
+```cpp
+// ❌ 深色主题下：白字 + #fff3e0 浅橙背景 = 看不清
+cartBadgeLbl->setStyleSheet(
+    "QLabel { background:#fff3e0; border:1px solid #ffb74d; ... }");
+
+// ✅ 显式设深色文字色
+cartBadgeLbl->setStyleSheet(
+    "QLabel { background:#fff3e0; color:#633806; ... }");
+```
+
+### 5.8.2 深色主题还影响
+
+- `#2e7d32`（深绿）在深色背景上几乎看不见 → 用 `#66bb6a`（亮绿）
+- 所有**只设了深色文字色但没设背景**的 label，深色主题下都偏暗
+
+### 5.8.3 建议
+
+- **P1**：Aria 文档/示例应提醒：设置浅色背景时**必须同时显式设 color**，否则深色主题下不可读
+- **P1**：提供一个「深浅主题双兼容」的样式示例（如背景用主题色变量、文字用对比色）
+- **P2**：考虑 Qt 样式表支持 `palette()` 或主题感知颜色，而不是硬编码 hex
+
+---
+
 ## 六、基于框架的二次封装：哪些本该是框架内建的
 
 作为业务开发者，我被迫在业务层打了这些补丁（都源自框架能力缺失）：

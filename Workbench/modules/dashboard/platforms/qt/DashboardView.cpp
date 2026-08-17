@@ -23,14 +23,20 @@ QWidget* build_view(DashboardVm& vm, aria::binding::BindingEngine& be) {
     // Cart badge + last order — driven by EventBus events published by the
     // cart module (no direct coupling). See DashboardVm's subscriptions.
     auto* cartBadgeLbl = new QLabel;
+    // Explicit dark text on the light badge — without `color:` the label
+    // inherits the system's light text in dark theme, making it illegible
+    // on the #fff3e0 background.
     cartBadgeLbl->setStyleSheet(
-        "QLabel { background:#fff3e0; border:1px solid #ffb74d;"
-        " border-radius:12px; padding:6px 12px; font-weight:bold; }");
+        "QLabel { background:#fff3e0; color:#633806;"
+        " border:1px solid #ffb74d; border-radius:12px;"
+        " padding:6px 12px; font-weight:bold; }");
     lay->addWidget(cartBadgeLbl);
     be.bind_text_oneway(vm.cartBadge, wb::ui::view_for(cartBadgeLbl));
 
     auto* orderLbl = new QLabel;
-    orderLbl->setStyleSheet("QLabel { color:#2e7d32; padding:4px; }");
+    // Dark-theme-friendly green (brighter than #2e7d32 which vanishes on
+    // dark backgrounds).
+    orderLbl->setStyleSheet("QLabel { color:#66bb6a; padding:4px; }");
     orderLbl->setWordWrap(true);
     lay->addWidget(orderLbl);
     be.bind_text_oneway(vm.lastOrder, wb::ui::view_for(orderLbl));

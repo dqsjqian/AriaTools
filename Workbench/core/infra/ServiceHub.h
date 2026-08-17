@@ -43,7 +43,14 @@ public:
     template <typename I>
     [[nodiscard]] I& service() { return *container_.resolve<I>(); }
 
-    [[nodiscard]] aria::runtime::EventBus& bus() { return bus_; }
+    /// Cross-module event bus. MUST be the process-wide singleton so a
+    /// publish from one module (via ctx.bus()) is received by a subscribe
+    /// from another module that uses EventBus::global() directly. If this
+    /// returned a private member instance, cart→dashboard cross-module
+    /// events would silently never arrive (two different buses).
+    [[nodiscard]] aria::runtime::EventBus& bus() {
+        return aria::runtime::EventBus::global();
+    }
     [[nodiscard]] aria::runtime::Container& container() { return container_; }
 
     // ── Platform executors (injected by each platform shell before the VMs
@@ -69,7 +76,6 @@ public:
 
 private:
     aria::runtime::Container container_;
-    aria::runtime::EventBus  bus_;
 
     aria::async::IExecutor*          ui_exec_ = nullptr;   ///< injected by shell
     aria::IDelayedScheduler*         timer_   = nullptr;   ///< injected by shell
