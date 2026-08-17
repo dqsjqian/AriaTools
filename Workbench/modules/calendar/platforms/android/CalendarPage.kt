@@ -3,10 +3,8 @@ package com.dqsjqian.ariatools.pages
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,13 +25,13 @@ private const val MOD = "calendar"
 /**
  * CalendarPage — Android (Compose) view for the "calendar" module.
  *
- * Real interaction: month navigation (prev/next/today), ICS subscription
- * URL input + subscribe button, refresh button, and the day grid + event
- * list rendered from VM state pushed over JNI.
+ * Decomposed into sub-composables (mirroring Qt/iOS sub-views):
+ *   MonthNavRow   — prev/today/next buttons + month title
+ *   SubscriptionBar — URL input + subscribe + refresh buttons
+ *   EventList     — events list (from VM days snapshot)
  *
- * Symmetric with the Qt CalendarView (QListWidget grid + QLineEdits +
- * QPushButtons) and the iOS CalendarView (UILabels + UITextFields +
- * UIButtons).
+ * Each sub-composable is a small, testable unit; CalendarPage assembles
+ * them into a vertical column and wires the shared AppViewModel.
  */
 @Composable
 fun CalendarPage(vm: AppViewModel) {
@@ -42,27 +40,50 @@ fun CalendarPage(vm: AppViewModel) {
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        // Header
         Text(props["$MOD.title"] ?: "calendar", style = MaterialTheme.typography.headlineSmall)
         Text(props["$MOD.hint"] ?: "", style = MaterialTheme.typography.bodySmall)
+        HorizontalDivider()
 
-        // Month title + nav buttons
-        Text(props["$MOD.monthTitle"] ?: "", style = MaterialTheme.typography.titleMedium)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Button(onClick = { vm.execute(MOD, "prevMonth") }, modifier = Modifier.weight(1f)) {
-                Text(props["$MOD.prev"] ?: "Prev")
-            }
-            Button(onClick = { vm.execute(MOD, "today") }, modifier = Modifier.weight(1f)) {
-                Text(props["$MOD.today"] ?: "Today")
-            }
-            Button(onClick = { vm.execute(MOD, "nextMonth") }, modifier = Modifier.weight(1f)) {
-                Text(props["$MOD.next"] ?: "Next")
-            }
+        // Sub-views
+        MonthNavRow(vm, props)
+        SubscriptionBar(vm, props)
+        HorizontalDivider()
+
+        // Status + event list
+        Text(props["$MOD.status"] ?: "", style = MaterialTheme.typography.bodyMedium)
+        EventList(props)
+    }
+}
+
+// ─── Sub-composables ──────────────────────────────────────────────────────
+
+@Composable
+private fun MonthNavRow(vm: AppViewModel, props: Map<String, String>) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Button(onClick = { vm.execute(MOD, "prevMonth") }, modifier = Modifier.weight(1f)) {
+            Text(props["$MOD.prev"] ?: "Prev")
         }
+        Text(
+            props["$MOD.monthTitle"] ?: "",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.weight(2f).padding(vertical = 4.dp),
+        )
+        Button(onClick = { vm.execute(MOD, "today") }, modifier = Modifier.weight(1f)) {
+            Text(props["$MOD.today"] ?: "Today")
+        }
+        Button(onClick = { vm.execute(MOD, "nextMonth") }, modifier = Modifier.weight(1f)) {
+            Text(props["$MOD.next"] ?: "Next")
+        }
+    }
+}
 
-        // Subscription
+@Composable
+private fun SubscriptionBar(vm: AppViewModel, props: Map<String, String>) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         OutlinedTextField(
             value = props["$MOD.subscribeUrl"] ?: "",
             onValueChange = { vm.setText(MOD, "subscribeUrl", it) },
@@ -81,17 +102,16 @@ fun CalendarPage(vm: AppViewModel) {
                 Text(props["$MOD.refresh"] ?: "Refresh")
             }
         }
+    }
+}
 
-        HorizontalDivider()
-
-        // Status + event list (pushed as newline-joined string from C++).
-        Text(props["$MOD.status"] ?: "", style = MaterialTheme.typography.bodyMedium)
-        val events = (props["$MOD.events"] ?: "").split('\n').filter { it.isNotBlank() }
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth().weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            items(events) { e -> Text(e, style = MaterialTheme.typography.bodySmall) }
-        }
+@Composable
+private fun EventList(props: Map<String, String>) {
+    val events = (props["$MOD.events"] ?: "").split('\n').filter { it.isNotBlank() }
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        items(events) { e -> Text(e, style = MaterialTheme.typography.bodySmall) }
     }
 }
