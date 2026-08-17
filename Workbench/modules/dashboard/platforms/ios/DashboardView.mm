@@ -22,6 +22,15 @@
 }
 @end
 
+// iOS 27 / Xcode-beta: [[UIViewController alloc] init]'s default loadView
+// doesn't materialize the view until the VC is added to a hierarchy, and
+// even [vc loadViewIfNeeded] still leaves vc.view = nil. Override loadView
+// so the dashboard's root view is reliably allocated on construction.
+@interface WbDashboardVC : UIViewController @end
+@implementation WbDashboardVC
+- (void)loadView { self.view = [[UIView alloc] init]; }
+@end
+
 namespace wb::dashboard::iosview {
 
 DashboardView::DashboardView(DashboardVm& vm, aria::binding::BindingEngine& be)
@@ -34,21 +43,101 @@ DashboardView::DashboardView(DashboardVm& vm, aria::binding::BindingEngine& be)
     UIButton* windowCartBtn = wb::ios::ui::make_button(@"");
     UIButton* backBtn       = wb::ios::ui::make_button(@"");
 
+    // Custom layout: the make_stack_vc helper is for plain pages where
+    // arrangedSubviews stack tightly and the scrollView carries any overflow.
+    // For the dashboard we need the embedded page host to FILL the space
+    // below the buttons (otherwise pushed pages render into a 0-height
+    // area), but a stack with a flexible child + stack.heightAnchor >=
+    // scroll.heightAnchor breaks every OTHER page's layout (extra space
+    // gets redistributed to arrangedSubviews). So we lay out the dashboard
+    // manually: a top stack (title/info/buttons, intrinsic height) and the
+    // host as a separate child VC that takes everything below it.
+        // vc_ member is __weak (the tab bar / IosShell owns the controller; the
+    // View only observes it). alloc/init does NOT go through autorelease, so
+    // assigning straight to the weak member would deallocate the controller
+    // immediately. Hold it in a local strong variable through construction —
+    // IosShell::build_root takes ownership right after.
+    WbDashboardVC* vc = [[WbDashboardVC alloc] initWithNibName:nil bundle:nil];
+    vc.view = [[UIView alloc] init];
+    vc.view.backgroundColor = [UIColor systemBackgroundColor];
+
+    UIStackView* top = [[UIStackView alloc] initWithArrangedSubviews:@[
+        title, info, openCartBtn, modalCartBtn, windowCartBtn, backBtn
+    ]];
+    top.axis = UILayoutConstraintAxisVertical;
+    top.spacing = 12;
+    top.alignment = UIStackViewAlignmentFill;
+    top.translatesAutoresizingMaskIntoConstraints = NO;
+    [vc.view addSubview:top];
+
     UIViewController* host = [[UIViewController alloc] init];
     host.view.backgroundColor = [UIColor systemBackgroundColor];
-    // An empty UIView has zero intrinsic height, which collapses the embedded
-    // host inside the vertical stack — pushed pages would get a 0x0 frame and
-    // look "dead" (tap appears to do nothing). Let the host stretch to fill
-    // the remaining stack space instead.
-    [host.view setTranslatesAutoresizingMaskIntoConstraints:NO];
-    [host.view setContentHuggingPriority:UILayoutPriorityDefaultLow
-                                 forAxis:UILayoutConstraintAxisVertical];
-    [host.view setContentCompressionResistancePriority:UILayoutPriorityDefaultHigh
-                                              forAxis:UILayoutConstraintAxisVertical];
+    host.view.translatesAutoresizingMaskIntoConstraints = NO;
+    [vc.view addSubview:host.view];
+    [vc addChildViewController:host];
+    [host didMoveToParentViewController:vc];
     pageHost_ = host;
 
-    vc_ = wb::ios::ui::make_stack_vc(
-        @[title, info, openCartBtn, modalCartBtn, windowCartBtn, backBtn, host.view]);
+    // Use the classic constraintWithItem:attribute: API instead of the anchor
+    // factory: iOS 27 / Xcode-beta anchor factories were throwing
+    // 'cannot be made to a constant' even with non-nil anchors, breaking
+    // the dashboard. Old API takes views directly and works reliably.
+    UIView* parent = vc.view;
+    [NSLayoutConstraint activateConstraints:@[
+        [NSLayoutConstraint constraintWithItem:top
+                                    attribute:NSLayoutAttributeTop
+                                    relatedBy:NSLayoutRelationEqual
+                                       toItem:parent
+                                    attribute:NSLayoutAttributeTop
+                                   multiplier:1.0
+                                     constant:60],
+        [NSLayoutConstraint constraintWithItem:top
+                                    attribute:NSLayoutAttributeLeading
+                                    relatedBy:NSLayoutRelationEqual
+                                       toItem:parent
+                                    attribute:NSLayoutAttributeLeading
+                                   multiplier:1.0
+                                     constant:16],
+        [NSLayoutConstraint constraintWithItem:top
+                                    attribute:NSLayoutAttributeTrailing
+                                    relatedBy:NSLayoutRelationEqual
+                                       toItem:parent
+                                    attribute:NSLayoutAttributeTrailing
+                                   multiplier:1.0
+                                     constant:-16],
+
+        [NSLayoutConstraint constraintWithItem:host.view
+                                    attribute:NSLayoutAttributeTop
+                                    relatedBy:NSLayoutRelationEqual
+                                       toItem:top
+                                    attribute:NSLayoutAttributeBottom
+                                   multiplier:1.0
+                                     constant:16],
+        [NSLayoutConstraint constraintWithItem:host.view
+                                    attribute:NSLayoutAttributeLeading
+                                    relatedBy:NSLayoutRelationEqual
+                                       toItem:parent
+                                    attribute:NSLayoutAttributeLeading
+                                   multiplier:1.0
+                                     constant:0],
+        [NSLayoutConstraint constraintWithItem:host.view
+                                    attribute:NSLayoutAttributeTrailing
+                                    relatedBy:NSLayoutRelationEqual
+                                       toItem:parent
+                                    attribute:NSLayoutAttributeTrailing
+                                   multiplier:1.0
+                                     constant:0],
+        [NSLayoutConstraint constraintWithItem:host.view
+                                    attribute:NSLayoutAttributeBottom
+                                    relatedBy:NSLayoutRelationEqual
+                                       toItem:parent
+                                    attribute:NSLayoutAttributeBottom
+                                   multiplier:1.0
+                                     constant:0],
+    ]];
+    // Hand the controller to the weak member now that construction is done;
+    // IosShell::build_root will take the strong ownership right after.
+    vc_ = vc;
 
     // The View only fires Commands; the VM decides which module to push and
     // HOW to present it. Buttons for the three presentation demos.
