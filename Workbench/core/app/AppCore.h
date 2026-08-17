@@ -7,6 +7,7 @@
 #include "infra/ServiceHub.h"
 #include "module_api/ModuleRegistry.h"
 #include "module_api/ModuleContext.h"
+#include "module_api/MountRegistry.h"
 #include "module_api/NavigatorHost.h"
 
 #include <memory>
@@ -65,11 +66,16 @@ public:
     /// load_modules).
     [[nodiscard]] wb::module_api::NavigatorHost& navigator() { return *navigator_; }
 
+    /// Cross-module mount registry (owns the slot→provider map; modules
+    /// provided slots via IModule::register_mounts during load_modules).
+    [[nodiscard]] wb::module_api::MountRegistry& mounts() { return *mounts_; }
+
 private:
     wb::infra::ServiceHub                     hub_;
     wb::module_api::ModuleRegistry            registry_;
     wb::module_api::ModuleContext             ctx_;
     std::shared_ptr<wb::module_api::NavigatorHost> navigator_;
+    std::shared_ptr<wb::module_api::MountRegistry> mounts_;
     std::vector<ModuleEntry>                  entries_;
     bool                                      loaded_ = false;
 };

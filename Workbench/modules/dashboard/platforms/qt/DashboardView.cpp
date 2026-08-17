@@ -39,37 +39,86 @@ DashboardView::DashboardView(DashboardVm& vm, aria::binding::BindingEngine& be)
     lay->addWidget(orderLbl);
     be.bind_text_oneway(vm.lastOrder, wb::ui::view_for(orderLbl));
 
+    // ── Extension point (mount) status ─────────────────────────────────
+    auto* mountStatusLbl = new QLabel;
+    mountStatusLbl->setStyleSheet(
+        "QLabel { color:#534AB7; padding:4px; font-weight:bold; }");
+    lay->addWidget(mountStatusLbl);
+    be.bind_text_oneway(vm.mountStatus, wb::ui::view_for(mountStatusLbl));
+
     // ── Cross-module navigation (VM-layer routing) ────────────────────
     // The View only fires Commands; the VM decides which module page to
-    // push AND how to present it (embedded / modal / window). This view
-    // renders the navigator's current entry by its Presentation kind.
-    auto* openCartBtn    = new QPushButton(root_);
+    // push AND how to present it (modal / window). This view renders the
+    // navigator's current entry by its Presentation kind.
     auto* modalCartBtn   = new QPushButton(root_);
     auto* windowCartBtn  = new QPushButton(root_);
     auto* backBtn        = new QPushButton(root_);
+    auto* mountToggleBtn = new QPushButton(root_);
     auto* navRow         = new QHBoxLayout;
-    navRow->addWidget(openCartBtn);
     navRow->addWidget(modalCartBtn);
     navRow->addWidget(windowCartBtn);
     navRow->addWidget(backBtn);
+    navRow->addWidget(mountToggleBtn);
     navRow->addStretch();
     lay->addLayout(navRow);
-    be.bind_text_oneway(vm.openCartLabel,   wb::ui::view_for(openCartBtn));
-    be.bind_text_oneway(vm.modalCartLabel,  wb::ui::view_for(modalCartBtn));
-    be.bind_text_oneway(vm.windowCartLabel, wb::ui::view_for(windowCartBtn));
-    be.bind_text_oneway(vm.navBackLabel,    wb::ui::view_for(backBtn));
-    be.bind_command(vm.openCart,   wb::ui::view_for(openCartBtn));
-    be.bind_command(vm.modalCart,  wb::ui::view_for(modalCartBtn));
-    be.bind_command(vm.windowCart, wb::ui::view_for(windowCartBtn));
-    be.bind_command(vm.navBack,    wb::ui::view_for(backBtn));
+    be.bind_text_oneway(vm.modalCartLabel,   wb::ui::view_for(modalCartBtn));
+    be.bind_text_oneway(vm.windowCartLabel,  wb::ui::view_for(windowCartBtn));
+    be.bind_text_oneway(vm.navBackLabel,     wb::ui::view_for(backBtn));
+    be.bind_text_oneway(vm.mountToggleLabel, wb::ui::view_for(mountToggleBtn));
+    be.bind_command(vm.modalCart,   wb::ui::view_for(modalCartBtn));
+    be.bind_command(vm.windowCart,  wb::ui::view_for(windowCartBtn));
+    be.bind_command(vm.navBack,     wb::ui::view_for(backBtn));
+    be.bind_command(vm.mountToggle, wb::ui::view_for(mountToggleBtn));
 
-    // Embedded page host: renders the current navigation entry.
+    // Embedded page host: renders the EXTENSION POINT content — the mounted
+    // provider's UI (e.g. cart) fills this area, or a placeholder when the
+    // slot is empty. Distinct from navigation (modal/window) which renders
+    // above the whole page.
     auto* stack = new QStackedWidget;
     stack->addWidget(pageHost_);
     lay->addWidget(stack, 1);
 
+    auto* placeholder = new QLabel;
+    placeholder->setWordWrap(true);
+    placeholder->setStyleSheet("QLabel { color:#888780; padding:12px; }");
+    pageHost_->setLayout([&] {
+        auto* l = new QVBoxLayout(pageHost_);
+        l->addWidget(placeholder);
+        l->addStretch();
+        return l;
+    }());
+
+    auto render_mount = [this, &vm, &be, stack, placeholder](
+                            const std::shared_ptr<aria::binding::ViewModel>& vmp) {
+        // Tear down the previous mounted UI (placeholder or provider page).
+        stack->setCurrentWidget(pageHost_);
+        while (stack->count() > 1) {
+            QWidget* w = stack->widget(1);
+            stack->removeWidget(w);
+            delete w;
+        }
+        if (!vmp) {
+            placeholder->setText(QString::fromStdString(vm.mountStatus.get()));
+            stack->setCurrentWidget(pageHost_);
+            return;
+        }
+        // Build the provider's view from the resolved VM.
+        auto* page = wb::qt::QtViewFactory::instance().build(
+            vm.mountedModule.get(), *vmp, be);
+        if (page) {
+            stack->addWidget(page);
+            stack->setCurrentWidget(page);
+        }
+    };
+    subs_.push_back(vm.mountedVm.on_changed(
+        [render_mount](const std::shared_ptr<aria::binding::ViewModel>& v) {
+            render_mount(v);
+        }));
+    render_mount(vm.mountedVm.get());
+
+    // Navigation (modal/window) rendering — independent of the mount area.
     auto& navCurrent = vm.navigator().current();
-    auto render_current = [this, &vm, &be, stack](const std::shared_ptr<aria::binding::ViewModel>& current) {
+    auto render_nav = [this, &vm, &be](const std::shared_ptr<aria::binding::ViewModel>& current) {
         // Re-rendering (navigation changed): tear down any live modal/window
         // WITHOUT popping the stack — they are being replaced, not closed by
         // the user. The navSettling_ guard silences their close handlers.
@@ -79,29 +128,18 @@ DashboardView::DashboardView(DashboardVm& vm, aria::binding::BindingEngine& be)
         navSettling_ = false;
 
         auto* entry = dynamic_cast<wb::module_api::NavigationEntryVm*>(current.get());
-        if (!entry) {
-            // At root: show the default placeholder.
-            stack->setCurrentWidget(pageHost_);
-            return;
-        }
+        if (!entry) return;  // at root: nothing to present above the page
+
         auto* page = wb::qt::QtViewFactory::instance().build(
             entry->module_id(), entry->inner(), be);
         if (!page) return;
 
         switch (entry->presentation()) {
-            case wb::module_api::Presentation::Push: {
-                // Embedded page: swap into the host stack (drop the previous
-                // embedded page so repeated pushes don't accumulate).
-                stack->setCurrentWidget(pageHost_);
-                while (stack->count() > 1) {
-                    QWidget* w = stack->widget(1);
-                    stack->removeWidget(w);
-                    delete w;
-                }
-                stack->addWidget(page);
-                stack->setCurrentWidget(page);
+            case wb::module_api::Presentation::Push:
+                // Reserved: Push (embedded) is superseded by the extension
+                // point system (MountRegistry). Modal/Window remain nav.
+                delete page;
                 break;
-            }
             case wb::module_api::Presentation::Modal: {
                 auto* dlg = new QDialog(root_);
                 dlg->setModal(true);
@@ -109,8 +147,6 @@ DashboardView::DashboardView(DashboardVm& vm, aria::binding::BindingEngine& be)
                 auto* dlay = new QVBoxLayout(dlg);
                 dlay->setContentsMargins(0, 0, 0, 0);
                 dlay->addWidget(page);
-                // User closes the dialog -> pop the stack entry (guarded so
-                // our teardown above doesn't fire it).
                 QObject::connect(dlg, &QDialog::finished, dlg,
                                  [this, &vm](int) {
                                      if (!navSettling_) vm.navBack.execute();
@@ -127,9 +163,6 @@ DashboardView::DashboardView(DashboardVm& vm, aria::binding::BindingEngine& be)
                 auto* wlay = new QVBoxLayout(win);
                 wlay->setContentsMargins(0, 0, 0, 0);
                 wlay->addWidget(page);
-                // User closes the window -> pop the stack entry. WA_DeleteOnClose
-                // destroys it, firing `destroyed`; the guard skips it when we are
-                // simply re-rendering.
                 QObject::connect(win, &QObject::destroyed, win,
                                  [this, &vm]() {
                                      if (!navSettling_) vm.navBack.execute();
@@ -142,10 +175,10 @@ DashboardView::DashboardView(DashboardVm& vm, aria::binding::BindingEngine& be)
         }
     };
     subs_.push_back(navCurrent.on_changed(
-        [render_current](const std::shared_ptr<aria::binding::ViewModel>& c) {
-            render_current(c);
+        [render_nav](const std::shared_ptr<aria::binding::ViewModel>& c) {
+            render_nav(c);
         }));
-    render_current(navCurrent.get());
+    render_nav(navCurrent.get());
 
     lay->addStretch();
 

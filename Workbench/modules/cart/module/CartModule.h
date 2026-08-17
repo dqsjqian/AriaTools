@@ -18,6 +18,10 @@ public:
     /// (ICartPage). Other modules navigate here via
     /// `ctx.navigator().Push<ICartPage>(params)`.
     void register_navigation(wb::module_api::NavigatorHost& nav) override;
+
+    /// Provides cart UI for host extension points (the dashboard's
+    /// "content" slot). Hosts resolve it via `ctx.mounts().Resolve(...)`.
+    void register_mounts(wb::module_api::MountRegistry& mounts) override;
 };
 
 }  // namespace wb::cart

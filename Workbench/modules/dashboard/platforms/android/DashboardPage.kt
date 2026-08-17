@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
@@ -25,13 +24,16 @@ private const val MOD = "dashboard"
 /**
  * DashboardPage — Android (Compose) view for the "dashboard" module.
  *
- * Cross-module navigation demo: buttons fire the VM's Commands; the routing
- * decision (which module AND how to present it) lives in the C++ VM layer.
- * This page renders the pushed page by module id + presentation kind pushed
- * over the JNI side-channel:
- *   0 = Push   -> embedded below the buttons
- *   1 = Modal  -> Compose Dialog overlay
- *   2 = Window -> mobile falls back to a full-screen Dialog
+ * Demos two decoupled capabilities, both driven by the C++ VM layer over
+ * the JNI side-channel:
+ *
+ * 1. Extension point (mount): cart provides UI for slot "dashboard.content"
+ *    via MountRegistry; this page shows the mount state and lets the user
+ *    toggle it on/off. Full provider-UI rendering is demonstrated on
+ *    Qt/iOS (the side-channel here mirrors only the state, not the mounted
+ *    VM's inner properties).
+ *
+ * 2. Navigation: modal/window presentation kinds render as Compose Dialog.
  */
 @Composable
 fun DashboardPage(vm: AppViewModel) {
@@ -43,25 +45,33 @@ fun DashboardPage(vm: AppViewModel) {
         WelcomeText(props)
         SummaryText(props)
 
-        // ── Cross-module navigation (VM-layer routing) ──────────────────
+        // ── Extension point (mount) state ───────────────────────────────
+        val mounted = props["$MOD.mountedModule"] ?: ""
+        Text(
+            props["$MOD.mount_status"] ?: "",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
+
+        // ── Buttons: navigation + extension toggle ──────────────────────
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { vm.execute(MOD, "openCart") }) {
-                Text(props["$MOD.open_cart"] ?: "Open cart")
-            }
             Button(onClick = { vm.execute(MOD, "modalCart") }) {
                 Text(props["$MOD.modal_cart"] ?: "Open cart (modal)")
             }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = { vm.execute(MOD, "windowCart") }) {
                 Text(props["$MOD.window_cart"] ?: "Open cart (window)")
             }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = { vm.execute(MOD, "navBack") }) {
                 Text(props["$MOD.back"] ?: "Back")
             }
+            Button(onClick = { vm.execute(MOD, "mountToggle") }) {
+                Text(props["$MOD.mount_toggle"] ?: "Toggle extension")
+            }
         }
 
-        // Render the pushed page by module id + presentation kind.
+        // Render the pushed navigation page (modal/window kinds as Dialog).
         val navModule = props["$MOD.navCurrentModule"] ?: ""
         val depth = props["$MOD.navDepth"] ?: "0"
         val navPres = (props["$MOD.navPresentation"] ?: "0").toIntOrNull() ?: 0
@@ -78,7 +88,7 @@ fun DashboardPage(vm: AppViewModel) {
                 // stack entry (same semantics as Qt QDialog / iOS present).
                 Dialog(onDismissRequest = { vm.execute(MOD, "navBack") }) {
                     Surface(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        modifier = Modifier.padding(16.dp),
                         shape = MaterialTheme.shapes.medium,
                         color = MaterialTheme.colorScheme.surface,
                     ) {

@@ -5,6 +5,7 @@
 //   2. raw json:      Push<ICartPage>(json{...})     → on_navigate(const json&)
 // Plus the graceful-degradation contract for unregistered target interfaces.
 #include "app/AppCore.h"
+#include "module_api/MountRegistry.h"
 #include "module_api/NavigationEntryVm.h"
 #include "module_api/NavigatorHost.h"
 #include "module_api/capabilities/cart/ICartPage.h"
@@ -59,9 +60,12 @@ int main() {
     wb::infra::ServiceHub hub(tmp.string());
     ModuleContext ctx(hub);
 
-    // Navigator + registry: only dashboard + cart are needed here.
+    // Navigator + mount registry + module registry: only dashboard + cart
+    // are needed here.
     auto navigator = std::make_shared<NavigatorHost>(ctx);
     ctx.set_navigator(navigator);
+    auto mounts = std::make_shared<MountRegistry>(ctx);
+    ctx.set_mounts(mounts);
     ModuleRegistry reg;
     reg.add(wb::dashboard::make_dashboard_module());
     reg.add(wb::cart::make_cart_module());
@@ -71,9 +75,13 @@ int main() {
         }
         return std::shared_ptr<aria::binding::ViewModel>{};
     });
-    // Modules register their navigation targets (as AppCore::load_modules does).
+    // Modules register their navigation targets + extension points
+    // (as AppCore::load_modules does).
     for (const auto& m : reg.all()) {
         m->register_navigation(*navigator);
+    }
+    for (const auto& m : reg.all()) {
+        m->register_mounts(*mounts);
     }
 
     auto vm = std::static_pointer_cast<DashboardVm>(
@@ -84,8 +92,10 @@ int main() {
     check(vm->navCurrentModule.get().empty(), "navCurrentModule empty at root");
     check(vm->navPresentation.get() == 0, "navPresentation 0 at root");
 
-    // ── Channel 1: typed struct (dashboard openCart) ───────────────────
-    vm->openCart.execute();
+    // ── Channel 1: typed struct (what dashboard's openCart used to do) ──
+    check(navigator->Push<ICartPage>(
+              CartArgs{.product = "Apple", .price = 2.5}),
+          "typed struct Push succeeds");
     auto* entry = dynamic_cast<NavigationEntryVm*>(
         vm->navigator().current().get().get());
     check(entry != nullptr, "current is a NavigationEntryVm");
@@ -181,6 +191,49 @@ int main() {
     check(!navigator->Push<ICartPage>(CartArgs{.product = "Mango", .price = 9.0}),
           "typed push to json-only target returns false (not consumed)");
     check(vm->navDepth.get() == 0, "unconsumed typed push leaves stack untouched");
+
+    // ── Extension points: MountRegistry semantics ──────────────────────
+    // cart's register_mounts provided slot "dashboard.content"; the host
+    // (dashboard) resolves it without knowing the provider.
+    check(mounts->provided(slots::kDashboardContent),
+          "cart provided the dashboard.content slot");
+    check(mounts->module_of(slots::kDashboardContent) == std::optional<std::string>("cart"),
+          "module_of resolves to the provider module id");
+    auto mounted = mounts->Resolve(slots::kDashboardContent);
+    check(mounted.has_value(), "Resolve builds the mounted VM");
+    check(mounted && mounted->moduleId == "cart", "resolved mount is cart");
+    check(mounted && mounted->vm != nullptr, "resolved mount carries a VM");
+    check(!mounts->Resolve("no.such.slot").has_value(),
+          "unknown slot resolves to nullopt (graceful degradation)");
+    check(!mounts->SetEnabled("no.such.slot", false),
+          "SetEnabled on unknown slot returns false");
+    check(mounts->SetEnabled(slots::kDashboardContent, false),
+          "SetEnabled disables a live slot without dropping its provider");
+    check(!mounts->provided(slots::kDashboardContent),
+          "disabled slot reports not provided");
+    check(!mounts->Resolve(slots::kDashboardContent).has_value(),
+          "disabled slot resolves to nullopt");
+    check(mounts->SetEnabled(slots::kDashboardContent, true),
+          "SetEnabled re-enables the slot (provider factory preserved)");
+    check(mounts->provided(slots::kDashboardContent),
+          "re-enabled slot reports provided again");
+
+    // ── Extension points: dashboard VM mount toggle ────────────────────
+    // Fresh VM: the slot is provided (enabled) by cart at load time, so the
+    // dashboard reflects it immediately.
+    auto vm2 = std::static_pointer_cast<DashboardVm>(
+        wb::dashboard::make_dashboard_module()->create_view_model(ctx));
+    check(vm2->mountedModule.get() == "cart", "dashboard sees the mounted provider");
+    check(vm2->mountedVm.get() != nullptr, "dashboard holds the mounted VM");
+    check(!vm2->mountStatus.get().empty(), "mount status is set");
+
+    vm2->mountToggle.execute();  // disable the extension
+    check(vm2->mountedModule.get().empty(), "toggle off clears the mounted module");
+    check(vm2->mountedVm.get() == nullptr, "toggle off clears the mounted VM");
+
+    vm2->mountToggle.execute();  // re-enable
+    check(vm2->mountedModule.get() == "cart", "toggle on restores the mounted module");
+    check(vm2->mountedVm.get() != nullptr, "toggle on restores the mounted VM");
 
     std::filesystem::remove_all(tmp);
 

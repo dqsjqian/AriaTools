@@ -11,4 +11,7 @@
     <string name="modal_cart">打开购物车（模态）</string>
     <string name="window_cart">打开购物车（窗口）</string>
     <string name="back">返回</string>
+    <string name="mount_toggle">切换拓展挂载</string>
+    <string name="mount_mounted">已挂载：</string>
+    <string name="mount_empty">此区域可被其他模块扩展（拓展点）</string>
 </resources>
