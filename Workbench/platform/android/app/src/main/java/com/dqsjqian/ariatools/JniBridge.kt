@@ -64,9 +64,21 @@ object JniBridge {
 
     fun activateModule(id: String) = nativeActivateModule(id)
 
+    // ── Kotlin → C++ (bidirectional bridge) ────────────────────────────────
+
+    /** Write a string Property on the given module's VM (View→VM text input). */
+    fun setProperty(moduleId: String, propName: String, value: String) =
+        nativeSetProperty(moduleId, propName, value)
+
+    /** Execute a parameterless Command on the given module's VM (View→VM click). */
+    fun executeCommand(moduleId: String, cmdName: String) =
+        nativeExecuteCommand(moduleId, cmdName)
+
     // ── JNI native method declarations ────────────────────────────────────
 
     @JvmStatic external fun nativeCreateShell(i18nDir: String)
     @JvmStatic external fun nativeDestroyShell()
     @JvmStatic external fun nativeActivateModule(id: String)
+    @JvmStatic external fun nativeSetProperty(moduleId: String, propName: String, value: String)
+    @JvmStatic external fun nativeExecuteCommand(moduleId: String, cmdName: String)
 }

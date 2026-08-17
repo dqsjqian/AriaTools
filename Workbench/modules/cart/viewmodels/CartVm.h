@@ -38,6 +38,15 @@ public:
     aria::Property<std::string> draftName{"Apple"};
     aria::Property<double>      draftPrice{3.5};
 
+    // Labels (i18n, auto-refresh on language change).
+    aria::Property<std::string> nameLabel;
+    aria::Property<std::string> priceLabel;
+    aria::Property<std::string> addLabel;
+    aria::Property<std::string> countLabel;
+    aria::Property<std::string> subtotalLabel;
+    aria::Property<std::string> taxLabel;
+    aria::Property<std::string> totalLabel;
+
     aria::Command<> addItem;
 
     void on_activate() override;

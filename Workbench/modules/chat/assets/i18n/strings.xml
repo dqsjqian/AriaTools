@@ -3,6 +3,8 @@
     <string name="title">聊天室</string>
     <string name="desc">组合 VM：ChatVm 是 parent，Publisher/Subscriber 是 children；离开 tab 时级联 deactivate——ViewModel 树状生命周期。</string>
     <string name="user">用户名</string>
+    <string name="user_label">用户名</string>
     <string name="draft">输入消息 …</string>
+    <string name="draft_label">输入消息 …</string>
     <string name="send">发送</string>
 </resources>
