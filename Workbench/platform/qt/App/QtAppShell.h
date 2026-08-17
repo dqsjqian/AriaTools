@@ -7,8 +7,11 @@
 #include "aria/adapters/qt6/qt_adapter.hpp"
 #include "aria/adapters/qt6/qt_dispatcher.hpp"
 #include "aria/binding/binding_engine.hpp"
+#include "aria/async/executor.hpp"
+#include "aria/scheduler.hpp"
 
 #include "app/AppCore.h"
+#include "support/QtExecutors.h"
 
 #include <QObject>
 #include <QWidget>
@@ -36,9 +39,11 @@ public:
 
 private:
     std::shared_ptr<aria::adapters::qt6::QtDispatcher> dispatcher_;
-    std::shared_ptr<aria::adapters::qt6::QtAdapter>    adapter_;
-    aria::binding::BindingEngine                       be_;
-    wb::core::AppCore                                  core_;
+    DispatcherExec                                    ui_exec_;
+    DispatcherDelay                                   delay_;
+    std::shared_ptr<aria::adapters::qt6::QtAdapter>   adapter_;
+    aria::binding::BindingEngine                      be_;
+    wb::core::AppCore                                 core_;
 };
 
 }  // namespace wb::qt

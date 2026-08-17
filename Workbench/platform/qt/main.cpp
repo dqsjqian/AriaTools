@@ -50,7 +50,8 @@ int main(int argc, char** argv) {
 
     const auto& mods = core.modules();
     for (int i = 0; i < static_cast<int>(mods.size()); ++i) {
-        nav->addItem(QString::fromStdString(core.nav_title(mods[static_cast<std::size_t>(i)].navKey)));
+        const auto& m = mods[static_cast<std::size_t>(i)];
+        nav->addItem(QString::fromStdString(core.nav_title(m.navKey)));
         stack->addWidget(shell.build_page(i));
     }
 
