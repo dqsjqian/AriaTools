@@ -7,6 +7,8 @@
     <string name="no_orders">No orders yet</string>
     <string name="order_placed">Order placed</string>
     <string name="qty_changed">Qty changed</string>
-    <string name="open_cart">Open cart</string>
+    <string name="open_cart">Open cart (embedded)</string>
+    <string name="modal_cart">Open cart (modal)</string>
+    <string name="window_cart">Open cart (window)</string>
     <string name="back">Back</string>
 </resources>

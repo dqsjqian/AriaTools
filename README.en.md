@@ -36,6 +36,7 @@ One C++20 core, four platform view shells: Qt / iOS / Android / Web
 - 🌍 **Internationalization** — XML i18n with runtime language switching; VM text properties auto-refresh (`BaseVm::text()`)
 - 🔌 **Platform service injection** — UI-thread executor / worker pool / delayed scheduler injected by each platform shell into `ServiceHub`; modules get them via `ModuleContext` — business code stays platform-free
 - 🖥 **Four platform shells** — Qt6 (desktop), iOS (UIKit), Android (Compose + JNI side-channel), Web (HTTP adapter, planned)
+- 🧭 **Route presentation** — `NavigatorHost::Push<I>(payload, NavOptions)` picks HOW a target appears in one call: `Push` (stack-embedded) / `Modal` (dialog) / `Window` (standalone top-level window). Each shell maps it to the native presentation (Qt QStackedWidget / QDialog / top-level window; iOS child VC / present VC; Android embedded / Compose Dialog); closing a modal or window pops the stack entry
 
 ## 🏗 Architecture
 
@@ -72,7 +73,7 @@ C++ VM (aria::Property) → on_changed → JNI callback → Kotlin StateFlow →
 
 | Module | Purpose | Aria capabilities demonstrated |
 |---|---|---|
-| dashboard | Home overview | Property / i18n |
+| dashboard | Home overview | Property / i18n / cross-module nav (interface routing + 3 presentation kinds) |
 | notes / calendar / tools | Notes / Calendar / Tools | ObservableList / forms |
 | settings / sync | Settings / Sync | service injection / EventBus |
 | tipcalc | Tip calculator | Computed / Command / reactive::batch |

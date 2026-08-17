@@ -18,11 +18,29 @@ DashboardVm::DashboardVm(wb::module_api::ModuleContext& ctx)
           navigator_->Push<wb::module_api::ICartPage>(
               wb::module_api::CartArgs{.product = "Apple", .price = 2.5});
       }),
+      modalCart([this] {
+          // Same navigation, presented as a modal dialog: the View renders
+          // the entry as an overlay (Qt QDialog / iOS present / Compose Dialog).
+          navigator_->Push<wb::module_api::ICartPage>(
+              wb::module_api::CartArgs{.product = "Apple", .price = 2.5},
+              wb::module_api::NavOptions{
+                  .presentation = wb::module_api::Presentation::Modal});
+      }),
+      windowCart([this] {
+          // Same navigation, presented as a standalone top-level window
+          // (desktop shells). Mobile shells fall back to a modal.
+          navigator_->Push<wb::module_api::ICartPage>(
+              wb::module_api::CartArgs{.product = "Apple", .price = 2.5},
+              wb::module_api::NavOptions{
+                  .presentation = wb::module_api::Presentation::Window});
+      }),
       navBack([this] { navigator_->Pop(); })
 {
     text(welcome, "welcome");
     text(summary, "summary");
     text(openCartLabel, "open_cart");
+    text(modalCartLabel, "modal_cart");
+    text(windowCartLabel, "window_cart");
     text(navBackLabel, "back");
     // Seed the badge with zero items.
     cartBadge.set(wb::i18n::str_in("dashboard", "cart_empty"));
@@ -80,6 +98,9 @@ DashboardVm::DashboardVm(wb::module_api::ModuleContext& ctx)
         auto* cur = nav.get().get();
         auto* entry = dynamic_cast<wb::module_api::NavigationEntryVm*>(cur);
         navCurrentModule.set(entry ? entry->module_id() : std::string{});
+        navPresentation.set(entry
+                                ? static_cast<int>(entry->presentation())
+                                : 0);
         navDepth.set(static_cast<int>(depth.get()));
     };
     nav_sync_sub_ = depth.on_changed([sync_nav](const auto&) { sync_nav(); });

@@ -62,8 +62,13 @@ public:
     /// value tells us whether it consumed it. Returns false when the
     /// interface is unregistered OR the target does not handle this payload
     /// (so the caller knows up front whether delivery succeeded).
+    ///
+    /// `opts.presentation` controls HOW the target is shown (embedded /
+    /// modal / window) — the View layer reads it off the pushed
+    /// NavigationEntryVm. Defaults to Presentation::Push (embedded),
+    /// preserving existing call sites.
     template<typename I, typename Payload>
-    bool Push(const Payload& payload) {
+    bool Push(const Payload& payload, NavOptions opts = {}) {
         auto it = factories_.find(typeid(I));
         if (it == factories_.end()) return false;   // no implementation → return
 
@@ -80,8 +85,21 @@ public:
             }
         }
 
+        // Window stays a Push-kind stack entry (slide semantics + close = pop);
+        // only Modal maps to Aria's modal kind so dismiss_modal()/pop_to_root()
+        // treat it as an overlay.
+        const auto ariaKind = [&] {
+            switch (opts.presentation) {
+                case Presentation::Modal: return aria::binding::Presentation::Modal;
+                case Presentation::Push:
+                case Presentation::Window:
+                default: return aria::binding::Presentation::Push;
+            }
+        }();
+
         stack_->push(std::make_shared<NavigationEntryVm>(
-            it->second.moduleId, std::move(vm)));
+                         it->second.moduleId, std::move(vm), opts.presentation),
+                     ariaKind);
         return true;
     }
 
