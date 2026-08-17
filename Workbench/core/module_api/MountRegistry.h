@@ -64,12 +64,9 @@ public:
     virtual bool on_mount(const nlohmann::json& args) = 0;
 };
 
-/// Well-known demo slot ids. Kept here (framework kernel) so both host and
-/// provider agree on the key without including each other — same idea as
-/// the kParam* constants in ICartPage.
-namespace slots {
-inline constexpr const char* kDashboardContent = "dashboard.content";
-}
+// NOTE: business slot ids (e.g. dashboard's content slot) live in
+// module_api/capabilities/<mod>/ (DashboardSlots.h) — the kernel only
+// provides the Provide/Resolve mechanism, never business identifiers.
 
 class MountRegistry {
 public:

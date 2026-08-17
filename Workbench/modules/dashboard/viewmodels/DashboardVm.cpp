@@ -4,6 +4,7 @@
 #include "events/CrossModuleEvents.h"
 
 #include "module_api/NavigationEntryVm.h"
+#include "module_api/capabilities/dashboard/DashboardSlots.h"
 
 #include "aria/runtime/event_bus.hpp"
 
@@ -34,7 +35,7 @@ DashboardVm::DashboardVm(wb::module_api::ModuleContext& ctx)
           // provider factory at load time; we only toggle the switch — no
           // knowledge of the provider needed (decoupled both ways).
           const bool enable = mountedModule.get().empty();
-          mounts_->SetEnabled(wb::module_api::slots::kDashboardContent, enable);
+          mounts_->SetEnabled(wb::module_api::DashboardSlots::kContent, enable);
           sync_mount_state();
       })
 {
@@ -115,7 +116,7 @@ DashboardVm::DashboardVm(wb::module_api::ModuleContext& ctx)
 
 void DashboardVm::sync_mount_state() {
     const auto mod =
-        mounts_->module_of(wb::module_api::slots::kDashboardContent);
+        mounts_->module_of(wb::module_api::DashboardSlots::kContent);
     mountedModule.set(mod.value_or(""));
     if (mod) {
         // Extension points carry parameters via TWO channels (mirroring
@@ -124,7 +125,7 @@ void DashboardVm::sync_mount_state() {
         // channel to pre-fill the mounted cart with a product; a host would
         // normally pass its own state.
         auto m = mounts_->Resolve<wb::module_api::IMountCartArgs>(
-            wb::module_api::slots::kDashboardContent,
+            wb::module_api::DashboardSlots::kContent,
             wb::module_api::CartArgs{.product = "Mounted Apple",
                                      .price   = 7.5});
         mountedVm.set(m ? std::move(m->vm) : nullptr);

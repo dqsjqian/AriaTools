@@ -9,6 +9,7 @@
 #include "module_api/NavigationEntryVm.h"
 #include "module_api/NavigatorHost.h"
 #include "module_api/capabilities/cart/ICartPage.h"
+#include "module_api/capabilities/dashboard/DashboardSlots.h"
 #include "viewmodels/DashboardVm.h"
 
 #include "module/DashboardModule.h"
@@ -202,11 +203,11 @@ int main() {
     // ── Extension points: MountRegistry semantics ──────────────────────
     // cart's register_mounts provided slot "dashboard.content"; the host
     // (dashboard) resolves it without knowing the provider.
-    check(mounts->provided(slots::kDashboardContent),
+    check(mounts->provided(wb::module_api::DashboardSlots::kContent),
           "cart provided the dashboard.content slot");
-    check(mounts->module_of(slots::kDashboardContent) == std::optional<std::string>("cart"),
+    check(mounts->module_of(wb::module_api::DashboardSlots::kContent) == std::optional<std::string>("cart"),
           "module_of resolves to the provider module id");
-    auto mounted = mounts->Resolve(slots::kDashboardContent);
+    auto mounted = mounts->Resolve(wb::module_api::DashboardSlots::kContent);
     check(mounted.has_value(), "Resolve builds the mounted VM");
     check(mounted && mounted->moduleId == "cart", "resolved mount is cart");
     check(mounted && mounted->vm != nullptr, "resolved mount carries a VM");
@@ -214,15 +215,15 @@ int main() {
           "unknown slot resolves to nullopt (graceful degradation)");
     check(!mounts->SetEnabled("no.such.slot", false),
           "SetEnabled on unknown slot returns false");
-    check(mounts->SetEnabled(slots::kDashboardContent, false),
+    check(mounts->SetEnabled(wb::module_api::DashboardSlots::kContent, false),
           "SetEnabled disables a live slot without dropping its provider");
-    check(!mounts->provided(slots::kDashboardContent),
+    check(!mounts->provided(wb::module_api::DashboardSlots::kContent),
           "disabled slot reports not provided");
-    check(!mounts->Resolve(slots::kDashboardContent).has_value(),
+    check(!mounts->Resolve(wb::module_api::DashboardSlots::kContent).has_value(),
           "disabled slot resolves to nullopt");
-    check(mounts->SetEnabled(slots::kDashboardContent, true),
+    check(mounts->SetEnabled(wb::module_api::DashboardSlots::kContent, true),
           "SetEnabled re-enables the slot (provider factory preserved)");
-    check(mounts->provided(slots::kDashboardContent),
+    check(mounts->provided(wb::module_api::DashboardSlots::kContent),
           "re-enabled slot reports provided again");
 
     // ── Extension points: dashboard VM mount toggle ────────────────────
@@ -252,7 +253,7 @@ int main() {
     // ── Extension points: mount parameters (IMountArgs) ────────────────
     // The host passes json args to the provider via on_mount; the mounted
     // cart prefills draftName/draftPrice from them.
-    auto mArgs = mounts->Resolve(slots::kDashboardContent,
+    auto mArgs = mounts->Resolve(wb::module_api::DashboardSlots::kContent,
                                  {{"product", "From Mount"}, {"price", 4.2}});
     check(mArgs.has_value(), "Resolve with args succeeds");
     check(mArgs && mArgs->vm == mainCartVm,
@@ -266,7 +267,7 @@ int main() {
     // TYPED mount channel: Resolve<IMountCartArgs>(slot, CartArgs{...}) —
     // compile-time checked struct fields, no json round-trip.
     auto mTyped = mounts->Resolve<wb::module_api::IMountCartArgs>(
-        slots::kDashboardContent,
+        wb::module_api::DashboardSlots::kContent,
         wb::module_api::CartArgs{.product = "Typed Mount", .price = 6.6});
     check(mTyped.has_value(), "typed Resolve succeeds");
     auto* cartTyped = mTyped ? dynamic_cast<wb::cart::CartVm*>(mTyped->vm.get()) : nullptr;
