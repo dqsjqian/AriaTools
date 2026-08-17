@@ -16,13 +16,18 @@ void subscribe_dashboard(aria::runtime::EventBus& bus, DashboardVm& vm,
     bind_str(subs, "dashboard", "cartBadge", vm.cartBadge);
     bind_str(subs, "dashboard", "lastOrder", vm.lastOrder);
     // Navigation demo labels.
-    bind_str(subs, "dashboard", "open_cart", vm.openCartLabel);
-    bind_str(subs, "dashboard", "back",     vm.navBackLabel);
+    bind_str(subs, "dashboard", "open_cart",   vm.openCartLabel);
+    bind_str(subs, "dashboard", "modal_cart",  vm.modalCartLabel);
+    bind_str(subs, "dashboard", "window_cart", vm.windowCartLabel);
+    bind_str(subs, "dashboard", "back",        vm.navBackLabel);
     // Navigation mirrors (pushed over the side-channel so Compose can
-    // render the pushed page by module id).
+    // render the pushed page by module id + presentation kind).
     bind_str(subs, "dashboard", "navCurrentModule", vm.navCurrentModule);
     wb::jni::bind_int(subs, "dashboard", "navDepth", vm.navDepth);
+    wb::jni::bind_int(subs, "dashboard", "navPresentation", vm.navPresentation);
     push_property("dashboard", "navDepth", std::to_string(vm.navDepth.get()));
+    push_property("dashboard", "navPresentation",
+                  std::to_string(vm.navPresentation.get()));
 }
 
 void set_dashboard_text(DashboardVm& vm, const std::string& propName,
@@ -33,6 +38,8 @@ void set_dashboard_text(DashboardVm& vm, const std::string& propName,
 
 void exec_dashboard_command(DashboardVm& vm, const std::string& cmdName) {
     if (cmdName == "openCart") vm.openCart.execute();
+    else if (cmdName == "modalCart") vm.modalCart.execute();
+    else if (cmdName == "windowCart") vm.windowCart.execute();
     else if (cmdName == "navBack") vm.navBack.execute();
 }
 

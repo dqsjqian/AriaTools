@@ -82,6 +82,7 @@ int main() {
     check(vm->navigator().current().get() == nullptr, "nav root is empty");
     check(vm->navDepth.get() == 0, "nav depth 0 at root");
     check(vm->navCurrentModule.get().empty(), "navCurrentModule empty at root");
+    check(vm->navPresentation.get() == 0, "navPresentation 0 at root");
 
     // ── Channel 1: typed struct (dashboard openCart) ───────────────────
     vm->openCart.execute();
@@ -89,8 +90,11 @@ int main() {
         vm->navigator().current().get().get());
     check(entry != nullptr, "current is a NavigationEntryVm");
     check(entry && entry->module_id() == "cart", "entry targets cart module");
+    check(entry && entry->presentation() == Presentation::Push,
+          "default presentation is Push (embedded, backward compatible)");
     check(vm->navDepth.get() == 1, "nav depth 1 after push");
     check(vm->navCurrentModule.get() == "cart", "navCurrentModule mirrors cart");
+    check(vm->navPresentation.get() == 0, "navPresentation mirrors Push(0)");
     check(entry && entry->inner().is_active().get(), "pushed cart VM is active");
 
     auto* cart = top_cart(*navigator);
@@ -113,12 +117,32 @@ int main() {
     check(cart2 && cart2->draftPrice.get() == 1.5,
           "json channel prefilled draft price (parsed from json)");
 
-    // ── navBack: pop returns to the previous entry ─────────────────────
+    // ── Presentation kinds: modal / window ─────────────────────────────
+    // Stack is [cart(Apple), cart(Pear)] at this point (depth 2).
     check(vm->navBack.can_execute(), "navBack enabled while stacked");
+    vm->modalCart.execute();
+    auto* mEntry = dynamic_cast<NavigationEntryVm*>(
+        vm->navigator().current().get().get());
+    check(mEntry != nullptr, "modal cart entry pushed");
+    check(mEntry && mEntry->presentation() == Presentation::Modal,
+          "modalCart uses Presentation::Modal");
+    check(vm->navPresentation.get() == 1, "navPresentation mirrors Modal(1)");
     vm->navBack.execute();
-    check(vm->navDepth.get() == 1, "nav depth 1 after pop");
-    check(vm->navCurrentModule.get() == "cart", "first cart page visible again");
+    check(vm->navDepth.get() == 2, "modal pop returns to previous entry");
+    check(vm->navCurrentModule.get() == "cart", "previous cart visible after modal pop");
 
+    vm->windowCart.execute();
+    auto* wEntry = dynamic_cast<NavigationEntryVm*>(
+        vm->navigator().current().get().get());
+    check(wEntry != nullptr, "window cart entry pushed");
+    check(wEntry && wEntry->presentation() == Presentation::Window,
+          "windowCart uses Presentation::Window");
+    check(vm->navPresentation.get() == 2, "navPresentation mirrors Window(2)");
+    vm->navBack.execute();
+    check(vm->navDepth.get() == 2, "window pop returns to previous entry");
+
+    vm->navBack.execute();
+    check(vm->navDepth.get() == 1, "nav depth 1 after popping json cart");
     vm->navBack.execute();
     check(vm->navDepth.get() == 0, "nav depth 0 back at root");
     check(vm->navigator().current().get() == nullptr, "nav root empty after pops");

@@ -44,6 +44,11 @@ public:
     /// prefill param ("product" / "price"). The View only fires the
     /// Command and renders navigator().current().
     aria::Command<> openCart;
+    /// Same navigation, but presented as a modal dialog (Presentation::Modal).
+    aria::Command<> modalCart;
+    /// Same navigation, but presented as a standalone window
+    /// (Presentation::Window; mobile shells fall back to modal).
+    aria::Command<> windowCart;
     /// Pop the navigation stack.
     aria::Command<> navBack;
 
@@ -58,9 +63,14 @@ public:
     aria::Property<std::string> navCurrentModule;
     /// Navigation stack depth (mirrors navigator().depth()).
     aria::Property<int> navDepth{0};
+    /// Current entry's Presentation kind (0=Push, 1=Modal, 2=Window),
+    /// mirrored for side-channel platforms.
+    aria::Property<int> navPresentation{0};
 
     /// Button labels for the navigation demo (i18n).
     aria::Property<std::string> openCartLabel;
+    aria::Property<std::string> modalCartLabel;
+    aria::Property<std::string> windowCartLabel;
     aria::Property<std::string> navBackLabel;
 
 private:

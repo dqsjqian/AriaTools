@@ -38,6 +38,7 @@
 - 🌍 **国际化** —— XML i18n，运行时切语言，VM 文案属性自动刷新（`BaseVm::text()`）
 - 🔌 **平台服务注入** —— UI 线程 executor / 工作线程池 / 延时调度器由各平台壳注入 `ServiceHub`，模块经 `ModuleContext` 获取，业务代码零平台依赖
 - 🖥 **四平台 View 壳** —— Qt6（桌面）、iOS（UIKit）、Android（Compose + JNI side-channel）、Web（HTTP adapter，规划中）
+- 🧭 **路由呈现方式（presentation）** —— `NavigatorHost::Push<I>(payload, NavOptions)` 一次调用指定目标**如何呈现**：`Push`（栈内嵌）/ `Modal`（模态对话框）/ `Window`（独立顶层窗口）；三端 View 各自映射原生呈现（Qt QStackedWidget / QDialog / 顶层窗口，iOS child VC / present VC，Android 内嵌 / Compose Dialog），关闭模态或窗口自动 Pop 栈条目
 
 ## 🏗 架构分层
 
@@ -74,7 +75,7 @@ C++ VM（aria::Property）→ on_changed → JNI 回调 → Kotlin StateFlow →
 
 | 模块 | 说明 | 演示的 Aria 能力 |
 |---|---|---|
-| dashboard | 首页概览 | Property / i18n |
+| dashboard | 首页概览 | Property / i18n / 跨模块导航（接口路由 + 三种呈现方式） |
 | notes / calendar / tools | 记事 / 日历 / 小工具 | ObservableList / 表单 |
 | settings / sync | 设置 / 同步 | 服务注入 / EventBus |
 | tipcalc | 小费计算器 | Computed / Command / reactive::batch |
