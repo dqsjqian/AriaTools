@@ -27,4 +27,5 @@
     <string name="nav_theme">主题切换</string>
     <string name="nav_wizard">注册向导</string>
     <string name="nav_echo">回声示例</string>
+    <string name="nav_frameworklab">框架能力实验室</string>
 </resources>

@@ -4,6 +4,7 @@
 
 #include "platforms/android/CalendarJniBinding.h"
 #include "platforms/android/DashboardJniBinding.h"
+#include "platforms/android/FrameworkLabJniBinding.h"
 #include "platforms/android/CartJniBinding.h"
 #include "platforms/android/ChatJniBinding.h"
 #include "platforms/android/LoginJniBinding.h"
@@ -30,6 +31,7 @@ const wb::jni::BindingTable& module_bindings() {
         wb::jni::BindingTable t;
         wb::calendar::register_calendar_binding(t);
         wb::dashboard::register_dashboard_binding(t);
+        wb::frameworklab::register_frameworklab_binding(t);
         wb::cart::register_cart_binding(t);
         wb::chat::register_chat_binding(t);
         wb::login::register_login_binding(t);

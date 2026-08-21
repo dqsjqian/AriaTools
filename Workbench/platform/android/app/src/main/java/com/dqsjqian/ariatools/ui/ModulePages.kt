@@ -5,6 +5,7 @@ import com.dqsjqian.ariatools.pages.register_cart_page
 import com.dqsjqian.ariatools.pages.register_chat_page
 import com.dqsjqian.ariatools.pages.register_dashboard_page
 import com.dqsjqian.ariatools.pages.register_echo_page
+import com.dqsjqian.ariatools.pages.register_frameworklab_page
 import com.dqsjqian.ariatools.pages.register_login_page
 import com.dqsjqian.ariatools.pages.register_notes_page
 import com.dqsjqian.ariatools.pages.register_search_page
@@ -30,6 +31,7 @@ import com.dqsjqian.ariatools.pages.register_wizard_page
 fun registerAllModulePages() {
     register_dashboard_page()
     register_echo_page()
+    register_frameworklab_page()
     register_notes_page()
     register_calendar_page()
     register_tools_page()
