@@ -46,6 +46,7 @@ set(WB_RUNTIME_ASSETS_DIR "${CMAKE_BINARY_DIR}/assets" CACHE INTERNAL "")
 option(WORKBENCH_TARGET_QT       "Build the Qt6 desktop app (Win/Mac/Linux)" ON)
 option(WORKBENCH_TARGET_IOS      "Build the iOS UIKit app"                    OFF)
 option(WORKBENCH_TARGET_ANDROID  "Build the Android JNI core (static libs)"   OFF)
+option(WORKBENCH_TARGET_WEB      "Build the HTTP/REST/SSE browser shell"      OFF)
 
 if(WORKBENCH_TARGET_IOS)
     set(WORKBENCH_TARGET_QT OFF CACHE BOOL "" FORCE)
@@ -54,10 +55,12 @@ endif()
 if(WORKBENCH_TARGET_ANDROID)
     set(WORKBENCH_TARGET_QT OFF CACHE BOOL "" FORCE)
 endif()
+if(WORKBENCH_TARGET_WEB)
+    set(WORKBENCH_TARGET_QT OFF CACHE BOOL "" FORCE)
+endif()
 
 # -- Pull in the Aria framework --
 set(ARIA_BUILD_TESTS     OFF CACHE BOOL "" FORCE)
-set(ARIA_BUILD_EXAMPLES  OFF CACHE BOOL "" FORCE)
 set(ARIA_BUILD_BENCHMARK OFF CACHE BOOL "" FORCE)
 if(WORKBENCH_TARGET_QT)
     set(ARIA_BUILD_QT6 ON CACHE BOOL "" FORCE)
@@ -72,6 +75,10 @@ if(WORKBENCH_TARGET_ANDROID)
     set(ARIA_BUILD_JNI   ON  CACHE BOOL "" FORCE)
     set(ARIA_BUILD_SHARED OFF CACHE BOOL "" FORCE)
     set(ARIA_BUILD_QT6   OFF CACHE BOOL "" FORCE)
+endif()
+if(WORKBENCH_TARGET_WEB)
+    set(ARIA_BUILD_HTTP ON CACHE BOOL "" FORCE)
+    set(ARIA_HTTP_ENABLE_TLS OFF CACHE BOOL "" FORCE)
 endif()
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/aria
@@ -151,6 +158,10 @@ endforeach()
 # -- App assembly layer (depends on all module libs) --
 add_subdirectory(core/app)
 
+if(WORKBENCH_TARGET_WEB)
+    add_subdirectory(platform/web)
+endif()
+
 # -- Copy shared i18n ("common" namespace) to the runtime directory --
 file(GLOB _common_i18n ${CMAKE_CURRENT_SOURCE_DIR}/modules/_shared/assets/i18n/*.xml)
 add_custom_target(wb_i18n_common ALL
@@ -177,8 +188,3 @@ if(TARGET workbench)
     endforeach()
 endif()
 
-# -- Patch the vendored UIKit adapter include path (bare #import issue) --
-if(WORKBENCH_TARGET_IOS AND TARGET aria_adapters_uikit)
-    target_include_directories(aria_adapters_uikit PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/aria/modules/adapters/uikit/include/aria/adapters/uikit)
-endif()
