@@ -14,7 +14,7 @@ jobs:
     name: Qt flagship probe (Linux)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
 
@@ -65,16 +65,16 @@ jobs:
     name: Android Compose + View-backed JNI build
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
 
       - name: Install NDK and CMake
         run: sdkmanager "ndk;29.0.14206865" "cmake;3.22.1"
@@ -90,7 +90,7 @@ jobs:
     name: iOS UIKit compile gate
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
 
