@@ -1,8 +1,10 @@
 package com.dqsjqian.ariatools
 
+import android.content.Intent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -12,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.dqsjqian.ariatools.ui.ComposeViewFactory
 
@@ -24,6 +27,7 @@ import com.dqsjqian.ariatools.ui.ComposeViewFactory
 fun AppRoot(viewModel: AppViewModel) {
     val modules by viewModel.modules.collectAsState()
     val current by viewModel.current.collectAsState()
+    val context = LocalContext.current
 
     Scaffold(
         bottomBar = {
@@ -45,6 +49,12 @@ fun AppRoot(viewModel: AppViewModel) {
                 .padding(padding)
                 .padding(16.dp)
         ) {
+            Button(onClick = {
+                context.startActivity(Intent(context, ViewBindingLabActivity::class.java))
+            }) {
+                Text(context.getString(R.string.jni_lab_entry))
+            }
+
             val page = current?.let { ComposeViewFactory.build(it, viewModel) }
             if (page != null) {
                 page()

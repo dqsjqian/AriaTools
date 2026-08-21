@@ -26,6 +26,7 @@ set(WB_LIB   "${WB_NATIVE_ROOT}/build/platforms/android/lib")
 add_library(aria_jni SHARED
     "${WB_ROOT}/platform/android/jni/jni_bridge.cpp"
     "${WB_ROOT}/platform/android/jni/AndroidShell.cpp"
+    "${WB_ROOT}/platform/android/jni/ViewBindingLabJni.cpp"
     "${WB_ROOT}/modules/calendar/platforms/android/CalendarJniBinding.cpp"
     "${WB_ROOT}/modules/cart/platforms/android/CartJniBinding.cpp"
     "${WB_ROOT}/modules/chat/platforms/android/ChatJniBinding.cpp"
