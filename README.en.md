@@ -35,9 +35,10 @@ One C++20 core, four platform view shells: Qt / iOS / Android / Web
 - 🎛 **Strongly-typed MVVM** — View → ViewModel → Model → Service → infrastructure, DI via `ServiceHub`/Container; no Service Locator, no global singletons
 - 🌍 **Internationalization** — XML i18n with runtime language switching; VM text properties auto-refresh (`BaseVm::text()`)
 - 🔌 **Platform service injection** — UI-thread executor / worker pool / delayed scheduler injected by each platform shell into `ServiceHub`; modules get them via `ModuleContext` — business code stays platform-free
-- 🖥 **Four platform shells** — Qt6 (desktop), iOS (UIKit), Android (Compose + JNI side-channel), Web (HTTP adapter, planned)
+- 🖥 **Four platform shells** — Qt6 (desktop), iOS (UIKit), Android (Compose side-channel + native View/JniAdapter paths), Web (HTTP/REST/SSE thin client)
 - 🧭 **Route presentation** — `NavigatorHost::Push<I>(payload, NavOptions)` picks HOW a target appears in one call: `Push` (stack-embedded) / `Modal` (dialog) / `Window` (standalone top-level window). Each shell maps it to the native presentation (Qt QStackedWidget / QDialog / top-level window; iOS child VC / present VC; Android embedded / Compose Dialog); closing a modal or window pops the stack entry
 - 🧩 **Extension points (MountRegistry)** — `IModule::register_mounts` lets one module mount its UI into a slot another module declares (VS Code `contributes.views` / Eclipse extension-point pattern): `Provide(slotId, moduleId, factory)` / `Resolve(slotId)`; host and provider are fully decoupled (host only knows the slot id, provider never knows the host); `SetEnabled` hot-toggles, empty slots render a placeholder (graceful degradation); the mounted VM is the provider's PRIMARY instance — shares state with the module's own tab, so interaction is identical across all three platforms
+- 🧪 **Framework Lab** — a real cross-platform module combining `ObservableList`, `FilteredList`, `Selection`, `Property` → `Computed` derivations, and `GraphInspector` snapshots in one shared C++ ViewModel.
 
 ## 🏗 Architecture
 
@@ -60,7 +61,8 @@ AriaTools/
 │   └── platform/
 │       ├── qt/                   #   Qt shell (QtViewFactory + UiHelpers)
 │       ├── ios/                  #   iOS shell (UIViewFactory + IosUi)
-│       └── android/              #   Gradle + JNI bridge + ComposeViewFactory
+│       ├── android/              #   Compose + typed JniAdapter lab
+│       └── web/                  #   HTTP/REST/SSE shell + thin browser client
 └── third_party/aria              # Aria framework (submodule)
 ```
 
@@ -70,7 +72,7 @@ AriaTools/
 C++ VM (aria::Property) → on_changed → JNI callback → Kotlin StateFlow → Compose recomposition
 ```
 
-## 📦 Modules (16)
+## 📦 Modules (17)
 
 | Module | Purpose | Aria capabilities demonstrated |
 |---|---|---|
@@ -86,6 +88,7 @@ C++ VM (aria::Property) → on_changed → JNI callback → Kotlin StateFlow →
 | chat | Chat room | EventBus cross-module messaging |
 | theme | Theme switch | Container DI |
 | wizard | Sign-up wizard | multi-step form state machine |
+| frameworklab | Framework capability lab | ObservableList + FilteredList + Selection / Property → Computed derivations / GraphInspector snapshots |
 | echo | Hot-plug template | minimal module skeleton |
 
 ### Platform View contract
@@ -162,9 +165,15 @@ bash Workbench/scripts/gen-android.sh        # core static libs only
 bash Workbench/scripts/gen-android.sh --apk  # core + Gradle APK
 ```
 
-### Web (planned)
+### Web
 
-`gen-web.sh` is a placeholder for now: the Web shape is a C++ backend exposing the ViewModel via the Aria HTTP adapter (REST+SSE) plus a thin browser client; not yet wired.
+```bash
+bash Workbench/scripts/gen-web.sh build  # build the C++ HTTP shell
+bash Workbench/scripts/gen-web.sh run    # serve http://127.0.0.1:19090
+bash Workbench/scripts/gen-web.sh probe  # verify /aria/health + /aria/views
+```
+
+The Web shell reuses the C++ `TipCalcVm`: browser input hops from an HTTP worker to the graph thread before writing `Property`; derived results return from `Computed` through `BindingEngine` and REST/SSE.
 
 ## 🛠 Tech Stack
 
@@ -174,8 +183,8 @@ bash Workbench/scripts/gen-android.sh --apk  # core + Gradle APK
 | Framework | [Aria](https://github.com/dqsjqian/Aria) (vendored, C++20 MVVM) |
 | Desktop | Qt6 (macOS / Windows / Linux) |
 | iOS | UIKit (Xcode project) |
-| Android | Kotlin + Jetpack Compose + NDK/JNI |
-| Web | Aria HTTP adapter (planned) |
+| Android | Kotlin + Jetpack Compose side-channel; Android View + typed JniAdapter lab |
+| Web | Aria HTTP adapter (REST/SSE) + thin browser client |
 | Build | CMake + Gradle + Xcode |
 
 ## 📜 License

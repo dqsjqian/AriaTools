@@ -37,9 +37,10 @@
 - 🎛 **强类型 MVVM** —— View → ViewModel → Model → Service → 基础设施，依赖注入走 `ServiceHub`/DI Container，无 Service Locator、无全局单例
 - 🌍 **国际化** —— XML i18n，运行时切语言，VM 文案属性自动刷新（`BaseVm::text()`）
 - 🔌 **平台服务注入** —— UI 线程 executor / 工作线程池 / 延时调度器由各平台壳注入 `ServiceHub`，模块经 `ModuleContext` 获取，业务代码零平台依赖
-- 🖥 **四平台 View 壳** —— Qt6（桌面）、iOS（UIKit）、Android（Compose + JNI side-channel）、Web（HTTP adapter，规划中）
+- 🖥 **四平台 View 壳** —— Qt6（桌面）、iOS（UIKit）、Android（Compose side-channel + 原生 View/JniAdapter 双路径）、Web（HTTP/REST/SSE 薄客户端）
 - 🧭 **路由呈现方式（presentation）** —— `NavigatorHost::Push<I>(payload, NavOptions)` 一次调用指定目标**如何呈现**：`Push`（栈内嵌）/ `Modal`（模态对话框）/ `Window`（独立顶层窗口）；三端 View 各自映射原生呈现（Qt QStackedWidget / QDialog / 顶层窗口，iOS child VC / present VC，Android 内嵌 / Compose Dialog），关闭模态或窗口自动 Pop 栈条目
 - 🧩 **拓展点（MountRegistry）** —— `IModule::register_mounts` 让一个模块把 UI 挂载到另一个模块声明的槽位（VS Code `contributes.views` / Eclipse extension-point 模式）：`Provide(slotId, moduleId, factory)` / `Resolve(slotId)`；宿主与提供者**零耦合**（宿主只认槽位 id，提供者不知宿主）；`SetEnabled` 热切换、无填充物显示占位（优雅降级）；挂载的是提供者**主 VM**（与模块 tab 共享数据，三端交互一致）
+- 🧪 **Framework Lab** —— 用一个真实跨端模块展示 `ObservableList` + `FilteredList` + `Selection`、`Property` → `Computed` 派生链和 `GraphInspector` 快照；Qt / UIKit / Compose 共用同一份 C++ ViewModel。
 
 ## 🏗 架构分层
 
@@ -62,7 +63,8 @@ AriaTools/
 │   └── platform/
 │       ├── qt/                   #   Qt 壳（shell + QtViewFactory + UiHelpers）
 │       ├── ios/                  #   iOS 壳（shell + UIViewFactory + IosUi）
-│       └── android/              #   Android 工程（Gradle + JNI 桥 + ComposeViewFactory）
+│       ├── android/              #   Android 工程（Compose + typed JniAdapter lab）
+│       └── web/                  #   HTTP/REST/SSE 壳 + 浏览器薄客户端
 └── third_party/aria              # Aria 框架（submodule）
 ```
 
@@ -72,7 +74,7 @@ AriaTools/
 C++ VM（aria::Property）→ on_changed → JNI 回调 → Kotlin StateFlow → Compose 重组
 ```
 
-## 📦 模块清单（16）
+## 📦 模块清单（17）
 
 | 模块 | 说明 | 演示的 Aria 能力 |
 |---|---|---|
@@ -88,6 +90,7 @@ C++ VM（aria::Property）→ on_changed → JNI 回调 → Kotlin StateFlow →
 | chat | 聊天室 | EventBus 跨模块通信（多 VM：Publisher + Subscriber） |
 | theme | 主题切换 | Container DI |
 | wizard | 注册向导 | 多步表单状态机（3 子 VM + Navigator） |
+| frameworklab | 框架能力实验室 | ObservableList + FilteredList + Selection / Property → Computed 派生链 / GraphInspector 快照 |
 | echo | 热插拔演示 | 最小化模块模板 |
 
 ## 🔌 模块热插拔
@@ -221,9 +224,15 @@ bash Workbench/scripts/gen-android.sh        # 仅核心静态库
 bash Workbench/scripts/gen-android.sh --apk  # 核心 + Gradle 打包 APK
 ```
 
-### Web（规划中）
+### Web
 
-`gen-web.sh` 目前是占位脚本：Web 形态为"C++ 后端经 Aria HTTP adapter 暴露 VM（REST+SSE）+ 浏览器薄客户端"，尚未接入。
+```bash
+bash Workbench/scripts/gen-web.sh build  # 构建 C++ HTTP 壳
+bash Workbench/scripts/gen-web.sh run    # 启动 http://127.0.0.1:19090
+bash Workbench/scripts/gen-web.sh probe  # 实测 /aria/health + /aria/views
+```
+
+Web 壳直接复用 C++ `TipCalcVm`：浏览器输入通过 HTTP worker 回到 graph thread，再写入 `Property`；派生结果从 `Computed` 经 `BindingEngine` 返回 REST/SSE。
 
 ## 🛠 技术栈
 
@@ -233,8 +242,8 @@ bash Workbench/scripts/gen-android.sh --apk  # 核心 + Gradle 打包 APK
 | 框架 | [Aria](https://github.com/dqsjqian/Aria)（vendored，C++20 MVVM） |
 | 桌面 | Qt6（macOS / Windows / Linux） |
 | iOS | UIKit（Xcode 工程） |
-| Android | Kotlin + Jetpack Compose + NDK/JNI |
-| Web | Aria HTTP adapter（规划中） |
+| Android | Kotlin + Jetpack Compose side-channel；Android View + typed JniAdapter lab |
+| Web | Aria HTTP adapter（REST/SSE）+ 浏览器薄客户端 |
 | 构建 | CMake + Gradle + Xcode |
 
 ## 📜 License
