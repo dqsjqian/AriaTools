@@ -27,4 +27,5 @@
     <string name="nav_theme">Theme</string>
     <string name="nav_wizard">Wizard</string>
     <string name="nav_echo">Echo demo</string>
+    <string name="nav_frameworklab">Framework Lab</string>
 </resources>

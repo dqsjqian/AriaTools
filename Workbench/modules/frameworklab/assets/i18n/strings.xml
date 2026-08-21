@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="title">Aria 框架能力实验室</string>
+    <string name="desc">用同一个 C++ VM 实际展示派生集合、选择一致性、响应式派生值与图诊断。</string>
+    <string name="draft">新任务</string>
+    <string name="default_task">探索响应式集合</string>
+    <string name="seed_graph">Property 到 Computed 响应式图</string>
+    <string name="seed_filter">派生的进行中列表</string>
+    <string name="seed_selection">选择状态一致性</string>
+    <string name="add">添加</string>
+    <string name="toggle">切换完成状态</string>
+    <string name="remove">删除选中</string>
+    <string name="clear_completed">清除已完成</string>
+    <string name="refresh_graph">刷新响应式图</string>
+    <string name="all">全部</string>
+    <string name="active">进行中</string>
+    <string name="completed">已完成</string>
+    <string name="graph">Property → Computed 图快照</string>
+    <string name="none_selected">未选择任务</string>
+</resources>

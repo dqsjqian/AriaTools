@@ -30,6 +30,7 @@ add_library(aria_jni SHARED
     "${WB_ROOT}/modules/cart/platforms/android/CartJniBinding.cpp"
     "${WB_ROOT}/modules/chat/platforms/android/ChatJniBinding.cpp"
     "${WB_ROOT}/modules/dashboard/platforms/android/DashboardJniBinding.cpp"
+    "${WB_ROOT}/modules/frameworklab/platforms/android/FrameworkLabJniBinding.cpp"
     "${WB_ROOT}/modules/login/platforms/android/LoginJniBinding.cpp"
     "${WB_ROOT}/modules/notes/platforms/android/NotesJniBinding.cpp"
     "${WB_ROOT}/modules/search/platforms/android/SearchJniBinding.cpp"
@@ -48,6 +49,7 @@ target_include_directories(aria_jni PRIVATE
     ${WB_ROOT}/core
     ${WB_ROOT}/platform/android
     ${WB_ROOT}/modules/dashboard
+    ${WB_ROOT}/modules/frameworklab
     ${WB_ROOT}/modules/notes
     ${WB_ROOT}/modules/calendar
     ${WB_ROOT}/modules/tools
@@ -78,6 +80,7 @@ target_link_libraries(aria_jni
     ${WB_LIB}/libwb_core_app.a
     ${WB_LIB}/libwb_module_dashboard.a
     ${WB_LIB}/libwb_module_echo.a
+    ${WB_LIB}/libwb_module_frameworklab.a
     ${WB_LIB}/libwb_module_notes.a
     ${WB_LIB}/libwb_module_calendar.a
     ${WB_LIB}/libwb_module_tools.a
