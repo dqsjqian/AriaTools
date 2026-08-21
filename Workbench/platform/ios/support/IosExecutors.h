@@ -3,7 +3,8 @@
 // IosExecutors — adapters that dispatch tasks onto the iOS main queue
 // (UIKit main thread), exposed as aria::async::IExecutor and
 // aria::IDelayedScheduler so ServiceHub can use the UI thread as the UI
-// executor and the delayed scheduler. Mirrors AriaTools' QtExecutors.h.
+// executor and the delayed scheduler. This is iOS-specific: unlike Qt,
+// Grand Central Dispatch does not implement Aria's IDispatcher contract.
 //
 #include "aria/async/executor.hpp"
 #include "aria/scheduler.hpp"

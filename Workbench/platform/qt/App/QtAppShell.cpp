@@ -1,7 +1,6 @@
 #include "App/QtAppShell.h"
 #include "App/QtViewManifest.h"
 #include "support/QtViewFactory.h"
-#include "support/QtExecutors.h"
 
 #include <QCoreApplication>
 #include <QDir>

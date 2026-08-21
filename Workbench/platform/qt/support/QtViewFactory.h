@@ -27,6 +27,10 @@ public:
         builders_[moduleId] = std::move(b);
     }
 
+    [[nodiscard]] bool has_builder(const std::string& moduleId) const {
+        return builders_.contains(moduleId);
+    }
+
     [[nodiscard]] QWidget* build(const std::string& moduleId,
                                  aria::binding::ViewModel& vm,
                                  aria::binding::BindingEngine& be) const {

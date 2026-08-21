@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ariatools-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qt:
+    name: Qt flagship probe (Linux)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install toolchain and Qt6
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build g++-13 qt6-base-dev
+
+      - name: Configure
+        env:
+          CC: gcc-13
+          CXX: g++-13
+        run: |
+          cmake -S Workbench -B build/ci-qt -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DWORKBENCH_TARGET_QT=ON
+
+      - name: Build
+        run: cmake --build build/ci-qt -j
+
+      - name: Run standalone module tests
+        run: |
+          for module in calendar cart dashboard frameworklab notes tools; do
+            cmake -S "Workbench/modules/$module/tests" \
+                  -B "build/ci-test-$module" -G Ninja \
+                  -DCMAKE_BUILD_TYPE=Release
+            cmake --build "build/ci-test-$module" -j
+            ctest --test-dir "build/ci-test-$module" --output-on-failure
+          done
+
+      - name: Probe every module and Qt View
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: ./build/ci-qt/platform/qt/workbench --probe
+
+      - name: Configure and build Web shell
+        run: |
+          cmake -S Workbench -B build/ci-web -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DWORKBENCH_TARGET_WEB=ON \
+            -DWORKBENCH_TARGET_QT=OFF
+          cmake --build build/ci-web -j
+
+      - name: Probe HTTP wire protocol and shared TipCalc VM
+        run: ./build/ci-web/platform/web/workbench_web --probe
+
+  android:
+    name: Android Compose + View-backed JNI build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install NDK and CMake
+        run: sdkmanager "ndk;29.0.14206865" "cmake;3.22.1"
+
+      - name: Build APK (Compose shell + typed JniAdapter Activity)
+        run: |
+          ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk/29.0.14206865" \
+          ARIA_ANDROID_CMAKE="$ANDROID_SDK_ROOT/cmake/3.22.1/bin/cmake" \
+          ARIA_ANDROID_NINJA="$ANDROID_SDK_ROOT/cmake/3.22.1/bin/ninja" \
+          bash Workbench/scripts/gen-android.sh --apk
+
+  ios:
+    name: iOS UIKit compile gate
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure simulator target
+        run: |
+          cmake -S Workbench -B build/ci-ios -G Xcode \
+            -DCMAKE_SYSTEM_NAME=iOS \
+            -DCMAKE_OSX_SYSROOT=iphonesimulator \
+            -DCMAKE_OSX_ARCHITECTURES=$(uname -m) \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
+            -DWORKBENCH_TARGET_IOS=ON \
+            -DWORKBENCH_TARGET_QT=OFF
+
+      - name: Build iOS shell and every module View
+        run: cmake --build build/ci-ios --config Debug --target workbench

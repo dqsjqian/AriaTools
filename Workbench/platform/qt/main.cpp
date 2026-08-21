@@ -6,6 +6,7 @@
 //  All text comes from i18n (VM dispatch / core.nav_title), zero hard-coded text in View.
 // ────────────────────────────────────────────────────────────────────────────
 #include "App/QtAppShell.h"
+#include "support/QtViewFactory.h"
 #include "infra/log/Log.h"
 #include "utils/Platform.h"
 
@@ -18,6 +19,54 @@
 #include <QStackedWidget>
 #include <QWidget>
 
+#include <memory>
+#include <string_view>
+#include <vector>
+
+namespace {
+
+bool has_arg(int argc, char** argv, std::string_view expected) {
+    for (int i = 1; i < argc; ++i) {
+        if (std::string_view{argv[i]} == expected) return true;
+    }
+    return false;
+}
+
+int run_probe(wb::qt::QtAppShell& shell) {
+    auto& core = shell.core();
+    const auto& modules = core.modules();
+    if (modules.empty()) {
+        WB_LOGE("probe", "no business modules loaded");
+        return 2;
+    }
+
+    std::vector<std::unique_ptr<QWidget>> pages;
+    pages.reserve(modules.size());
+    for (int i = 0; i < static_cast<int>(modules.size()); ++i) {
+        const auto& module = modules[static_cast<std::size_t>(i)];
+        if (module.id.empty() || module.navKey.empty() || !module.vm) {
+            WB_LOGE("probe", "invalid module entry at index " << i);
+            return 3;
+        }
+        if (!wb::qt::QtViewFactory::instance().has_builder(module.id)) {
+            WB_LOGE("probe", "missing Qt View builder for module " << module.id);
+            return 4;
+        }
+        auto page = std::unique_ptr<QWidget>{shell.build_page(i)};
+        if (!page) {
+            WB_LOGE("probe", "View builder returned null for module " << module.id);
+            return 5;
+        }
+        pages.push_back(std::move(page));
+    }
+
+    WB_LOGI("probe", "all " << modules.size()
+            << " modules and Qt Views instantiated successfully");
+    return 0;
+}
+
+}  // namespace
+
 int main(int argc, char** argv) {
     QApplication app(argc, argv);
 
@@ -26,6 +75,10 @@ int main(int argc, char** argv) {
 
     wb::qt::QtAppShell shell{&app};
     auto& core = shell.core();
+
+    if (has_arg(argc, argv, "--probe")) {
+        return run_probe(shell);
+    }
 
     QMainWindow win;
     // Window title from i18n common/app_name.
