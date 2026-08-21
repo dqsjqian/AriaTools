@@ -86,6 +86,16 @@ jobs:
           ARIA_ANDROID_NINJA="$ANDROID_SDK_ROOT/cmake/3.22.1/bin/ninja" \
           bash Workbench/scripts/gen-android.sh --apk
 
+      # 16 KB page size is mandatory for Play uploads targeting Android 15+.
+      # The .so is built 16 KB aligned by the NDK, but whether it stays that
+      # way inside the APK depends on the packaging step — so assert on the
+      # packaged artifact rather than trusting the build.
+      - name: Verify native libs are 16 KB aligned in the APK
+        run: |
+          zipalign=$(ls -d "$ANDROID_SDK_ROOT"/build-tools/*/zipalign | sort -V | tail -1)
+          "$zipalign" -c -P 16 -v 4 \
+            Workbench/platform/android/app/build/outputs/apk/debug/app-debug.apk
+
   ios:
     name: iOS UIKit compile gate
     runs-on: macos-14
