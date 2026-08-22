@@ -12,6 +12,15 @@ if [[ "$MODE" == "clean" ]]; then
   exit 0
 fi
 
+case "$MODE" in
+  build|run|probe) ;;
+  *)
+    echo "unknown mode: $MODE"
+    echo "valid: build | run | probe | clean"
+    exit 1
+    ;;
+esac
+
 cmake -S "$WB_ROOT" -B "$BUILD_DIR" \
   -DCMAKE_BUILD_TYPE=Debug \
   -DWORKBENCH_TARGET_WEB=ON \

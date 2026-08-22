@@ -18,6 +18,7 @@
 #    pwsh Workbench/scripts/gen-win.ps1 debug         # Debug
 #    pwsh Workbench/scripts/gen-win.ps1 clean         # clean build/win
 #    pwsh Workbench/scripts/gen-win.ps1 run           # run after build
+#    pwsh Workbench/scripts/gen-win.ps1 probe         # build + verify every module and Qt View
 #    pwsh Workbench/scripts/gen-win.ps1 tests         # build + ctest module tests
 #
 #  Environment variables (optional):
@@ -68,10 +69,10 @@ try {
             if (Test-Path $BUILD_DIR) { Remove-Item -Recurse -Force $BUILD_DIR }
             exit 0
         }
-        { $_ -in "release", "debug", "run", "tests" } { }
+        { $_ -in "release", "debug", "run", "probe", "tests" } { }
         default {
             Write-Host "unknown mode: $Mode"
-            Write-Host "valid: release | debug | run | tests | clean"
+            Write-Host "valid: release | debug | run | probe | tests | clean"
             exit 1
         }
     }
@@ -312,6 +313,30 @@ try {
         $env:PATH = ($runPath -join ";") + ";" + $env:PATH
         & $ExePath
         exit $LASTEXITCODE
+    }
+
+    # ── Probe: instantiate every module and its Qt View, then exit ──────
+    # Same gate the Linux CI job runs. A missing or broken view builder
+    # otherwise stays invisible until someone clicks that nav item.
+    if ($Mode -eq "probe" -and (Test-Path $ExePath)) {
+        Write-Host ""
+        Write-Host "[gen-win] Probing modules and Qt Views..."
+        $probePath = @(
+            (Join-Path $Qt6Dir "bin")
+        )
+        if ($vsPath) {
+            $msvcDirs2 = Get-ChildItem "$vsPath\VC\Tools\MSVC" -Directory -ErrorAction SilentlyContinue | Sort-Object Name -Descending
+            if ($msvcDirs2) { $probePath += (Join-Path $msvcDirs2[0].FullName "bin\Hostx64\x64") }
+        }
+        $env:PATH = ($probePath -join ";") + ";" + $env:PATH
+        $env:QT_QPA_PLATFORM = "offscreen"
+        & $ExePath --probe
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "[gen-win] probe failed with exit code $LASTEXITCODE"
+            exit $LASTEXITCODE
+        }
+        Write-Host "[gen-win] Probe passed"
+        exit 0
     }
 
     # ── Module tests ────────────────────────────────────────────────────

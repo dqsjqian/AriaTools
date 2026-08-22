@@ -146,6 +146,7 @@ bash Workbench/scripts/gen-mac.sh run        # build and launch
 ```powershell
 pwsh Workbench/scripts/gen-win.ps1           # configure + build (Release)
 pwsh Workbench/scripts/gen-win.ps1 run       # build and launch
+pwsh Workbench/scripts/gen-win.ps1 probe     # build + verify every module and Qt View
 pwsh Workbench/scripts/gen-win.ps1 tests     # build + run module tests
 ```
 
@@ -171,6 +172,14 @@ bash Workbench/scripts/gen-android.sh --apk  # core + Gradle APK
 bash Workbench/scripts/gen-web.sh build  # build the C++ HTTP shell
 bash Workbench/scripts/gen-web.sh run    # serve http://127.0.0.1:19090
 bash Workbench/scripts/gen-web.sh probe  # verify /aria/health + /aria/views
+```
+
+On Windows use the PowerShell twin (the Web shell has no Qt dependency):
+
+```powershell
+pwsh Workbench/scripts/gen-web.ps1 build
+pwsh Workbench/scripts/gen-web.ps1 run
+pwsh Workbench/scripts/gen-web.ps1 probe
 ```
 
 The Web shell reuses the C++ `TipCalcVm`: browser input hops from an HTTP worker to the graph thread before writing `Property`; derived results return from `Computed` through `BindingEngine` and REST/SSE.
