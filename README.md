@@ -205,6 +205,7 @@ bash Workbench/scripts/gen-mac.sh run        # 构建后直接启动
 ```powershell
 pwsh Workbench/scripts/gen-win.ps1           # configure + build（Release）
 pwsh Workbench/scripts/gen-win.ps1 run       # 构建后直接启动
+pwsh Workbench/scripts/gen-win.ps1 probe     # 构建 + 校验所有模块与 Qt View
 pwsh Workbench/scripts/gen-win.ps1 tests     # 构建 + 跑模块测试
 ```
 
@@ -230,6 +231,14 @@ bash Workbench/scripts/gen-android.sh --apk  # 核心 + Gradle 打包 APK
 bash Workbench/scripts/gen-web.sh build  # 构建 C++ HTTP 壳
 bash Workbench/scripts/gen-web.sh run    # 启动 http://127.0.0.1:19090
 bash Workbench/scripts/gen-web.sh probe  # 实测 /aria/health + /aria/views
+```
+
+Windows 用 PowerShell 版（Web 壳不依赖 Qt，纯 C++）：
+
+```powershell
+pwsh Workbench/scripts/gen-web.ps1 build
+pwsh Workbench/scripts/gen-web.ps1 run
+pwsh Workbench/scripts/gen-web.ps1 probe
 ```
 
 Web 壳直接复用 C++ `TipCalcVm`：浏览器输入通过 HTTP worker 回到 graph thread，再写入 `Property`；派生结果从 `Computed` 经 `BindingEngine` 返回 REST/SSE。
