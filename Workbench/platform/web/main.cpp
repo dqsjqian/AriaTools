@@ -60,6 +60,24 @@ int probe(unsigned short port, aria::runtime::SimpleDispatcher& dispatcher) {
         return 13;
     }
 
+    // Round Up click gate: with a fractional bill the click must ceil it;
+    // with an integer bill + 5-multiple tip it must be a silent no-op
+    // (can_execute false). Guards the wire can_execute wiring.
+    client.Post("/aria/state",
+        R"({"view":"tipcalc.bill","field":"double","value":100.5})",
+        "application/json");
+    dispatcher.pump(std::chrono::milliseconds{100});
+    const auto before = client.Get("/aria/state?view=tipcalc.bill");
+    client.Post("/aria/click", R"({"view":"tipcalc.round_up"})",
+        "application/json");
+    dispatcher.pump(std::chrono::milliseconds{100});
+    const auto after = client.Get("/aria/state?view=tipcalc.bill");
+    if (!before || before->body.find("\"value\":100.5") == std::string::npos ||
+        !after || after->body.find("\"value\":101.0") == std::string::npos) {
+        std::cerr << "probe: round_up click did not ceil the bill\n";
+        return 14;
+    }
+
     std::cout << "probe: HTTP health + browser→Property→Computed→HTTP passed\n";
     return 0;
 }
@@ -135,6 +153,16 @@ int main(int argc, char** argv) {
     bindings.adopt(round_up, http->on_click(round_up, [&] {
         dispatcher->post([vm] { vm->roundUp.execute(); });
     }));
+
+    // Mirror can_execute onto the wire so web clients can disable the Round Up
+    // button. The Qt shell gets this automatically via bind_command; this
+    // on_click path posts to the dispatcher instead (graph-thread safety), so
+    // re-wire the predicate here. Command<> auto-tracks its predicate: the
+    // event re-fires whenever bill/tipPercent change. set_enabled is
+    // thread-safe and the effect fires on the graph thread.
+    bindings.adopt(round_up, vm->roundUp.observe_can_execute(
+        [http, &round_up](bool can) { http->set_enabled(round_up, can); }));
+    http->set_enabled(round_up, vm->roundUp.can_execute());
 
     if (!http->start()) {
         std::cerr << "web: failed to start HTTP adapter\n";
