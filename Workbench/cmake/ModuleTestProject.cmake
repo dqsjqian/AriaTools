@@ -18,6 +18,15 @@ cmake_minimum_required(VERSION 3.20)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Same MSVC source-encoding guard as the top-level Workbench/CMakeLists.txt:
+# without /utf-8, sources containing Chinese comments are read as the system
+# code page (GBK) and multibyte sequences can swallow a closing quote/newline
+# (C2001/C2143). The main build adds this globally; standalone module test
+# projects must too.
+if(MSVC)
+    add_compile_options(/utf-8)
+endif()
+
 get_filename_component(_WB_ROOT "${WB_MOD_DIR}/../.." ABSOLUTE)   # Workbench/
 get_filename_component(_REPO_ROOT "${_WB_ROOT}/.." ABSOLUTE)
 

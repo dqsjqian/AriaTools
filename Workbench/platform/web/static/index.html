@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AriaTools Web</title>
 <style>
-body{font:15px system-ui,sans-serif;max-width:720px;margin:40px auto;padding:0 20px;color:#1f2937;background:#f8fafc}main{background:white;border:1px solid #e5e7eb;border-radius:12px;padding:24px}h1{margin-top:0}label{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:center;margin:12px 0}input{padding:8px;border:1px solid #cbd5e1;border-radius:6px}button{padding:9px 14px;border:0;border-radius:6px;background:#4f46e5;color:white;cursor:pointer}.results{margin-top:20px;padding:16px;background:#f1f5f9;border-radius:8px;display:grid;gap:8px}.value{font-variant-numeric:tabular-nums}small{color:#64748b}</style>
+body{font:15px system-ui,sans-serif;max-width:720px;margin:40px auto;padding:0 20px;color:#1f2937;background:#f8fafc}main{background:white;border:1px solid #e5e7eb;border-radius:12px;padding:24px}h1{margin-top:0}label{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:center;margin:12px 0}input{padding:8px;border:1px solid #cbd5e1;border-radius:6px}button{padding:9px 14px;border:0;border-radius:6px;background:#4f46e5;color:white;cursor:pointer}button:disabled{opacity:.5;cursor:default}.results{margin-top:20px;padding:16px;background:#f1f5f9;border-radius:8px;display:grid;gap:8px}.value{font-variant-numeric:tabular-nums}small{color:#64748b}</style>
 </head>
 <body><main>
 <h1>AriaTools Web</h1>
@@ -34,6 +34,10 @@ async function refresh(){
  document.querySelector('#tipAmount').textContent=Number(tipAmount).toFixed(2);
  document.querySelector('#total').textContent=Number(total).toFixed(2);
  document.querySelector('#perPerson').textContent=Number(perPerson).toFixed(2);
+ // Round Up is only meaningful when there is something to round: the VM's
+ // can_execute is (bill not integer) || (tip % 5 != 0). Mirror it here so the
+ // button is visibly disabled instead of silently ignoring clicks.
+ document.querySelector('#round').disabled = Number.isInteger(Number(bill)) && Number(tip)%5===0;
 }
 for(const [id,key,kind] of [['bill','bill','double'],['tip','tip_percent','int'],['people','people','int']]){
  document.querySelector(`#${id}`).addEventListener('change',e=>set(`tipcalc.${key}`,kind,kind==='int'?Number.parseInt(e.target.value,10):Number(e.target.value)));

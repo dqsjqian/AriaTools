@@ -21,6 +21,10 @@
 #    pwsh Workbench/scripts/gen-win.ps1 probe         # build + verify every module and Qt View
 #    pwsh Workbench/scripts/gen-win.ps1 tests         # build + ctest module tests
 #
+#  Output goes flat into build/win/bin/ (exe + aria_*.dll + Qt DLLs together).
+#  Switching between release and debug automatically wipes build/win first —
+#  a flat bin/ cannot hold two configs side by side.
+#
 #  Environment variables (optional):
 #    $env:QT_DIR="D:\worksoft\Qt\6.11.1\msvc2022_64"  # specify Qt6 prefix
 #    $env:ARIA_VS_GENERATOR="Visual Studio 18 2026"  # override CMake generator
@@ -249,6 +253,19 @@ try {
     # ── Build type ───────────────────────────────────────────────────────────
     $BuildConfig = if ($Mode -eq "debug") { "Debug" } else { "Release" }
 
+    # ── Flat bin/ cannot host multiple builds side by side: auto-clean on change ──
+    # A marker file records "generator|config" of the current build dir. When the
+    # requested generator or config differs (release -> debug, or Ninja -> VS),
+    # wipe the build dir so stale exe/DLLs never linger in the flat bin/ layout.
+    # Same stamp -> no clean, incremental build.
+    $ConfigMarker = Join-Path $BUILD_DIR ".last-config"
+    $BuildStamp   = "$Generator|$BuildConfig"
+    $LastStamp    = if (Test-Path $ConfigMarker) { (Get-Content $ConfigMarker -Raw).Trim() } else { $null }
+    if ($LastStamp -and $LastStamp -ne $BuildStamp) {
+        Write-Host "[gen-win] Build stamp changed: $LastStamp -> $BuildStamp. Cleaning build dir (flat bin/ holds one build at a time)..."
+        if (Test-Path $BUILD_DIR) { Remove-Item -Recurse -Force $BUILD_DIR }
+    }
+
     # ── CMake configure ──────────────────────────────────────────────────
     $CMakeOpts = @(
         "-DWORKBENCH_TARGET_QT=ON",
@@ -278,6 +295,9 @@ try {
         & $cmakePath --build $BUILD_DIR --config $BuildConfig -- /m:1
     }
     if ($LASTEXITCODE -ne 0) { Write-Error "Build failed"; exit $LASTEXITCODE }
+
+    # Record generator|config so the next run can detect a switch.
+    Set-Content -Path $ConfigMarker -Value $BuildStamp
 
     # ── Locate the executable ───────────────────────────────────────────
     # RUNTIME_OUTPUT_DIRECTORY is set to bin/ so the exe sits beside aria_*.dll.
@@ -339,20 +359,12 @@ try {
         exit 0
     }
 
-    # ── Module tests ────────────────────────────────────────────────────
+    # ── Module tests: each modules/<m>/tests is a standalone CMake project
+    #    (cmake/ModuleTestProject.cmake; the CI job runs the same loop). The
+    #    main build registers no ctest cases, so iterate the modules. ─────────
     if ($Mode -eq "tests") {
         Write-Host ""
-        Write-Host "[gen-win] Running ctest..."
-        $testPath = @(
-            (Join-Path $BUILD_DIR (if ($UseNinja) { "bin" } else { "bin/$BuildConfig" }))
-        )
-        $testPath += (Join-Path $Qt6Dir "bin")
-        if ($vsPath) {
-            $msvcDirs2 = Get-ChildItem "$vsPath\VC\Tools\MSVC" -Directory -ErrorAction SilentlyContinue | Sort-Object Name -Descending
-            if ($msvcDirs2) { $testPath += (Join-Path $msvcDirs2[0].FullName "bin\Hostx64\x64") }
-        }
-        $env:PATH = ($testPath -join ";") + ";" + $env:PATH
-
+        Write-Host "[gen-win] Running module tests (standalone test projects)..."
         $ctestPath = Join-Path (Split-Path -Parent $cmakePath) "ctest.exe"
         if (-not (Test-Path $ctestPath)) {
             $ctestCmd = Get-Command ctest -ErrorAction SilentlyContinue
@@ -362,8 +374,46 @@ try {
             Write-Error "ctest not found (neither beside cmake nor on PATH)."
             exit 1
         }
-        $proc = Start-Process $ctestPath -ArgumentList @("--test-dir", $BUILD_DIR, "-C", $BuildConfig, "--output-on-failure") -NoNewWindow -Wait -PassThru
-        if ($proc.ExitCode -ne 0) { Write-Error "Tests failed"; exit $proc.ExitCode }
+        # Sibling dir so the test projects never collide with the main build's
+        # own build/win/modules/<m> binary dirs.
+        $TestRoot = Join-Path (Split-Path -Parent $BUILD_DIR) "win-tests"
+        $failed = @()
+        foreach ($m in @("calendar","cart","dashboard","frameworklab","notes","tools")) {
+            $src = Join-Path $WB_ROOT "modules\$m\tests"
+            if (-not (Test-Path (Join-Path $src "CMakeLists.txt"))) { continue }
+            $dir = Join-Path $TestRoot $m
+            Write-Host ""
+            Write-Host "[gen-win] == module: $m =="
+            if ($UseNinja) {
+                # NOTE: bare `-DNAME=$var` is passed literally by PS 5.1 (no
+                # expansion after `=` in argument mode) — quote the define.
+                & $cmakePath -S $src -B $dir -G "Ninja" "-DCMAKE_BUILD_TYPE=$BuildConfig"
+            } else {
+                & $cmakePath -S $src -B $dir -G $Generator
+            }
+            if ($LASTEXITCODE -ne 0) { $failed += $m; continue }
+            if ($UseNinja) {
+                & $cmakePath --build $dir -j
+            } else {
+                & $cmakePath --build $dir --config $BuildConfig
+            }
+            if ($LASTEXITCODE -ne 0) { $failed += $m; continue }
+            # aria_*.dll land in <dir>/bin (Aria's RUNTIME_OUTPUT_DIRECTORY) while
+            # the test exe sits beside its build tree; without bin/ on PATH the
+            # test process dies with 0xc0000135 (STATUS_DLL_NOT_FOUND).
+            $env:PATH = (Join-Path $dir "bin") + ";" + $env:PATH
+            $ctestArgs = @("--test-dir", $dir, "--output-on-failure")
+            if (-not $UseNinja) { $ctestArgs += @("-C", $BuildConfig) }
+            & $ctestPath @ctestArgs
+            if ($LASTEXITCODE -ne 0) { $failed += $m }
+        }
+        if ($failed.Count -gt 0) {
+            Write-Error "[gen-win] failing modules: $($failed -join ', ')"
+            exit 1
+        }
+        Write-Host ""
+        Write-Host "[gen-win] All module tests passed"
+        exit 0
     }
 
     Write-Host ""
