@@ -59,7 +59,7 @@ jobs:
           cmake --build build/ci-web -j
 
       - name: Probe HTTP wire protocol and shared TipCalc VM
-        run: ./build/ci-web/platform/web/workbench_web --probe
+        run: ./build/ci-web/bin/workbench_web --probe
 
   android:
     name: Android Compose + View-backed JNI build

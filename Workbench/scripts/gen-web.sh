@@ -22,12 +22,20 @@ case "$MODE" in
 esac
 
 cmake -S "$WB_ROOT" -B "$BUILD_DIR" \
-  -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_BUILD_TYPE=Release \
   -DWORKBENCH_TARGET_WEB=ON \
   -DWORKBENCH_TARGET_QT=OFF
 cmake --build "$BUILD_DIR" -j "$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)"
 
-BIN="$BUILD_DIR/platform/web/workbench_web"
+# RUNTIME_OUTPUT_DIRECTORY is set to bin/ (same as the Qt shell): single-config
+# generators put the exe directly in bin/; multi-config ones add <Config>.
+BIN="$BUILD_DIR/bin/workbench_web"
+if [[ ! -x "$BIN" ]]; then
+  BIN="$BUILD_DIR/bin/Release/workbench_web"
+fi
+if [[ ! -x "$BIN" ]]; then
+  BIN="$BUILD_DIR/bin/Debug/workbench_web"
+fi
 if [[ "$MODE" == "probe" ]]; then
   "$BIN" --probe
   exit 0
