@@ -93,6 +93,19 @@ C++ VM（aria::Property）→ on_changed → JNI 回调 → Kotlin StateFlow →
 | frameworklab | 框架能力实验室 | ObservableList + FilteredList + Selection / Property → Computed 派生链 / GraphInspector 快照 |
 | echo | 热插拔演示 | 最小化模块模板 |
 
+## 🖼 跨端截图
+
+AriaTools 基于 Aria 框架 + 各平台原生 View 壳实现，一份 C++ ViewModel 在四个平台跑出下表所示的同源结果：
+
+| 平台 | 截图 | 适配器 |
+|---|---|---|
+| macOS（Qt6） | ![AriaTools-Mac](docs/marketing/images/AriaTools-Mac.png) | `aria-qt6` |
+| iOS / UIKit | ![AriaTools-iOS](docs/marketing/images/AriaTools-iOS.png) | `aria-uikit` |
+| Android（Compose side-channel） | ![AriaTools-Android](docs/marketing/images/AriaTools-Android.png) | `aria-jni` |
+| Web（HTTP/REST/SSE） | ![AriaTools-Web](docs/marketing/images/AriaTools-Web.png) | `aria-http` |
+
+> **关于 Windows / Linux 截图**：Mac 的壳基于 **Aria（框架技术底座）+ Qt6 Adapter（View 层）** 构建，在 Windows / Linux 上跑出来的程序与 Mac 视觉上完全一致（同一份 Qt 控件 + 同一份 C++ ViewModel），所以不必重复截图。Windows 下还另有 MSVC + Qt6 与 MSYS2 UCRT64 两条工具链可以独立验证。
+
 ## 🔌 模块热插拔
 
 AriaTools 的模块系统支持**热插拔**——新增、删除模块**不需要修改任何核心文件**。
