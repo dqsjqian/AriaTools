@@ -22,7 +22,7 @@ One C++20 core, four platform view shells: Qt / iOS / Android / Web
 **AriaTools** (formerly AiTools) is the flagship cross-platform example for [Aria](https://github.com/dqsjqian/Aria) (C++20 reactive MVVM framework) — and a **best-practice blueprint** for Aria's cross-platform architecture:
 
 - **One pure-C++ core (Model + ViewModel + Service), four platform view shells** (Qt6 desktop / iOS UIKit / Android Compose / Web HTTP)
-- **Plugin-style modular architecture**: 15 business modules, one static library each (`wb_module_<name>`); adding a module = one directory + one registration line
+- **Plugin-style modular architecture**: 17 business modules, one static library each (`wb_module_<name>`); adding a module = one directory + one registration line
 - **All logic sinks into the cross-platform layer** (VM/Model/Service); views only bind and render — no business computation, no state juggling, no hard-coded copy in views
 - **Zero-logic views are enforced by architecture**: every platform resolves pages through a registration registry (QtViewFactory / UIViewFactory / ComposeViewFactory) keyed by module id
 
