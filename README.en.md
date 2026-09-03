@@ -127,6 +127,23 @@ if (auto m = ctx.mounts().Resolve(slots::kDashboardContent)) {
 - **Shared instance**: the mounted VM is the provider's PRIMARY instance, so the mounted UI and the module's tab show/edit the same data; Android side-channel command routing works with zero changes
 - **Orthogonal to navigation**: navigation pushes a fresh page instance (returnable); mounting is a resident shared panel. The dashboard demonstrates both at once (mounted cart + modal/window navigation)
 
+## 🖼 Cross-platform screenshots
+
+AriaTools runs on the Aria framework plus native view shells per platform; one C++ ViewModel produces the same result on all four:
+
+| Platform | Screenshot | Adapter |
+|---|---|---|
+| macOS (Qt6) | ![AriaTools-Mac](docs/marketing/images/AriaTools-Mac.png) | `aria-qt6` |
+| iOS / UIKit | ![AriaTools-iOS](docs/marketing/images/AriaTools-iOS.png) | `aria-uikit` |
+| Android (Compose side-channel) | ![AriaTools-Android](docs/marketing/images/AriaTools-Android.png) | `aria-jni` |
+| Web (HTTP/REST/SSE) | ![AriaTools-Web](docs/marketing/images/AriaTools-Web.png) | `aria-http` |
+
+> **Why no Windows / Linux screenshots?** The macOS shell is built on **Aria (the
+> framework base) + the Qt6 adapter (the View layer)**; the Windows and Linux builds
+> look identical to the macOS one (same Qt widgets + the same C++ ViewModel), so
+> duplicate screenshots would add nothing. Windows additionally has two independently
+> validated toolchains — MSVC + Qt6 and MSYS2 UCRT64.
+
 ## 🚀 Quick Start
 
 ```bash
