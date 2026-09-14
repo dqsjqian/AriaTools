@@ -102,10 +102,13 @@ jobs:
       - name: Build and probe Qt desktop
         env:
           QT_QPA_PLATFORM: offscreen
+        # -s KILL：MSYS2 timeout 默认 TERM 对 native Windows 进程不可投递
+        # （曾观察到 probe 挂死后 timeout 无效、拖满 job 超时）；KILL 走
+        # TerminateProcess 一定生效。
         run: |
           cmake -S Workbench -B build/ci-win -G Ninja -DCMAKE_BUILD_TYPE=Release -DWORKBENCH_TARGET_QT=ON
           cmake --build build/ci-win --parallel 3
-          ./build/ci-win/bin/workbench.exe --probe
+          timeout -s KILL 120 ./build/ci-win/bin/workbench.exe --probe
       - name: Run standalone module tests
         run: |
           for module in calendar cart dashboard frameworklab notes tools; do
@@ -117,7 +120,7 @@ jobs:
         run: |
           cmake -S Workbench -B build/ci-win-web -G Ninja -DCMAKE_BUILD_TYPE=Release -DWORKBENCH_TARGET_WEB=ON -DWORKBENCH_TARGET_QT=OFF
           cmake --build build/ci-win-web --parallel 3
-          timeout 120 ./build/ci-win-web/bin/workbench_web.exe --probe
+          timeout -s KILL 120 ./build/ci-win-web/bin/workbench_web.exe --probe
 
   qt:
     name: Qt and Web probes (${{ matrix.os }})
