@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: ariatools-${{ github.workflow }}-${{ github.ref }}
@@ -11,25 +15,40 @@ concurrency:
 
 jobs:
   qt:
-    name: Qt flagship probe (Linux)
-    runs-on: ubuntu-24.04
+    name: Qt and Web probes (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14]
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v7
         with:
           submodules: recursive
 
-      - name: Install toolchain and Qt6
+      - name: Install Linux toolchain and Qt6
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build g++-13 qt6-base-dev
+          echo "CC=gcc-13" >> "$GITHUB_ENV"
+          echo "CXX=g++-13" >> "$GITHUB_ENV"
+
+      - name: Install macOS toolchain and Qt6
+        if: runner.os == 'macOS'
+        run: |
+          brew install ninja qt
+          echo "CMAKE_PREFIX_PATH=$(brew --prefix qt)" >> "$GITHUB_ENV"
 
       - name: Configure
-        env:
-          CC: gcc-13
-          CXX: g++-13
         run: |
           cmake -S Workbench -B build/ci-qt -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH:-}" \
             -DWORKBENCH_TARGET_QT=ON
 
       - name: Build
@@ -48,7 +67,12 @@ jobs:
       - name: Probe every module and Qt View
         env:
           QT_QPA_PLATFORM: offscreen
-        run: ./build/ci-qt/platform/qt/workbench --probe
+        run: |
+          executable=./build/ci-qt/platform/qt/workbench
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            executable="$executable.app/Contents/MacOS/workbench"
+          fi
+          "$executable" --probe
 
       - name: Configure and build Web shell
         run: |
