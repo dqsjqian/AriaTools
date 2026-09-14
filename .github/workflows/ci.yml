@@ -14,6 +14,70 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  vs2026:
+    name: Qt and Web (VS2026 MSVC)
+    runs-on: windows-2025-vs2026
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+          persist-credentials: false
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          arch: win64_msvc2022_64
+          cache: true
+      - name: Configure and build with Visual Studio 2026
+        run: |
+          cmake -S Workbench -B build/ci-vs2026 -G "Visual Studio 18 2026" -A x64 -DWORKBENCH_TARGET_QT=ON
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          cmake --build build/ci-vs2026 --config Release --parallel 3
+      - name: Probe Qt views
+        env:
+          QT_QPA_PLATFORM: offscreen
+        # timeout 兜底：Windows runner 上 workbench --probe 曾静默挂死
+        # （stdout 进管道缓冲，无任何日志），把 job 拖满 40 分钟才被杀。
+        # 正常 probe 数秒完成；挂死时 120s 后以 124 快速失败。
+        # 注意 pwsh 下不能用 timeout.exe —— 那是"暂停 N 秒"，不是超时杀进程。
+        run: |
+          $env:QT_QPA_PLATFORM = "offscreen"
+          $p = Start-Process -FilePath "./build/ci-vs2026/bin/Release/workbench.exe" -ArgumentList "--probe" -PassThru -NoNewWindow
+          if (-not $p.WaitForExit(120000)) {
+            Write-Host "::error::qt probe timed out after 120s, killing"
+            $p.Kill($true)
+            exit 124
+          }
+          exit $p.ExitCode.Value
+      - name: Run standalone module tests
+        run: |
+          foreach ($module in @('calendar', 'cart', 'dashboard', 'frameworklab', 'notes', 'tools')) {
+            $build = "build/ci-vs2026-test-$module"
+            cmake -S "Workbench/modules/$module/tests" -B $build -G "Visual Studio 18 2026" -A x64
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+            cmake --build $build --config Release --parallel 3
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+            $env:PATH = "$(Resolve-Path "$build/bin/Release");$env:PATH"
+            ctest --test-dir $build -C Release --output-on-failure --no-tests=error
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          }
+      - name: Build and probe Web shell
+        run: |
+          cmake -S Workbench -B build/ci-vs2026-web -G "Visual Studio 18 2026" -A x64 -DWORKBENCH_TARGET_WEB=ON -DWORKBENCH_TARGET_QT=OFF
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          cmake --build build/ci-vs2026-web --config Release --parallel 3
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $p = Start-Process -FilePath "./build/ci-vs2026-web/bin/Release/workbench_web.exe" -ArgumentList "--probe" -PassThru -NoNewWindow
+          if (-not $p.WaitForExit(120000)) {
+            Write-Host "::error::web probe timed out after 120s, killing"
+            $p.Kill($true)
+            exit 124
+          }
+          exit $p.ExitCode.Value
+
   windows:
     name: Qt and Web probes (Windows UCRT64)
     runs-on: windows-2022
@@ -53,7 +117,7 @@ jobs:
         run: |
           cmake -S Workbench -B build/ci-win-web -G Ninja -DCMAKE_BUILD_TYPE=Release -DWORKBENCH_TARGET_WEB=ON -DWORKBENCH_TARGET_QT=OFF
           cmake --build build/ci-win-web --parallel 3
-          ./build/ci-win-web/bin/workbench_web.exe --probe
+          timeout 120 ./build/ci-win-web/bin/workbench_web.exe --probe
 
   qt:
     name: Qt and Web probes (${{ matrix.os }})
