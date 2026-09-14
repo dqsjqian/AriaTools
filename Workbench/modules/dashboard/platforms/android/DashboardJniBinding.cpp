@@ -31,7 +31,7 @@ void subscribe_dashboard(aria::runtime::EventBus& bus, DashboardVm& vm,
     auto mountSubs = std::make_shared<std::vector<aria::Subscription>>();
     auto rebridge = [mountSubs, &vm](
                         const std::shared_ptr<aria::binding::ViewModel>& vmp) {
-        for (auto& s : *mountSubs) s.detach();
+        for (auto& s : *mountSubs) s.release();
         mountSubs->clear();
         if (!vmp) return;
         wb::jni::bridge_vm(vm.mountedModule.get(), *vmp, *mountSubs);
