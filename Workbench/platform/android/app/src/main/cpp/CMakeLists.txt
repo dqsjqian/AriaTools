@@ -65,7 +65,7 @@ target_include_directories(aria_jni PRIVATE
     ${WB_ROOT}/modules/chat
     ${WB_ROOT}/modules/theme
     ${WB_ROOT}/modules/wizard
-    ${ARIA_ROOT}/third_party/nlohmann_json/include
+    
     ${ARIA_ROOT}/modules/abi/include
     ${ARIA_ROOT}/modules/adapters/jni/include
     ${ARIA_ROOT}/modules/async/include
@@ -105,7 +105,8 @@ target_link_libraries(aria_jni
     ${WB_LIB}/libaria_abi.a
     android
     log
-)
+
+    nlohmann_json::nlohmann_json)
 
 # ── Flags ────────────────────────────────────────────────────────────────
 target_compile_options(aria_jni PRIVATE
