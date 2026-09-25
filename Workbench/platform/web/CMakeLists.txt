@@ -15,9 +15,11 @@ target_link_libraries(workbench_web PRIVATE
     aria::http
     aria::runtime
     aria::binding
+    continuo::transport
+    continuo::http    # Aria 的 Continuo 依赖是 PRIVATE，probe 自检直用其客户端
 )
 
-target_compile_features(workbench_web PRIVATE cxx_std_20)
+target_compile_features(workbench_web PRIVATE cxx_std_23)
 
 target_compile_definitions(workbench_web PRIVATE
     WB_WEB_STATIC_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/static"

@@ -9,6 +9,4 @@ wb_add_module(NAME tools
     IOS_SOURCES platforms/ios/ToolsView.mm platforms/ios/ToolsViewEntry.mm
 )
 
-target_include_directories(wb_module_tools PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/aria/third_party/nlohmann_json/include
-)
+target_link_libraries(wb_module_tools PRIVATE nlohmann_json::nlohmann_json)

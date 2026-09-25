@@ -6,7 +6,12 @@
 #include "aria/runtime/dispatcher.hpp"
 #include "aria/runtime/dispatcher_executor.hpp"
 
-#include <httplib.h>
+#include <continuo/core/event_loop.hpp>
+#include <continuo/core/task.hpp>
+#include <continuo/http/client.hpp>
+#include <continuo/http/message.hpp>
+#include <continuo/transport/endpoint.hpp>
+#include <continuo/transport/tcp.hpp>
 
 #include <atomic>
 #include <chrono>
@@ -32,30 +37,89 @@ std::shared_ptr<wb::tipcalc::TipCalcVm> find_tipcalc(wb::core::AppCore& core) {
     return nullptr;
 }
 
+// One blocking HTTP exchange on a private Continuo EventLoop — the same
+// pattern AriaAgent's LLM client uses. Returns status + accumulated body.
+struct HttpReply {
+    long status = 0;
+    std::string body;
+    std::string error;
+};
+
+HttpReply blocking_request(unsigned short port, const char* method,
+                           std::string_view target, std::string_view body = {}) {
+    using namespace continuo;
+    HttpReply reply;
+    auto loop = EventLoop::create();
+    if (!loop) {
+        reply.error = "EventLoop creation failed";
+        return reply;
+    }
+
+    auto exchange = [&](EventLoop& loop_ref) -> Task<void> {
+        auto socket = co_await transport::tcp::connect(
+            loop_ref, transport::Endpoint::loopback(port), {},
+            OperationOptions{.deadline = EventLoop::Clock::now() + std::chrono::seconds{5}});
+        if (!socket) {
+            reply.error = "connect failed: " + socket.error().message();
+            co_return;
+        }
+
+        http::Request request;
+        request.method = http::method_from_token(method);
+        request.target = std::string(target);
+        request.version = http::Version::http_1_1;
+        request.headers.append("Host", "127.0.0.1");
+        request.headers.append("Connection", "close");
+        if (!body.empty()) {
+            request.headers.append("Content-Type", "application/json");
+        }
+        const std::span<const std::byte> body_bytes{
+            reinterpret_cast<const std::byte*>(body.data()), body.size()};
+
+        http::ClientConnection<transport::tcp::Socket> client{*socket, {}};
+        auto started = co_await client.start(request, body_bytes, {});
+        if (!started) {
+            reply.error = "request failed: " + started.error().message();
+            co_return;
+        }
+        reply.status = static_cast<long>(client.response().status);
+        for (;;) {
+            auto chunk = co_await client.read_body();
+            if (!chunk) {
+                reply.error = "read failed: " + chunk.error().message();
+                co_return;
+            }
+            if (chunk->empty()) break;
+            reply.body.append(reinterpret_cast<const char*>(chunk->data()), chunk->size());
+        }
+    };
+
+    Task<void> root = exchange(*loop);
+    (void)loop->run_until_complete(std::move(root));
+    return reply;
+}
+
 int probe(unsigned short port, aria::runtime::SimpleDispatcher& dispatcher) {
-    httplib::Client client{"127.0.0.1", port};
-    client.set_connection_timeout(2, 0);
-    const auto health = client.Get("/aria/health");
-    const auto views = client.Get("/aria/views");
-    if (!health || health->status != 200 || health->body.find("\"ok\":true") == std::string::npos) {
-        std::cerr << "probe: /aria/health failed\n";
+    const auto health = blocking_request(port, "GET", "/aria/health");
+    const auto views = blocking_request(port, "GET", "/aria/views");
+    if (health.status != 200 || health.body.find("\"ok\":true") == std::string::npos) {
+        std::cerr << "probe: /aria/health failed: " << (health.error.empty() ? health.body : health.error) << "\n";
         return 10;
     }
-    if (!views || views->status != 200 || views->body.find("tipcalc.per_person") == std::string::npos) {
+    if (views.status != 200 || views.body.find("tipcalc.per_person") == std::string::npos) {
         std::cerr << "probe: /aria/views did not expose the shared TipCalc VM\n";
         return 11;
     }
 
-    const auto write = client.Post("/aria/state",
-        R"({"view":"tipcalc.bill","field":"double","value":100.0})",
-        "application/json");
-    if (!write || write->status != 200) {
+    const auto write = blocking_request(port, "POST", "/aria/state",
+        R"({"view":"tipcalc.bill","field":"double","value":100.0})");
+    if (write.status != 200) {
         std::cerr << "probe: browser-to-VM state write failed\n";
         return 12;
     }
     dispatcher.pump(std::chrono::milliseconds{100});
-    const auto derived = client.Get("/aria/state?view=tipcalc.per_person");
-    if (!derived || derived->status != 200 || derived->body.find("57.500000") == std::string::npos) {
+    const auto derived = blocking_request(port, "GET", "/aria/state?view=tipcalc.per_person");
+    if (derived.status != 200 || derived.body.find("57.500000") == std::string::npos) {
         std::cerr << "probe: VM Computed value did not flow back to HTTP state\n";
         return 13;
     }
@@ -63,17 +127,15 @@ int probe(unsigned short port, aria::runtime::SimpleDispatcher& dispatcher) {
     // Round Up click gate: with a fractional bill the click must ceil it;
     // with an integer bill + 5-multiple tip it must be a silent no-op
     // (can_execute false). Guards the wire can_execute wiring.
-    client.Post("/aria/state",
-        R"({"view":"tipcalc.bill","field":"double","value":100.5})",
-        "application/json");
+    (void)blocking_request(port, "POST", "/aria/state",
+        R"({"view":"tipcalc.bill","field":"double","value":100.5})");
     dispatcher.pump(std::chrono::milliseconds{100});
-    const auto before = client.Get("/aria/state?view=tipcalc.bill");
-    client.Post("/aria/click", R"({"view":"tipcalc.round_up"})",
-        "application/json");
+    const auto before = blocking_request(port, "GET", "/aria/state?view=tipcalc.bill");
+    (void)blocking_request(port, "POST", "/aria/click", R"({"view":"tipcalc.round_up"})");
     dispatcher.pump(std::chrono::milliseconds{100});
-    const auto after = client.Get("/aria/state?view=tipcalc.bill");
-    if (!before || before->body.find("\"value\":100.5") == std::string::npos ||
-        !after || after->body.find("\"value\":101.0") == std::string::npos) {
+    const auto after = blocking_request(port, "GET", "/aria/state?view=tipcalc.bill");
+    if (before.body.find("\"value\":100.5") == std::string::npos ||
+        after.body.find("\"value\":101.0") == std::string::npos) {
         std::cerr << "probe: round_up click did not ceil the bill\n";
         return 14;
     }
