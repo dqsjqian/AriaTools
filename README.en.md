@@ -19,7 +19,7 @@ One C++23 core, four platform view shells: Qt / iOS / Android / Web
 
 ## 🎯 What is this?
 
-**AriaTools** (formerly AiTools) is the flagship cross-platform example for [Aria](https://github.com/dqsjqian/Aria) (C++23 reactive MVVM framework, Continuo-powered HTTP transport) — and a **best-practice blueprint** for Aria's cross-platform architecture:
+**AriaTools** (formerly AiTools) is the flagship cross-platform example for [Aria](https://github.com/dqsjqian/Aria) (C++23 reactive MVVM framework, Mira-powered HTTP transport) — and a **best-practice blueprint** for Aria's cross-platform architecture:
 
 - **One pure-C++ core (Model + ViewModel + Service), four platform view shells** (Qt6 desktop / iOS UIKit / Android Compose / Web HTTP)
 - **Plugin-style modular architecture**: 17 business modules, one static library each (`wb_module_<name>`); adding a module = one directory + one registration line

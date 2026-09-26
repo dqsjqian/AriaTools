@@ -1,0 +1,355 @@
+-- The CXX compiler identification is MSVC 19.51.36252.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: D:/worksoft/VS2026/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- aria: platform = Windows
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Failed
+-- Looking for pthread_create in pthreads
+-- Looking for pthread_create in pthreads - not found
+-- Looking for pthread_create in pthread
+-- Looking for pthread_create in pthread - not found
+-- Found Threads: TRUE
+-- Aria deps: downloading json 3.12.0
+-- [download 4% complete]
+-- [download 5% complete]
+-- [download 6% complete]
+-- [download 7% complete]
+-- [download 9% complete]
+-- [download 10% complete]
+-- [download 11% complete]
+-- [download 12% complete]
+-- [download 14% complete]
+-- [download 16% complete]
+-- [download 17% complete]
+-- [download 18% complete]
+-- [download 19% complete]
+-- [download 20% complete]
+-- [download 22% complete]
+-- [download 23% complete]
+-- [download 24% complete]
+-- [download 25% complete]
+-- [download 27% complete]
+-- [download 28% complete]
+-- [download 29% complete]
+-- [download 30% complete]
+-- [download 32% complete]
+-- [download 33% complete]
+-- [download 34% complete]
+-- [download 35% complete]
+-- [download 37% complete]
+-- [download 38% complete]
+-- [download 39% complete]
+-- [download 40% complete]
+-- [download 41% complete]
+-- [download 43% complete]
+-- [download 44% complete]
+-- [download 45% complete]
+-- [download 46% complete]
+-- [download 48% complete]
+-- [download 49% complete]
+-- [download 50% complete]
+-- [download 51% complete]
+-- [download 53% complete]
+-- [download 54% complete]
+-- [download 55% complete]
+-- [download 56% complete]
+-- [download 57% complete]
+-- [download 59% complete]
+-- [download 60% complete]
+-- [download 61% complete]
+-- [download 62% complete]
+-- [download 64% complete]
+-- [download 65% complete]
+-- [download 66% complete]
+-- [download 67% complete]
+-- [download 69% complete]
+-- [download 70% complete]
+-- [download 71% complete]
+-- [download 73% complete]
+-- [download 74% complete]
+-- [download 75% complete]
+-- [download 76% complete]
+-- [download 78% complete]
+-- [download 79% complete]
+-- [download 80% complete]
+-- [download 81% complete]
+-- [download 83% complete]
+-- [download 84% complete]
+-- [download 85% complete]
+-- [download 86% complete]
+-- [download 88% complete]
+-- [download 89% complete]
+-- [download 90% complete]
+-- [download 91% complete]
+-- [download 92% complete]
+-- [download 94% complete]
+-- [download 95% complete]
+-- [download 96% complete]
+-- [download 97% complete]
+-- [download 99% complete]
+-- [download 100% complete]
+-- Aria deps: json 3.12.0 ready (D:/Coding/AriaTools/build/web/_deps/extracted/json-3.12.0)
+-- Aria deps: downloading Mira 0.2.0
+-- [download 0% complete]
+-- [download 1% complete]
+-- [download 2% complete]
+-- [download 3% complete]
+-- [download 4% complete]
+-- [download 5% complete]
+-- [download 6% complete]
+-- [download 7% complete]
+-- [download 8% complete]
+-- [download 9% complete]
+-- [download 10% complete]
+-- [download 11% complete]
+-- [download 12% complete]
+-- [download 13% complete]
+-- [download 14% complete]
+-- [download 15% complete]
+-- [download 16% complete]
+-- [download 17% complete]
+-- [download 18% complete]
+-- [download 19% complete]
+-- [download 20% complete]
+-- [download 21% complete]
+-- [download 22% complete]
+-- [download 23% complete]
+-- [download 24% complete]
+-- [download 25% complete]
+-- [download 26% complete]
+-- [download 27% complete]
+-- [download 28% complete]
+-- [download 29% complete]
+-- [download 30% complete]
+-- [download 31% complete]
+-- [download 32% complete]
+-- [download 33% complete]
+-- [download 34% complete]
+-- [download 35% complete]
+-- [download 36% complete]
+-- [download 37% complete]
+-- [download 38% complete]
+-- [download 39% complete]
+-- [download 40% complete]
+-- [download 41% complete]
+-- [download 42% complete]
+-- [download 43% complete]
+-- [download 44% complete]
+-- [download 45% complete]
+-- [download 46% complete]
+-- [download 47% complete]
+-- [download 48% complete]
+-- [download 49% complete]
+-- [download 50% complete]
+-- [download 51% complete]
+-- [download 52% complete]
+-- [download 53% complete]
+-- [download 54% complete]
+-- [download 55% complete]
+-- [download 56% complete]
+-- [download 57% complete]
+-- [download 58% complete]
+-- [download 59% complete]
+-- [download 60% complete]
+-- [download 61% complete]
+-- [download 62% complete]
+-- [download 63% complete]
+-- [download 64% complete]
+-- [download 65% complete]
+-- [download 66% complete]
+-- [download 67% complete]
+-- [download 68% complete]
+-- [download 69% complete]
+-- [download 70% complete]
+-- [download 71% complete]
+-- [download 72% complete]
+-- [download 73% complete]
+-- [download 74% complete]
+-- [download 75% complete]
+-- [download 76% complete]
+-- [download 77% complete]
+-- [download 78% complete]
+-- [download 79% complete]
+-- [download 80% complete]
+-- [download 81% complete]
+-- [download 82% complete]
+-- [download 83% complete]
+-- [download 84% complete]
+-- [download 85% complete]
+-- [download 86% complete]
+-- [download 87% complete]
+-- [download 88% complete]
+-- [download 89% complete]
+-- [download 90% complete]
+-- [download 91% complete]
+-- [download 92% complete]
+-- [download 93% complete]
+-- [download 94% complete]
+-- [download 95% complete]
+-- [download 96% complete]
+-- [download 97% complete]
+-- [download 98% complete]
+-- [download 99% complete]
+-- [download 100% complete]
+-- Aria deps: Mira 0.2.0 ready (D:/Coding/AriaTools/build/web/_deps/extracted/Mira-0.2.0)
+-- Mira: I/O backend = iocp (Windows)
+-- aria::http: TLS disabled (HTTP-only)
+-- 
+-- aria v3.0.0 configuration:
+--   Platform        : Windows
+--   Build type      : Release
+--   C++ standard    : 23
+--   Compiler        : MSVC 19.51.36252.0
+--   Tests           : OFF
+--   Benchmark       : OFF
+--   Shared libs     : ON
+--   Qt6 adapter     : OFF
+--   HTTP adapter    : ON
+--   HTTP TLS        : OFF
+--   JNI adapter     : OFF
+--   macOS AppKit    : OFF
+--   iOS UIKit       : OFF
+--   ASan/UBSan/TSan : OFF/OFF/OFF
+-- 
+-- Configuring done (21.9s)
+-- Generating done (0.1s)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    CMAKE_C_COMPILER
+
+
+-- Build files have been written to: D:/Coding/AriaTools/build/web
+[1/129] Building CXX object aria\modules\abi\CMakeFiles\aria_abi.dir\src\version.cpp.obj
+[2/129] Building CXX object aria\modules\abi\CMakeFiles\aria_abi.dir\src\slot.cpp.obj
+[3/129] Building CXX object aria\modules\abi\CMakeFiles\aria_abi.dir\src\callback_boundary.cpp.obj
+[4/129] Building CXX object aria\modules\runtime\CMakeFiles\aria_runtime.dir\src\logger.cpp.obj
+[5/129] Building CXX object aria\modules\abi\CMakeFiles\aria_abi.dir\src\signal.cpp.obj
+[6/129] Building CXX object aria\modules\runtime\CMakeFiles\aria_runtime.dir\src\container.cpp.obj
+[7/129] Building CXX object aria\modules\abi\CMakeFiles\aria_abi.dir\src\diagnostics.cpp.obj
+[8/129] Building CXX object aria\modules\runtime\CMakeFiles\aria_runtime.dir\src\runtime_bootstrap.cpp.obj
+[9/129] Building CXX object aria\modules\binding\CMakeFiles\aria_binding.dir\src\view_adapter_base.cpp.obj
+[10/129] Building CXX object aria\modules\abi\CMakeFiles\aria_abi.dir\src\reactive_graph.cpp.obj
+[11/129] Building CXX object aria\modules\abi\CMakeFiles\aria_abi.dir\src\scheduler.cpp.obj
+[12/129] Building CXX object core\utils\CMakeFiles\wb_utils.dir\Base64.cpp.obj
+[13/129] Linking CXX shared library bin\aria_abi.dll
+[14/129] Linking CXX static library core\utils\wb_utils.lib
+[15/129] Building CXX object aria\modules\runtime\CMakeFiles\aria_runtime.dir\src\event_bus.cpp.obj
+[16/129] Building CXX object aria\modules\runtime\CMakeFiles\aria_runtime.dir\src\dispatcher.cpp.obj
+[17/129] Linking CXX shared library bin\aria_runtime.dll
+[18/129] Building CXX object core\infra\CMakeFiles\wb_infra.dir\log\Log.cpp.obj
+[19/129] Building CXX object core\infra\CMakeFiles\wb_infra.dir\secret\StubSecretStore.cpp.obj
+[20/129] Building CXX object core\infra\CMakeFiles\wb_infra.dir\crypto\StubCryptoService.cpp.obj
+[21/129] Building CXX object aria\modules\binding\CMakeFiles\aria_binding.dir\src\view_model.cpp.obj
+[22/129] Building CXX object core\infra\CMakeFiles\wb_infra.dir\storage\LocalFileStorageService.cpp.obj
+[23/129] Building CXX object core\infra\CMakeFiles\wb_infra.dir\i18n\I18n.cpp.obj
+[24/129] Building CXX object core\infra\CMakeFiles\wb_infra.dir\settings\InMemorySettingsService.cpp.obj
+[25/129] Building CXX object core\infra\CMakeFiles\wb_infra.dir\sync\StubSyncService.cpp.obj
+[26/129] Building CXX object core\infra\CMakeFiles\wb_infra.dir\ServiceHub.cpp.obj
+[27/129] Building CXX object core\infra\CMakeFiles\wb_infra.dir\http\HttpResponse.cpp.obj
+[28/129] C:\WINDOWS\system32\cmd.exe /C "cd /D D:\Coding\AriaTools\build\web\modules\calendar && "C:\Program Files\CMake\bin\cmake.exe" -E make_directory D:/Coding/AriaTools/build/web/i18n/calendar && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/Coding/AriaTools/Workbench/modules/calendar/assets/i18n/strings.xml D:/Coding/AriaTools/Workbench/modules/calendar/assets/i18n/strings_en.xml D:/Coding/AriaTools/build/web/i18n/calendar"
+[29/129] C:\WINDOWS\system32\cmd.exe /C "cd /D D:\Coding\AriaTools\build\web\modules\cart && "C:\Program Files\CMake\bin\cmake.exe" -E make_directory D:/Coding/AriaTools/build/web/i18n/cart && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/Coding/AriaTools/Workbench/modules/cart/assets/i18n/strings.xml D:/Coding/AriaTools/Workbench/modules/cart/assets/i18n/strings_en.xml D:/Coding/AriaTools/build/web/i18n/cart"
+[30/129] C:\WINDOWS\system32\cmd.exe /C "cd /D D:\Coding\AriaTools\build\web\modules\chat && "C:\Program Files\CMake\bin\cmake.exe" -E make_directory D:/Coding/AriaTools/build/web/i18n/chat && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/Coding/AriaTools/Workbench/modules/chat/assets/i18n/strings.xml D:/Coding/AriaTools/Workbench/modules/chat/assets/i18n/strings_en.xml D:/Coding/AriaTools/build/web/i18n/chat"
+[31/129] C:\WINDOWS\system32\cmd.exe /C "cd /D D:\Coding\AriaTools\build\web\modules\dashboard && "C:\Program Files\CMake\bin\cmake.exe" -E make_directory D:/Coding/AriaTools/build/web/i18n/dashboard && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/Coding/AriaTools/Workbench/modules/dashboard/assets/i18n/strings.xml D:/Coding/AriaTools/Workbench/modules/dashboard/assets/i18n/strings_en.xml D:/Coding/AriaTools/build/web/i18n/dashboard"
+[32/129] Building CXX object aria\modules\adapters\http\Mira\modules\core\CMakeFiles\mira_core.dir\src\error.cpp.obj
+[33/129] C:\WINDOWS\system32\cmd.exe /C "cd /D D:\Coding\AriaTools\build\web\modules\echo && "C:\Program Files\CMake\bin\cmake.exe" -E make_directory D:/Coding/AriaTools/build/web/i18n/echo && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/Coding/AriaTools/Workbench/modules/echo/assets/i18n/strings.xml D:/Coding/AriaTools/Workbench/modules/echo/assets/i18n/strings_en.xml D:/Coding/AriaTools/build/web/i18n/echo"
+[34/129] Building CXX object core\infra\CMakeFiles\wb_infra.dir\i18n\XmlI18nService.cpp.obj
+[35/129] C:\WINDOWS\system32\cmd.exe /C "cd /D D:\Coding\AriaTools\build\web\modules\frameworklab && "C:\Program Files\CMake\bin\cmake.exe" -E make_directory D:/Coding/AriaTools/build/web/i18n/frameworklab && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/Coding/AriaTools/Workbench/modules/frameworklab/assets/i18n/strings.xml D:/Coding/AriaTools/Workbench/modules/frameworklab/assets/i18n/strings_en.xml D:/Coding/AriaTools/build/web/i18n/frameworklab"
+[36/129] C:\WINDOWS\system32\cmd.exe /C "cd /D D:\Coding\AriaTools\build\web\modules\login && "C:\Program Files\CMake\bin\cmake.exe" -E make_directory D:/Coding/AriaTools/build/web/i18n/login && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/Coding/AriaTools/Workbench/modules/login/assets/i18n/strings.xml D:/Coding/AriaTools/Workbench/modules/login/assets/i18n/strings_en.xml D:/Coding/AriaTools/build/web/i18n/login"
+[37/129] C:\WINDOWS\system32\cmd.exe /C "cd /D D:\Coding\AriaTools\build\web\modules\notes && "C:\Program Files\CMake\bin\cmake.exe" -E make_directory D:/Coding/AriaTools/build/web/i18n/notes && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/Coding/AriaTools/Workbench/modules/notes/assets/i18n/strings.xml D:/Coding/AriaTools/Workbench/modules/notes/assets/i18n/strings_en.xml D:/Coding/AriaTools/build/web/i18n/notes"
+[38/129] C:\WINDOWS\system32\cmd.exe /C "cd /D D:\Coding\AriaTools\build\web\modules\search && "C:\Program Files\CMake\bin\cmake.exe" -E make_directory D:/Coding/AriaTools/build/web/i18n/search && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/Coding/AriaTools/Workbench/modules/search/assets/i18n/strings.xml D:/Coding/AriaTools/Workbench/modules/search/assets/i18n/strings_en.xml D:/Coding/AriaTools/build/web/i18n/search"
+[39/129] C:\WINDOWS\system32\cmd.exe /C "cd /D D:\Coding\AriaTools\build\web\modules\settings && "C:\Program Files\CMake\bin\cmake.exe" -E make_directory D:/Coding/AriaTools/build/web/i18n/settings && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/Coding/AriaTools/Workbench/modules/settings/assets/i18n/strings.xml D:/Coding/AriaTools/Workbench/modules/settings/assets/i18n/strings_en.xml D:/Coding/AriaTools/build/web/i18n/settings"
+[40/129] C:\WINDOWS\system32\cmd.exe /C "cd /D D:\Coding\AriaTools\build\web\modules\signup && "C:\Program Files\CMake\bin\cmake.exe" -E make_directory D:/Coding/AriaTools/build/web/i18n/signup && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/Coding/AriaTools/Workbench/modules/signup/assets/i18n/strings.xml D:/Coding/AriaTools/Workbench/modules/signup/assets/i18n/strings_en.xml D:/Coding/AriaTools/build/web/i18n/signup"
+[41/129] C:\WINDOWS\system32\cmd.exe /C "cd /D D:\Coding\AriaTools\build\web\modules\sync && "C:\Program Files\CMake\bin\cmake.exe" -E make_directory D:/Coding/AriaTools/build/web/i18n/sync && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/Coding/AriaTools/Workbench/modules/sync/assets/i18n/strings.xml D:/Coding/AriaTools/Workbench/modules/sync/assets/i18n/strings_en.xml D:/Coding/AriaTools/build/web/i18n/sync"
+[42/129] C:\WINDOWS\system32\cmd.exe /C "cd /D D:\Coding\AriaTools\build\web\modules\theme && "C:\Program Files\CMake\bin\cmake.exe" -E make_directory D:/Coding/AriaTools/build/web/i18n/theme && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/Coding/AriaTools/Workbench/modules/theme/assets/i18n/strings.xml D:/Coding/AriaTools/Workbench/modules/theme/assets/i18n/strings_en.xml D:/Coding/AriaTools/build/web/i18n/theme"
+[43/129] C:\WINDOWS\system32\cmd.exe /C "cd /D D:\Coding\AriaTools\build\web\modules\tipcalc && "C:\Program Files\CMake\bin\cmake.exe" -E make_directory D:/Coding/AriaTools/build/web/i18n/tipcalc && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/Coding/AriaTools/Workbench/modules/tipcalc/assets/i18n/strings.xml D:/Coding/AriaTools/Workbench/modules/tipcalc/assets/i18n/strings_en.xml D:/Coding/AriaTools/build/web/i18n/tipcalc"
+[44/129] C:\WINDOWS\system32\cmd.exe /C "cd /D D:\Coding\AriaTools\build\web\modules\tools && "C:\Program Files\CMake\bin\cmake.exe" -E make_directory D:/Coding/AriaTools/build/web/i18n/tools && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/Coding/AriaTools/Workbench/modules/tools/assets/i18n/strings.xml D:/Coding/AriaTools/Workbench/modules/tools/assets/i18n/strings_en.xml D:/Coding/AriaTools/build/web/i18n/tools"
+[45/129] C:\WINDOWS\system32\cmd.exe /C "cd /D D:\Coding\AriaTools\build\web\modules\unitconvert && "C:\Program Files\CMake\bin\cmake.exe" -E make_directory D:/Coding/AriaTools/build/web/i18n/unitconvert && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/Coding/AriaTools/Workbench/modules/unitconvert/assets/i18n/strings.xml D:/Coding/AriaTools/Workbench/modules/unitconvert/assets/i18n/strings_en.xml D:/Coding/AriaTools/build/web/i18n/unitconvert"
+[46/129] C:\WINDOWS\system32\cmd.exe /C "cd /D D:\Coding\AriaTools\build\web\modules\wizard && "C:\Program Files\CMake\bin\cmake.exe" -E make_directory D:/Coding/AriaTools/build/web/i18n/wizard && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/Coding/AriaTools/Workbench/modules/wizard/assets/i18n/strings.xml D:/Coding/AriaTools/Workbench/modules/wizard/assets/i18n/strings_en.xml D:/Coding/AriaTools/build/web/i18n/wizard"
+[47/129] Building CXX object aria\modules\binding\CMakeFiles\aria_binding.dir\src\binding.cpp.obj
+[48/129] Building CXX object core\infra\CMakeFiles\wb_infra.dir\http\StubHttpClient.cpp.obj
+[49/129] Building CXX object aria\modules\adapters\http\Mira\modules\core\CMakeFiles\mira_core.dir\src\event_loop_common.cpp.obj
+[50/129] Linking CXX shared library bin\aria_binding.dll
+[51/129] Linking CXX static library core\infra\wb_infra.lib
+[52/129] Building CXX object aria\modules\adapters\http\Mira\modules\transport\CMakeFiles\mira_transport.dir\src\endpoint.cpp.obj
+[53/129] Building CXX object aria\modules\adapters\http\Mira\modules\http\CMakeFiles\mira_http.dir\src\message.cpp.obj
+[54/129] Building CXX object aria\modules\adapters\http\Mira\modules\core\CMakeFiles\mira_core.dir\src\event_loop_iocp.cpp.obj
+[55/129] Building CXX object aria\modules\adapters\http\Mira\modules\http\CMakeFiles\mira_http.dir\src\parser.cpp.obj
+[56/129] Linking CXX static library lib\Mira-core.lib
+[57/129] Building CXX object aria\modules\adapters\http\Mira\modules\transport\CMakeFiles\mira_transport.dir\src\udp.cpp.obj
+[58/129] Building CXX object aria\modules\adapters\http\Mira\modules\transport\CMakeFiles\mira_transport.dir\src\tcp.cpp.obj
+[59/129] Building CXX object aria\modules\adapters\http\Mira\modules\http\CMakeFiles\mira_http.dir\src\response_parser.cpp.obj
+[60/129] Building CXX object aria\modules\adapters\http\Mira\modules\http\CMakeFiles\mira_http.dir\src\serializer.cpp.obj
+[61/129] Building CXX object aria\modules\adapters\http\Mira\modules\transport\CMakeFiles\mira_transport.dir\src\resolver.cpp.obj
+[62/129] Building CXX object core\module_api\CMakeFiles\wb_module_api.dir\ModuleRegistry.cpp.obj
+[63/129] Linking CXX static library core\module_api\wb_module_api.lib
+[64/129] Building CXX object modules\calendar\CMakeFiles\wb_module_calendar.dir\services\CalendarService.cpp.obj
+[65/129] Building CXX object modules\cart\CMakeFiles\wb_module_cart.dir\models\CartItem.cpp.obj
+[66/129] Building CXX object modules\calendar\CMakeFiles\wb_module_calendar.dir\models\CalendarModel.cpp.obj
+[67/129] Building CXX object modules\calendar\CMakeFiles\wb_module_calendar.dir\viewmodels\CalendarVm.cpp.obj
+[68/129] Building CXX object modules\chat\CMakeFiles\wb_module_chat.dir\viewmodels\ChatVm.cpp.obj
+[69/129] Building CXX object modules\calendar\CMakeFiles\wb_module_calendar.dir\module\CalendarModule.cpp.obj
+[70/129] Building CXX object modules\cart\CMakeFiles\wb_module_cart.dir\viewmodels\CartVm.cpp.obj
+[71/129] Building CXX object modules\cart\CMakeFiles\wb_module_cart.dir\module\CartModule.cpp.obj
+[72/129] Building CXX object modules\chat\CMakeFiles\wb_module_chat.dir\module\ChatModule.cpp.obj
+[73/129] Building CXX object modules\echo\CMakeFiles\wb_module_echo.dir\module\EchoModule.cpp.obj
+[74/129] Building CXX object modules\dashboard\CMakeFiles\wb_module_dashboard.dir\module\DashboardModule.cpp.obj
+[75/129] Building CXX object modules\dashboard\CMakeFiles\wb_module_dashboard.dir\viewmodels\DashboardVm.cpp.obj
+[76/129] Building CXX object modules\login\CMakeFiles\wb_module_login.dir\viewmodels\LoginVm.cpp.obj
+[77/129] Building CXX object modules\notes\CMakeFiles\wb_module_notes.dir\models\NotesModel.cpp.obj
+[78/129] Building CXX object modules\frameworklab\CMakeFiles\wb_module_frameworklab.dir\viewmodels\FrameworkLabVm.cpp.obj
+[79/129] Building CXX object modules\frameworklab\CMakeFiles\wb_module_frameworklab.dir\module\FrameworklabModule.cpp.obj
+[80/129] Building CXX object modules\login\CMakeFiles\wb_module_login.dir\module\LoginModule.cpp.obj
+[81/129] Building CXX object modules\notes\CMakeFiles\wb_module_notes.dir\services\MarkdownNotesService.cpp.obj
+[82/129] Building CXX object modules\notes\CMakeFiles\wb_module_notes.dir\viewmodels\NotesVm.cpp.obj
+[83/129] Building CXX object modules\settings\CMakeFiles\wb_module_settings.dir\viewmodels\SettingsVm.cpp.obj
+[84/129] Building CXX object modules\search\CMakeFiles\wb_module_search.dir\viewmodels\SearchVm.cpp.obj
+[85/129] Building CXX object modules\notes\CMakeFiles\wb_module_notes.dir\module\NotesModule.cpp.obj
+[86/129] Building CXX object modules\signup\CMakeFiles\wb_module_signup.dir\viewmodels\SignupVm.cpp.obj
+[87/129] Building CXX object modules\search\CMakeFiles\wb_module_search.dir\module\SearchModule.cpp.obj
+[88/129] Building CXX object modules\sync\CMakeFiles\wb_module_sync.dir\viewmodels\SyncVm.cpp.obj
+[89/129] Building CXX object modules\settings\CMakeFiles\wb_module_settings.dir\module\SettingsModule.cpp.obj
+[90/129] Building CXX object modules\signup\CMakeFiles\wb_module_signup.dir\module\SignupModule.cpp.obj
+[91/129] Building CXX object modules\theme\CMakeFiles\wb_module_theme.dir\viewmodels\ThemeVm.cpp.obj
+[92/129] Building CXX object modules\tools\CMakeFiles\wb_module_tools.dir\models\ToolsModel.cpp.obj
+[93/129] Building CXX object modules\tipcalc\CMakeFiles\wb_module_tipcalc.dir\viewmodels\TipCalcVm.cpp.obj
+[94/129] Building CXX object modules\sync\CMakeFiles\wb_module_sync.dir\module\SyncModule.cpp.obj
+[95/129] Building CXX object modules\theme\CMakeFiles\wb_module_theme.dir\module\ThemeModule.cpp.obj
+[96/129] Building CXX object modules\tools\CMakeFiles\wb_module_tools.dir\viewmodels\ToolsVm.cpp.obj
+[97/129] Building CXX object modules\tools\CMakeFiles\wb_module_tools.dir\services\ToolsService.cpp.obj
+[98/129] Linking CXX static library lib\Mira-transport.lib
+[99/129] Linking CXX static library lib\Mira-http.lib
+[100/129] Linking CXX static library modules\calendar\wb_module_calendar.lib
+[101/129] Linking CXX static library modules\cart\wb_module_cart.lib
+[102/129] Linking CXX static library modules\chat\wb_module_chat.lib
+[103/129] Linking CXX static library modules\dashboard\wb_module_dashboard.lib
+[104/129] Linking CXX static library modules\echo\wb_module_echo.lib
+[105/129] Linking CXX static library modules\frameworklab\wb_module_frameworklab.lib
+[106/129] Linking CXX static library modules\login\wb_module_login.lib
+[107/129] Linking CXX static library modules\notes\wb_module_notes.lib
+[108/129] Linking CXX static library modules\search\wb_module_search.lib
+[109/129] Linking CXX static library modules\settings\wb_module_settings.lib
+[110/129] Linking CXX static library modules\signup\wb_module_signup.lib
+[111/129] Linking CXX static library modules\sync\wb_module_sync.lib
+[112/129] Linking CXX static library modules\theme\wb_module_theme.lib
+[113/129] Building CXX object modules\tipcalc\CMakeFiles\wb_module_tipcalc.dir\module\TipcalcModule.cpp.obj
+[114/129] Linking CXX static library modules\tipcalc\wb_module_tipcalc.lib
+[115/129] Building CXX object modules\tools\CMakeFiles\wb_module_tools.dir\module\ToolsModule.cpp.obj
+[116/129] Linking CXX static library modules\tools\wb_module_tools.lib
+[117/129] Building CXX object modules\wizard\CMakeFiles\wb_module_wizard.dir\viewmodels\WizardVm.cpp.obj
+[118/129] C:\WINDOWS\system32\cmd.exe /C "cd /D D:\Coding\AriaTools\build\web && "C:\Program Files\CMake\bin\cmake.exe" -E make_directory D:/Coding/AriaTools/build/web/i18n/common && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/Coding/AriaTools/Workbench/modules/_shared/assets/i18n/strings.xml D:/Coding/AriaTools/Workbench/modules/_shared/assets/i18n/strings_en.xml D:/Coding/AriaTools/build/web/i18n/common"
+[119/129] Building CXX object modules\unitconvert\CMakeFiles\wb_module_unitconvert.dir\module\UnitConvertModule.cpp.obj
+[120/129] Linking CXX static library modules\unitconvert\wb_module_unitconvert.lib
+[121/129] Building CXX object modules\wizard\CMakeFiles\wb_module_wizard.dir\module\WizardModule.cpp.obj
+[122/129] Linking CXX static library modules\wizard\wb_module_wizard.lib
+[123/129] Building CXX object core\app\CMakeFiles\wb_core_app.dir\ModulesManifest.cpp.obj
+[124/129] Building CXX object core\app\CMakeFiles\wb_core_app.dir\AppCore.cpp.obj
+[125/129] Linking CXX static library core\app\wb_core_app.lib
+[126/129] Building CXX object platform\web\CMakeFiles\workbench_web.dir\main.cpp.obj
+[127/129] Building CXX object aria\modules\adapters\http\CMakeFiles\aria_http.dir\src\http_adapter.cpp.obj
+[128/129] Linking CXX shared library bin\aria_http.dll
+[129/129] Linking CXX executable bin\workbench_web.exe
+probe: HTTP health + browser→Property→Computed→HTTP passed
