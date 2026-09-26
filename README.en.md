@@ -4,9 +4,9 @@
 
 **Aria's cross-platform MVVM best practice** · plugin-based · modular · zero-logic views
 
-One C++20 core, four platform view shells: Qt / iOS / Android / Web
+One C++23 core, four platform view shells: Qt / iOS / Android / Web
 
-[![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/20)
+[![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 [![Framework](https://img.shields.io/badge/Aria-v1.1.0-blueviolet.svg)](https://github.com/dqsjqian/Aria)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Qt6%20%7C%20iOS%20%7C%20Android%20%7C%20Web-lightgrey.svg)](#)
@@ -19,7 +19,7 @@ One C++20 core, four platform view shells: Qt / iOS / Android / Web
 
 ## 🎯 What is this?
 
-**AriaTools** (formerly AiTools) is the flagship cross-platform example for [Aria](https://github.com/dqsjqian/Aria) (C++20 reactive MVVM framework) — and a **best-practice blueprint** for Aria's cross-platform architecture:
+**AriaTools** (formerly AiTools) is the flagship cross-platform example for [Aria](https://github.com/dqsjqian/Aria) (C++23 reactive MVVM framework, Continuo-powered HTTP transport) — and a **best-practice blueprint** for Aria's cross-platform architecture:
 
 - **One pure-C++ core (Model + ViewModel + Service), four platform view shells** (Qt6 desktop / iOS UIKit / Android Compose / Web HTTP)
 - **Plugin-style modular architecture**: 17 business modules, one static library each (`wb_module_<name>`); adding a module = one directory + one registration line
@@ -205,8 +205,8 @@ The Web shell reuses the C++ `TipCalcVm`: browser input hops from an HTTP worker
 
 | Area | Technology |
 |---|---|
-| Language | C++20 |
-| Framework | [Aria](https://github.com/dqsjqian/Aria) (vendored, C++20 MVVM) |
+| Language | C++23 |
+| Framework | [Aria](https://github.com/dqsjqian/Aria) (git submodule, C++23 MVVM) |
 | Desktop | Qt6 (macOS / Windows / Linux) |
 | iOS | UIKit (Xcode project) |
 | Android | Kotlin + Jetpack Compose side-channel; Android View + typed JniAdapter lab |
