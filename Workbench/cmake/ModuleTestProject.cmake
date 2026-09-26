@@ -40,14 +40,20 @@ set(WB_RUNTIME_ASSETS_DIR "${CMAKE_BINARY_DIR}/assets" CACHE INTERNAL "")
 option(WORKBENCH_TARGET_QT "" OFF)
 option(WORKBENCH_TARGET_IOS "" OFF)
 
-# Aria (minimal: no tests/examples).
+# Aria (pinned fetch, minimal: no tests/examples).
 set(ARIA_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(ARIA_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(ARIA_BUILD_BENCHMARK OFF CACHE BOOL "" FORCE)
 if(WORKBENCH_TARGET_QT)
     set(ARIA_BUILD_QT6 ON CACHE BOOL "" FORCE)
 endif()
-add_subdirectory(${_REPO_ROOT}/third_party/aria ${CMAKE_BINARY_DIR}/aria EXCLUDE_FROM_ALL)
+if(NOT EXISTS "${_REPO_ROOT}/build/deps/aria/CMakeLists.txt")
+    message(FATAL_ERROR
+        "Aria not found at ${_REPO_ROOT}/build/deps/aria.\n"
+        "Run once before configuring (from the repository root):\n"
+        "  python tools/ci/fetch_aria.py")
+endif()
+add_subdirectory(${_REPO_ROOT}/build/deps/aria ${CMAKE_BINARY_DIR}/aria EXCLUDE_FROM_ALL)
 
 # Base libraries.
 add_subdirectory(${_WB_ROOT}/core/utils      ${CMAKE_BINARY_DIR}/wb_utils)

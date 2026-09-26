@@ -90,8 +90,6 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Fetch pinned Aria
-        run: python tools/ci/fetch_aria.py
       - uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
@@ -101,6 +99,8 @@ jobs:
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja
             mingw-w64-ucrt-x86_64-qt6-base
+      - name: Fetch pinned Aria
+        run: python tools/ci/fetch_aria.py
       - name: Build Qt desktop
         run: |
           cmake -S Workbench -B build/ci-win -G Ninja -DCMAKE_BUILD_TYPE=Release -DWORKBENCH_TARGET_QT=ON

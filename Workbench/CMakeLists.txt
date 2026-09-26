@@ -2,7 +2,7 @@
 #  Workbench — cross-platform workbench (Aria C++ MVVM flagship example)
 #
 #  Architecture:
-#    third_party/aria   vendored framework
+#    build/deps/aria    pinned Aria fetch (tools/ci/fetch_aria.py)
 #    core/utils         wb_utils      pure functions + platform macros
 #    core/infra         wb_infra      stable services (i18n/storage/secret/crypto/settings/sync/log)
 #                                     + DI container + EventBus

@@ -91,6 +91,6 @@ powershell -File Workbench/scripts/gen-win.ps1
 
 ## 仓库注意事项
 
-- 远程仓库已配置为 GitHub 私有仓库，`main` 跟踪 `origin/main`；新设备使用 `git clone --recurse-submodules`。
+- 远程仓库已配置为 GitHub 私有仓库，`main` 跟踪 `origin/main`；新设备 clone 后先执行 `python tools/ci/fetch_aria.py`拉取钉定版本的 Aria。
 - 代码与文档不得包含内部工作流、内部系统或公司身份信息。
 - 不照搬参考项目中的 Service Locator、全局 Singleton、弱类型 action/event；只吸收其共享 Model 心智模型。
