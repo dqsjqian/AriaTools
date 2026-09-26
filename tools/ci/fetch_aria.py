@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 ARIA_URL = "https://github.com/dqsjqian/Aria.git"
-ARIA_SHA = "1202f4281725e2164241eb35dee0bafe07c10277"
+ARIA_SHA = "6d821033e9528351f812cf9acd52cd336b881211"
 DEST = Path(__file__).resolve().parents[2] / "build" / "deps" / "aria"
 
 
