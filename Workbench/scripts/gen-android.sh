@@ -106,6 +106,16 @@ mkdir -p "$BUILD_DIR/lib"
 find "$BUILD_DIR" -name "*.a" -not -path "*CMakeFiles*" \
     -exec cp -f {} "$BUILD_DIR/lib/" \;
 
+# json headers come from Aria's pinned fetch (no vendored third_party since
+# the Continuo integration); export them to a stable path for the Gradle
+# JNI bridge, which is a separate CMake project and links no Aria targets.
+JSON_HPP=$(find "$BUILD_DIR/_deps" -type f -path "*nlohmann*" -name json.hpp 2>/dev/null | head -1)
+if [[ -n "$JSON_HPP" ]]; then
+    mkdir -p "$BUILD_DIR/include"
+    cp -r "$(dirname "$JSON_HPP")" "$BUILD_DIR/include/"
+    echo "  json headers   : $BUILD_DIR/include/nlohmann/"
+fi
+
 echo "✓ core static libs: $BUILD_DIR/lib/"
 echo "  i18n resources : $BUILD_DIR/i18n/"
 
