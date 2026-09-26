@@ -23,7 +23,7 @@ Workbench/
 │   ├── gen-win.ps1            Windows (Qt6)  ✅ 可用（Ninja 默认）
 │   ├── gen-android.sh         Android        预留
 │   └── gen-web.sh             Web (HTTP)     预留
-└── third_party/aria           vendored 框架（add_subdirectory）
+└── build/deps/aria            pinned fetch 框架（add_subdirectory）
 ```
 
 ## 关键设计

@@ -8,7 +8,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
-// AriaTools repository root (contains Workbench/ and third_party/aria).
+// AriaTools repository root (contains Workbench/ and build/deps/aria).
 val wbNativeRoot: String = providers.gradleProperty("wbNativeRoot")
     .orElse("../../..")   // app → platform/android → Workbench → AriaTools root
     .get()

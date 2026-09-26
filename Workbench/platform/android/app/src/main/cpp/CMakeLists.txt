@@ -17,7 +17,13 @@ if(NOT WB_NATIVE_ROOT)
 endif()
 
 set(WB_ROOT  "${WB_NATIVE_ROOT}/Workbench")
-set(ARIA_ROOT "${WB_NATIVE_ROOT}/third_party/aria")
+set(ARIA_ROOT "${WB_NATIVE_ROOT}/build/deps/aria")
+if(NOT EXISTS "${ARIA_ROOT}/CMakeLists.txt")
+    message(FATAL_ERROR
+        "Aria not found at ${ARIA_ROOT}.\n"
+        "Run once before building (from the repository root):\n"
+        "  python tools/ci/fetch_aria.py")
+endif()
 set(WB_LIB   "${WB_NATIVE_ROOT}/build/platforms/android/lib")
 
 # ── JNI side-channel bridge ─────────────────────────────────────────────
