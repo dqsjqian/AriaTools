@@ -106,7 +106,14 @@ target_link_libraries(aria_jni
     android
     log
 
-    nlohmann_json::nlohmann_json)
+)
+
+# nlohmann/json 头文件来自 gen-android.sh 从 Aria 钉定抓取中导出的副本
+# （$WB_LIB/../include/nlohmann）；本工程不 add_subdirectory Aria，没有
+# 该 target，链接的是 gen-android 产出的静态库本身。
+target_include_directories(aria_jni PRIVATE
+    "${WB_LIB}/../include"
+)
 
 # ── Flags ────────────────────────────────────────────────────────────────
 target_compile_options(aria_jni PRIVATE
