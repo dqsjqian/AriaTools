@@ -81,7 +81,17 @@ if(WORKBENCH_TARGET_WEB)
     set(ARIA_HTTP_ENABLE_TLS OFF CACHE BOOL "" FORCE)
 endif()
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/aria
+# -- Pull in the Aria framework (pinned fetch; no git submodule) --
+set(ARIA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../build/deps/aria CACHE PATH
+    "Pinned Aria source tree, created by tools/ci/fetch_aria.py")
+if(NOT EXISTS ${ARIA_DIR}/CMakeLists.txt)
+    message(FATAL_ERROR
+        "Aria not found at ${ARIA_DIR}.\n"
+        "Run once before configuring (from the repository root):\n"
+        "  python tools/ci/fetch_aria.py\n"
+        "(no git submodules -- Aria is fetched at a pinned commit SHA)")
+endif()
+add_subdirectory(${ARIA_DIR}
                  ${CMAKE_BINARY_DIR}/aria
                  EXCLUDE_FROM_ALL)
 

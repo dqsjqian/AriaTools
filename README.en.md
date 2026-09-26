@@ -63,7 +63,7 @@ AriaTools/
 │       ├── ios/                  #   iOS shell (UIViewFactory + IosUi)
 │       ├── android/              #   Compose + typed JniAdapter lab
 │       └── web/                  #   HTTP/REST/SSE shell + thin browser client
-└── third_party/aria              # Aria framework (submodule)
+└── build/deps/aria               # Aria framework (pinned fetch: tools/ci/fetch_aria.py)
 ```
 
 **Data flow (JNI side-channel; identical shape on every platform)**:
@@ -147,7 +147,8 @@ AriaTools runs on the Aria framework plus native view shells per platform; one C
 ## 🚀 Quick Start
 
 ```bash
-git clone --recurse-submodules https://github.com/dqsjqian/AriaTools.git
+git clone https://github.com/dqsjqian/AriaTools.git
+python tools/ci/fetch_aria.py
 cd AriaTools
 ```
 
@@ -206,7 +207,7 @@ The Web shell reuses the C++ `TipCalcVm`: browser input hops from an HTTP worker
 | Area | Technology |
 |---|---|
 | Language | C++23 |
-| Framework | [Aria](https://github.com/dqsjqian/Aria) (git submodule, C++23 MVVM) |
+| Framework | [Aria](https://github.com/dqsjqian/Aria) (pinned fetch, C++23 MVVM) |
 | Desktop | Qt6 (macOS / Windows / Linux) |
 | iOS | UIKit (Xcode project) |
 | Android | Kotlin + Jetpack Compose side-channel; Android View + typed JniAdapter lab |
