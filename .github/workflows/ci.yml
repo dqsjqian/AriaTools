@@ -24,8 +24,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          submodules: true
           persist-credentials: false
+      - name: Fetch pinned Aria
+        run: python tools/ci/fetch_aria.py
       - uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.3'
@@ -88,8 +89,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          submodules: true
           persist-credentials: false
+      - name: Fetch pinned Aria
+        run: python tools/ci/fetch_aria.py
       - uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
@@ -139,8 +141,8 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v7
-        with:
-          submodules: recursive
+      - name: Fetch pinned Aria
+        run: python tools/ci/fetch_aria.py
 
       - name: Install Linux toolchain and Qt6
         if: runner.os == 'Linux'
@@ -202,8 +204,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-        with:
-          submodules: recursive
+      - name: Fetch pinned Aria
+        run: python tools/ci/fetch_aria.py
 
       - uses: actions/setup-java@v5
         with:
@@ -237,8 +239,8 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v7
-        with:
-          submodules: recursive
+      - name: Fetch pinned Aria
+        run: python tools/ci/fetch_aria.py
 
       - name: Configure simulator target
         run: |

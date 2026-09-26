@@ -65,7 +65,7 @@ AriaTools/
 │       ├── ios/                  #   iOS 壳（shell + UIViewFactory + IosUi）
 │       ├── android/              #   Android 工程（Compose + typed JniAdapter lab）
 │       └── web/                  #   HTTP/REST/SSE 壳 + 浏览器薄客户端
-└── third_party/aria              # Aria 框架（submodule）
+└── build/deps/aria               # Aria 框架（pinned fetch：tools/ci/fetch_aria.py）
 ```
 
 **数据流（JNI side-channel 示意，各平台同构）**：
@@ -201,8 +201,9 @@ if (auto m = ctx.mounts().Resolve(slots::kDashboardContent)) {
 ## 🚀 快速开始
 
 ```bash
-# 克隆（含 Aria submodule）
-git clone --recurse-submodules https://github.com/dqsjqian/AriaTools.git
+# 克隆后拉取钉定版本的 Aria（无 submodule）
+git clone https://github.com/dqsjqian/AriaTools.git
+python tools/ci/fetch_aria.py
 cd AriaTools
 ```
 
@@ -261,7 +262,7 @@ Web 壳直接复用 C++ `TipCalcVm`：浏览器输入通过 HTTP worker 回到 g
 | 领域 | 技术 |
 |---|---|
 | 语言 | C++23 |
-| 框架 | [Aria](https://github.com/dqsjqian/Aria)（git submodule，C++23 MVVM） |
+| 框架 | [Aria](https://github.com/dqsjqian/Aria)（pinned fetch，C++23 MVVM） |
 | 桌面 | Qt6（macOS / Windows / Linux） |
 | iOS | UIKit（Xcode 工程） |
 | Android | Kotlin + Jetpack Compose side-channel；Android View + typed JniAdapter lab |
