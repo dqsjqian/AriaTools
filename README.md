@@ -19,7 +19,7 @@
 
 ## 🎯 这是什么？
 
-**AriaTools**（原 AiTools）是 [Aria](https://github.com/dqsjqian/Aria)（C++23 响应式 MVVM 框架，HTTP 传输层为 Continuo）的**旗舰级跨平台示例工程**，也是 Aria 跨平台架构的**最佳实践样板**：
+**AriaTools**（原 AiTools）是 [Aria](https://github.com/dqsjqian/Aria)（C++23 响应式 MVVM 框架，HTTP 传输层为 Mira）的**旗舰级跨平台示例工程**，也是 Aria 跨平台架构的**最佳实践样板**：
 
 - **一份纯 C++ 核心（Model + ViewModel + Service），四个平台 View 壳**（Qt6 桌面 / iOS UIKit / Android Compose / Web HTTP）
 - **插件化模块化**：业务模块各自独立成库（一个模块一个 `wb_module_<name>` 静态库），**热插拔**——新增模块只需加目录，删除模块只需删目录，**不改任何核心文件**，CMake 自动发现

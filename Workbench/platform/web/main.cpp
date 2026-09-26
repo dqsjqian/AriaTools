@@ -6,12 +6,12 @@
 #include "aria/runtime/dispatcher.hpp"
 #include "aria/runtime/dispatcher_executor.hpp"
 
-#include <continuo/core/event_loop.hpp>
-#include <continuo/core/task.hpp>
-#include <continuo/http/client.hpp>
-#include <continuo/http/message.hpp>
-#include <continuo/transport/endpoint.hpp>
-#include <continuo/transport/tcp.hpp>
+#include <mira/core/event_loop.hpp>
+#include <mira/core/task.hpp>
+#include <mira/http/client.hpp>
+#include <mira/http/message.hpp>
+#include <mira/transport/endpoint.hpp>
+#include <mira/transport/tcp.hpp>
 
 #include <atomic>
 #include <chrono>
@@ -37,7 +37,7 @@ std::shared_ptr<wb::tipcalc::TipCalcVm> find_tipcalc(wb::core::AppCore& core) {
     return nullptr;
 }
 
-// One blocking HTTP exchange on a private Continuo EventLoop — the same
+// One blocking HTTP exchange on a private Mira EventLoop — the same
 // pattern AriaAgent's LLM client uses. Returns status + accumulated body.
 struct HttpReply {
     long status = 0;
@@ -47,7 +47,7 @@ struct HttpReply {
 
 HttpReply blocking_request(unsigned short port, const char* method,
                            std::string_view target, std::string_view body = {}) {
-    using namespace continuo;
+    using namespace Mira;
     HttpReply reply;
     auto loop = EventLoop::create();
     if (!loop) {
