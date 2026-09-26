@@ -4,9 +4,9 @@
 
 **Aria 的跨平台 MVVM 最佳实践** · 插件化 · 模块化 · View 零逻辑
 
-一份 C++20 核心，驱动 Qt / iOS / Android / Web 四个 View 壳
+一份 C++23 核心，驱动 Qt / iOS / Android / Web 四个 View 壳
 
-[![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/20)
+[![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 [![Framework](https://img.shields.io/badge/Aria-v1.1.0-blueviolet.svg)](https://github.com/dqsjqian/Aria)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Qt6%20%7C%20iOS%20%7C%20Android%20%7C%20Web-lightgrey.svg)](#)
@@ -19,7 +19,7 @@
 
 ## 🎯 这是什么？
 
-**AriaTools**（原 AiTools）是 [Aria](https://github.com/dqsjqian/Aria)（C++20 响应式 MVVM 框架）的**旗舰级跨平台示例工程**，也是 Aria 跨平台架构的**最佳实践样板**：
+**AriaTools**（原 AiTools）是 [Aria](https://github.com/dqsjqian/Aria)（C++23 响应式 MVVM 框架，HTTP 传输层为 Continuo）的**旗舰级跨平台示例工程**，也是 Aria 跨平台架构的**最佳实践样板**：
 
 - **一份纯 C++ 核心（Model + ViewModel + Service），四个平台 View 壳**（Qt6 桌面 / iOS UIKit / Android Compose / Web HTTP）
 - **插件化模块化**：业务模块各自独立成库（一个模块一个 `wb_module_<name>` 静态库），**热插拔**——新增模块只需加目录，删除模块只需删目录，**不改任何核心文件**，CMake 自动发现
@@ -260,8 +260,8 @@ Web 壳直接复用 C++ `TipCalcVm`：浏览器输入通过 HTTP worker 回到 g
 
 | 领域 | 技术 |
 |---|---|
-| 语言 | C++20 |
-| 框架 | [Aria](https://github.com/dqsjqian/Aria)（vendored，C++20 MVVM） |
+| 语言 | C++23 |
+| 框架 | [Aria](https://github.com/dqsjqian/Aria)（git submodule，C++23 MVVM） |
 | 桌面 | Qt6（macOS / Windows / Linux） |
 | iOS | UIKit（Xcode 工程） |
 | Android | Kotlin + Jetpack Compose side-channel；Android View + typed JniAdapter lab |
