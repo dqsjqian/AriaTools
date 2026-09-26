@@ -22,4 +22,5 @@ DerivedData/
 
 # macOS
 .DS_Store
-build/_run_web.bat
+_run_web.bat
+web_cfg*.log
