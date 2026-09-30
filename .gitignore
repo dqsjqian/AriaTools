@@ -33,3 +33,7 @@ venv/
 .env
 .skills_data/
 .workbuddy/
+# Generated diagnostic logs
+*.log
+*.logg
+*.err
