@@ -16,6 +16,8 @@
 
 </div>
 
+目录职责与模块内分层见 [Workbench 架构说明](Workbench/docs/ARCHITECTURE.md)。
+
 ---
 
 ## 🎯 这是什么？
@@ -241,13 +243,14 @@ pwsh Workbench/scripts/gen-win.ps1 probe     # 构建 + 校验所有模块与 Qt
 pwsh Workbench/scripts/gen-win.ps1 tests     # 构建 + 跑模块测试
 ```
 
-工具链自动探测：vswhere 定位 VS（2022/2026 均支持）、注册表读 Windows Kits 路径、Qt6 自动检测（`C:\DevTools\Qt` 等）。可选环境变量：`$env:QT_DIR` 指定 Qt 前缀、`$env:ARIA_VS_GENERATOR` 覆盖 CMake 生成器。
+工具链自动探测：vswhere 定位 VS（2022/2026 均支持）、注册表读 Windows Kits 路径、Qt6 自动检测（`QT_DIR` 或标准 Qt 安装目录）。可选环境变量：`$env:QT_DIR` 指定 Qt 前缀、`$env:ARIA_VS_GENERATOR` 覆盖 CMake 生成器。
 
 ### iOS（需 Xcode）
 
 ```bash
 bash Workbench/scripts/gen-ios.sh            # 生成 Xcode 工程
-bash Workbench/scripts/gen-ios.sh build      # 生成 + 构建模拟器
+bash Workbench/scripts/gen-ios.sh build      # 生成 + 构建模拟器（免签）
+WB_IOS_DEV_TEAM=YOUR_TEAM_ID bash Workbench/scripts/gen-ios.sh device # 真机构建与安装
 ```
 
 ### Android（需 NDK r26+ / SDK CMake 3.22.1）

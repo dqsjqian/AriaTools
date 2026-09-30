@@ -8,6 +8,7 @@
 #    bash Workbench/scripts/gen-ios.sh              # generate Xcode project
 #    bash Workbench/scripts/gen-ios.sh build         # generate + build (iOS simulator)
 #    bash Workbench/scripts/gen-ios.sh open          # generate + open Xcode
+#    WB_IOS_DEV_TEAM=YOUR_TEAM_ID bash Workbench/scripts/gen-ios.sh device
 #    bash Workbench/scripts/gen-ios.sh clean
 #
 #  Requires: Xcode + iOS SDK (xcodebuild).
@@ -21,7 +22,7 @@ BUILD_DIR="$REPO_ROOT/build/ios"
 
 MODE="${1:-generate}"
 
-# Device build Team (personal Apple ID: dqsjqian@163.com). Override via environment variable.
+# Device builds use the caller's signing team; simulator builds need no team.
 WB_IOS_DEV_TEAM="${WB_IOS_DEV_TEAM:-}"
 
 if [[ "$MODE" == "clean" ]]; then
@@ -32,6 +33,10 @@ fi
 
 # Device mode uses a separate build directory to avoid mixing with the simulator SDK.
 if [[ "$MODE" == "device" ]]; then
+  if [[ -z "$WB_IOS_DEV_TEAM" ]]; then
+    echo "[gen-ios] Error: set WB_IOS_DEV_TEAM to your Apple signing team for device builds." >&2
+    exit 1
+  fi
   BUILD_DIR="${BUILD_DIR}-device"
 fi
 

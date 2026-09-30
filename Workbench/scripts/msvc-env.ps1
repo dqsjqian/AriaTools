@@ -16,36 +16,64 @@
 #  On success also sets:
 #    $script:MSVC_VS_PATH          VS install root
 #    $script:MSVC_TOOLCHAIN_DIR    dir containing cl.exe
+#    $script:MSVC_VS_MAJOR/YEAR    detected CMake Visual Studio generator version
 # ============================================================================
 
 function Initialize-MsvcToolchain {
-    # -- Locate Visual Studio (vswhere, supports 2022/2026) -----------------
-    $vsWhere = "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"
-    if (-not (Test-Path $vsWhere)) {
-        $alt = Join-Path $env:ProgramFiles "Microsoft Visual Studio\Installer\vswhere.exe"
-        if (Test-Path $alt) { $vsWhere = $alt }
+    $script:MSVC_VS_PATH = $null
+    $script:MSVC_VS_MAJOR = $null
+    $script:MSVC_VS_YEAR = $null
+    $script:MSVC_TOOLCHAIN_DIR = $null
+
+    # Prefer an explicit Developer PowerShell installation or vswhere.
+    $programRoots = @(${env:ProgramFiles(x86)}, $env:ProgramFiles) |
+                    Where-Object { $_ } | Select-Object -Unique
+    $vsWhereCmd = Get-Command vswhere.exe -ErrorAction SilentlyContinue
+    $vsWhere = if ($vsWhereCmd) { $vsWhereCmd.Source } else { $null }
+    if (-not $vsWhere) {
+        foreach ($root in $programRoots) {
+            $candidate = Join-Path $root "Microsoft Visual Studio\Installer\vswhere.exe"
+            if (Test-Path $candidate) { $vsWhere = $candidate; break }
+        }
     }
 
-    $vsPath = $null
-    if (Test-Path $vsWhere) {
-        $vsPath = & $vsWhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null
-        if (-not $vsPath) {
-            $vsPath = & $vsWhere -latest -products * -property installationPath 2>$null
+    $vsPath = $env:VSINSTALLDIR
+    if ($vsPath -and -not (Test-Path $vsPath)) { $vsPath = $null }
+    if (-not $vsPath -and $vsWhere) {
+        $query = @("-latest", "-products", "*", "-requires", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64")
+        $vsPath = & $vsWhere @query -property installationPath 2>$null
+        if ($vsPath) {
+            $vsVersion = & $vsWhere @query -property installationVersion 2>$null
+            if ($vsVersion -match '^(\d+)') {
+                $script:MSVC_VS_MAJOR = [int]$matches[1]
+                $script:MSVC_VS_YEAR = switch ($script:MSVC_VS_MAJOR) {
+                    18 { "2026" }
+                    17 { "2022" }
+                }
+            }
         }
     }
     if (-not $vsPath) {
-        foreach ($p in @(
-            "C:\DevTools\VS2026", "C:\DevTools\VS2022",
-            "C:\Program Files\Microsoft Visual Studio\2026\Professional",
-            "C:\Program Files\Microsoft Visual Studio\2026\Enterprise",
-            "C:\Program Files\Microsoft Visual Studio\2026\Community",
-            "C:\Program Files\Microsoft Visual Studio\2022\Professional",
-            "C:\Program Files\Microsoft Visual Studio\2022\Enterprise",
-            "C:\Program Files\Microsoft Visual Studio\2022\Community")) {
-            if (Test-Path (Join-Path $p "VC\Auxiliary\Build\vcvars64.bat")) { $vsPath = $p; break }
+        foreach ($root in $programRoots) {
+            foreach ($year in @("2026", "2022")) {
+                foreach ($edition in @("Professional", "Enterprise", "Community", "BuildTools")) {
+                    $candidate = Join-Path $root "Microsoft Visual Studio\$year\$edition"
+                    if (Test-Path (Join-Path $candidate "VC\Auxiliary\Build\vcvars64.bat")) {
+                        $vsPath = $candidate
+                        break
+                    }
+                }
+                if ($vsPath) { break }
+            }
+            if ($vsPath) { break }
         }
     }
     if (-not $vsPath) { return $false }
+    $script:MSVC_VS_PATH = $vsPath
+    if (-not $script:MSVC_VS_YEAR -and $vsPath -match '(2026|2022)') {
+        $script:MSVC_VS_YEAR = $matches[1]
+        $script:MSVC_VS_MAJOR = if ($script:MSVC_VS_YEAR -eq "2026") { 18 } else { 17 }
+    }
 
     $msvcDirs = Get-ChildItem "$vsPath\VC\Tools\MSVC" -Directory -ErrorAction SilentlyContinue |
                 Sort-Object Name -Descending
@@ -59,7 +87,8 @@ function Initialize-MsvcToolchain {
         if ($reg.KitsRoot10) { $kitsRoot = $reg.KitsRoot10.TrimEnd('\') }
     } catch { }
     if (-not $kitsRoot) {
-        foreach ($cand in @("C:\Program Files (x86)\Windows Kits\10", "D:\Windows Kits\10", "C:\Windows Kits\10")) {
+        foreach ($root in $programRoots) {
+            $cand = Join-Path $root "Windows Kits\10"
             if (Test-Path $cand) { $kitsRoot = $cand; break }
         }
     }

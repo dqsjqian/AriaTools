@@ -9,9 +9,9 @@
 #       the JNI bridge (aria_jni.so) that links those .a archives.
 #
 #  Usage:
-#    scripts/gen-android.sh            # stage 1 only (core static libs)
-#    scripts/gen-android.sh --apk      # stage 1 + stage 2 (assemble APK)
-#    scripts/gen-android.sh clean      # wipe build/platforms/android/
+#    bash Workbench/scripts/gen-android.sh            # stage 1 only (core static libs)
+#    bash Workbench/scripts/gen-android.sh --apk      # stage 1 + stage 2 (assemble APK)
+#    bash Workbench/scripts/gen-android.sh clean      # wipe build/platforms/android/
 #
 #  Env:
 #    ANDROID_SDK_ROOT    Android SDK path (default ~/Library/Android/sdk)
@@ -29,6 +29,19 @@ cd "$REPO_ROOT"
 
 MODE="${1:-core}"
 JOBS="${JOBS:-$(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)}"
+
+BUILD_DIR="build/platforms/android"
+
+case "$MODE" in
+    clean)
+        rm -rf "$BUILD_DIR" "$WB_ROOT/platform/android/app/build" "$WB_ROOT/platform/android/app/.cxx"
+        echo "✓ android build trees wiped"
+        exit 0
+        ;;
+    core|--apk) ;;
+    *) echo "usage: gen-android.sh [core|--apk|clean]"; exit 1 ;;
+esac
+
 
 # ── Android toolchain detection ─────────────────────────────────────────────
 ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}"
@@ -60,17 +73,6 @@ if [[ -z "$ARIA_ANDROID_NINJA" ]]; then
     exit 1
 fi
 
-BUILD_DIR="build/platforms/android"
-
-case "$MODE" in
-    clean)
-        rm -rf "$BUILD_DIR" platform/android/app/build platform/android/app/.cxx
-        echo "✓ android build trees wiped"
-        exit 0
-        ;;
-    core|--apk) ;;
-    *) echo "usage: gen-android.sh [core|--apk|clean]"; exit 1 ;;
-esac
 
 echo "▶ Workbench Android core cross-build (NDK)"
 echo "  NDK   : $ANDROID_NDK_ROOT"

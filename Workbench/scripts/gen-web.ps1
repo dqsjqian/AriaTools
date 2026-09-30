@@ -1,7 +1,7 @@
 # ============================================================================
 #  gen-web.ps1 — Generate and build the Web (HTTP/REST/SSE) shell on Windows
 #
-#  The Web shell is plain C++ (cpp-httplib) with no Qt dependency, so it
+#  The Web shell uses Aria's Mira-backed HTTP adapter with no Qt dependency, so it
 #  builds on Windows exactly like it does on macOS and Linux; the Aria HTTP
 #  adapter already links ws2_32 for platform sockets. This script is the
 #  PowerShell twin of gen-web.sh so Windows contributors get the same entry
@@ -41,16 +41,23 @@ switch ($Mode) {
         if (Test-Path $BuildDir) { Remove-Item -Recurse -Force $BuildDir }
         exit 0
     }
-    { $_ -in "release", "debug", "run", "probe" } { }
+    { $_ -in "build", "release", "debug", "run", "probe" } { }
     default {
         Write-Host "unknown mode: $Mode"
-        Write-Host "valid: release | debug | run | probe | clean"
+        Write-Host "valid: build | release | debug | run | probe | clean"
         exit 1
     }
 }
 
 # ── Build type: default Release; Debug only when explicitly requested ──────
 $BuildConfig = if ($Mode -eq "debug") { "Debug" } else { "Release" }
+
+. "$PSScriptRoot\msvc-env.ps1"
+if (-not (Get-Command cl.exe -ErrorAction SilentlyContinue)) {
+    $null = Initialize-MsvcToolchain
+} else {
+    $script:MSVC_VS_PATH = $env:VSINSTALLDIR
+}
 
 # ── Generator: prefer Ninja (single-config) so the exe lands flat in bin/
 #    like the win build; fall back to the default VS multi-config generator. ──
@@ -60,18 +67,9 @@ if ($env:ARIA_VS_GENERATOR) {
 } else {
     $ninjaCmd = Get-Command ninja -ErrorAction SilentlyContinue
     if ($ninjaCmd) { $NinjaExe = $ninjaCmd.Source }
-    if (-not $NinjaExe) {
-        $ninjaCandidates = @(
-            "C:\Program Files\Microsoft Visual Studio\2026\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\ninja.exe",
-            "C:\Program Files\Microsoft Visual Studio\2026\Professional\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\ninja.exe",
-            "C:\Program Files\Microsoft Visual Studio\2026\Enterprise\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\ninja.exe",
-            "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\ninja.exe",
-            "C:\DevTools\VS2026\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\ninja.exe",
-            "C:\DevTools\VS2022\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\ninja.exe"
-        )
-        foreach ($p in $ninjaCandidates) {
-            if (Test-Path $p) { $NinjaExe = $p; break }
-        }
+    if (-not $NinjaExe -and $script:MSVC_VS_PATH) {
+        $bundled = Join-Path $script:MSVC_VS_PATH "Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\ninja.exe"
+        if (Test-Path $bundled) { $NinjaExe = $bundled }
     }
     if ($NinjaExe) {
         $Generator = "Ninja"
@@ -82,7 +80,6 @@ if ($env:ARIA_VS_GENERATOR) {
 # Ninja cannot find cl.exe by itself (unlike the VS generator). Bootstrap the
 # MSVC toolchain; if that fails, fall back to the default generator.
 if ($Generator -eq "Ninja" -and -not (Get-Command cl.exe -ErrorAction SilentlyContinue)) {
-    . "$PSScriptRoot\msvc-env.ps1"
     if (-not (Initialize-MsvcToolchain)) {
         Write-Warning "[gen-web] MSVC toolchain not found; Ninja cannot find cl.exe. Falling back to the default (multi-config) generator -> bin/<Config>/ layout."
         $Generator = $null

@@ -11,7 +11,7 @@
 #      when ninja is absent, or when $env:ARIA_VS_GENERATOR is set.
 #    - Windows SDK bin\x64 is added to PATH so Ninja can locate rc.exe/mt.exe
 #      (the VS generator finds these internally; Ninja relies on PATH).
-#    - Qt6 auto-detection (C:\DevTools\Qt, etc.)
+#    - Qt6 auto-detection (QT_DIR or standard Qt installation folders)
 #
 #  Usage:
 #    pwsh Workbench/scripts/gen-win.ps1              # configure + build (Release)
@@ -26,7 +26,7 @@
 #  a flat bin/ cannot hold two configs side by side.
 #
 #  Environment variables (optional):
-#    $env:QT_DIR="C:\DevTools\Qt\6.11.1\msvc2022_64"  # specify Qt6 prefix
+#    $env:QT_DIR="C:\Qt\6.8.3\msvc2022_64"  # specify Qt6 prefix
 #    $env:ARIA_VS_GENERATOR="Visual Studio 18 2026"  # override CMake generator
 #    $env:ARIA_NO_QT6="1"                             # disable Qt6 (build core only)
 # ============================================================================
@@ -88,96 +88,14 @@ try {
     $cmakePath = $cmake.Source
     Write-Host "[gen-win] cmake : $cmakePath"
 
-    # ── Auto-detect Visual Studio (vswhere, supports 2022/2026, no hardcoding) ─
-    $vsWhere = "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"
-    if (-not (Test-Path $vsWhere)) {
-        $vsWhere2 = Join-Path $env:ProgramFiles "Microsoft Visual Studio\Installer\vswhere.exe"
-        if (Test-Path $vsWhere2) { $vsWhere = $vsWhere2 }
+    # Shared discovery/SDK bootstrap also serves the Web build entry point.
+    . "$PSScriptRoot\msvc-env.ps1"
+    if (-not (Initialize-MsvcToolchain)) {
+        Write-Warning "MSVC toolchain or Windows SDK not found; CMake may be unable to configure."
     }
-
-    $vsPath = $null; $vsMajor = $null; $vsYear = $null
-    if (Test-Path $vsWhere) {
-        $vsPath = & $vsWhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null
-        if (-not $vsPath) {
-            $vsPath = & $vsWhere -latest -products * -property installationPath 2>$null
-        }
-        if ($vsPath) {
-            $vsVer = & $vsWhere -latest -products * -property installationVersion 2>$null
-            if ($vsVer -match '^(\d+)') { $vsMajor = $matches[1] }
-            $vsName = & $vsWhere -latest -products * -property displayName 2>$null
-            if ($vsName -match '(\d{4})\s*$') { $vsYear = $matches[1] }
-        }
-    }
-    if (-not $vsPath) {
-        # Fallback: known install locations
-        $fallbackRoots = @(
-            "C:\DevTools\VS2026", "C:\DevTools\VS2022",
-            "C:\Program Files\Microsoft Visual Studio\2026\Professional",
-            "C:\Program Files\Microsoft Visual Studio\2026\Enterprise",
-            "C:\Program Files\Microsoft Visual Studio\2026\Community",
-            "C:\Program Files\Microsoft Visual Studio\2022\Professional",
-            "C:\Program Files\Microsoft Visual Studio\2022\Enterprise",
-            "C:\Program Files\Microsoft Visual Studio\2022\Community"
-        )
-        foreach ($p in $fallbackRoots) {
-            if (Test-Path (Join-Path $p "VC\Auxiliary\Build\vcvars64.bat")) {
-                $vsPath = $p
-                if ($p -match 'VS(20\d{2})') {
-                    $vsYear = $matches[1]
-                    $vsMajor = if ($vsYear -eq '2026') { 18 } elseif ($vsYear -eq '2022') { 17 } else { 17 }
-                }
-                break
-            }
-        }
-    }
-
-    if ($vsPath) {
-        $vsLabel = if ($vsYear) { " ($vsYear)" } else { "" }
-        Write-Host "[gen-win] VS    : $vsPath$vsLabel"
-
-        # Find the latest MSVC toolchain
-        $msvcDirs = Get-ChildItem "$vsPath\VC\Tools\MSVC" -Directory -ErrorAction SilentlyContinue | Sort-Object Name -Descending
-        if (-not $msvcDirs) {
-            Write-Error "VS found at $vsPath but VC\Tools\MSVC is empty. Install the 'MSVC v143/v144 - VS 2022/2026 C++ x64/x86 build tools' component."
-            exit 1
-        }
-        $msvc = $msvcDirs | Select-Object -First 1
-
-        # Windows Kits: read from registry (no hardcoded C drive)
-        $kitsRoot = $null
-        try {
-            $reg = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows Kits\Installed Roots" -Name KitsRoot10 -ErrorAction Stop
-            if ($reg.KitsRoot10) { $kitsRoot = $reg.KitsRoot10.TrimEnd('\') }
-        } catch { }
-        if (-not $kitsRoot) {
-            foreach ($cand in @("C:\Program Files (x86)\Windows Kits\10", "D:\Windows Kits\10", "C:\Windows Kits\10")) {
-                if (Test-Path $cand) { $kitsRoot = $cand; break }
-            }
-        }
-        if (-not $kitsRoot) {
-            Write-Error "Windows Kits not found. Install the Windows 10/11 SDK."
-            exit 1
-        }
-        # SDK version directories live under Include/, not at the root
-        $kitsDirs = Get-ChildItem "$kitsRoot\Include" -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^\d' } | Sort-Object Name -Descending
-        if (-not $kitsDirs) {
-            Write-Error "No SDK version directory under Include/ in Windows Kits ($kitsRoot). Install the Windows 10/11 SDK."
-            exit 1
-        }
-        $kitsVer = ($kitsDirs | Select-Object -First 1).Name
-        $clDir = "$vsPath\VC\Tools\MSVC\$($msvc.Name)\bin\Hostx64\x64"
-
-        # PATH must include: cl.exe dir, Windows SDK bin (rc.exe/mt.exe for resource embedding —
-        # the VS generator locates these internally, but Ninja relies on PATH), and the VS tooling dirs.
-        $env:PATH    = "$clDir;$kitsRoot\bin\$kitsVer\x64;$vsPath\Common7\IDE;$vsPath\MSBuild\Current\Bin;$env:PATH"
-        $env:INCLUDE = "$($msvc.FullName)\include;$kitsRoot\Include\$kitsVer\ucrt;$kitsRoot\Include\$kitsVer\um;$kitsRoot\Include\$kitsVer\shared"
-        $env:LIB     = "$($msvc.FullName)\lib\x64;$kitsRoot\Lib\$kitsVer\ucrt\x64;$kitsRoot\Lib\$kitsVer\um\x64"
-
-        Write-Host "[gen-win] MSVC  : $($msvc.Name)"
-        Write-Host "[gen-win] SDK   : $kitsVer ($kitsRoot)"
-    } else {
-        Write-Warning "Visual Studio not found; CMake may be unable to locate the MSVC compiler."
-    }
+    $vsPath = $script:MSVC_VS_PATH
+    $vsMajor = $script:MSVC_VS_MAJOR
+    $vsYear = $script:MSVC_VS_YEAR
 
     # ── Derive the CMake generator: prefer Ninja (faster, parallel by default, sidesteps the MSBuild MSB4166 bug) ──
     # Ninja is a single-config generator; the VS generator is multi-config. The choice affects:
@@ -225,8 +143,8 @@ try {
                 return $env:QT_DIR
             }
         }
-        $roots = @("C:\DevTools\Qt", "C:\Qt", "D:\Qt")
-        $kitOrder = @("msvc2022_64", "msvc2019_64", "mingw_64")
+        $roots = @("$env:SystemDrive\Qt", "$env:USERPROFILE\Qt")
+        $kitOrder = @("msvc2022_64", "msvc2019_64")
         foreach ($root in $roots) {
             if (-not (Test-Path $root)) { continue }
             $versions = Get-ChildItem $root -Directory -ErrorAction SilentlyContinue |
@@ -245,7 +163,7 @@ try {
 
     $Qt6Dir = Find-Qt6
     if (-not $Qt6Dir) {
-        Write-Error "Qt6 (msvc2022_64) not found. Set `$env:QT_DIR or install Qt to C:\DevTools\Qt / C:\Qt."
+        Write-Error "Qt6 (msvc2022_64) not found. Set `$env:QT_DIR to the matching MSVC Qt installation prefix."
         exit 1
     }
     Write-Host "[gen-win] Qt6   : $Qt6Dir"

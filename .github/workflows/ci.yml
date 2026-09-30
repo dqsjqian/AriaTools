@@ -40,6 +40,16 @@ jobs:
           version: '6.8.3'
           arch: win64_msvc2022_64
           cache: true
+      - name: Validate Windows build scripts
+        run: |
+          foreach ($script in Get-ChildItem Workbench/scripts/*.ps1) {
+            $tokens = $null
+            $parseErrors = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseFile($script.FullName, [ref]$tokens, [ref]$parseErrors)
+            if ($parseErrors.Count) { throw ($parseErrors | Out-String) }
+          }
+          . ./Workbench/scripts/msvc-env.ps1
+          if (-not (Initialize-MsvcToolchain)) { throw "MSVC/Windows SDK discovery failed" }
       - name: Configure and build with Visual Studio 2026
         run: |
           cmake -S Workbench -B build/ci-vs2026 -G "Visual Studio 18 2026" -A x64 -DWORKBENCH_TARGET_QT=ON
@@ -48,11 +58,13 @@ jobs:
       - name: Probe Qt views
         env:
           QT_QPA_PLATFORM: offscreen
-        # timeout 兜底：Windows runner 上 workbench --probe 曾静默挂死
-        # （stdout 进管道缓冲，无任何日志），把 job 拖满 40 分钟才被杀。
-        # 正常 probe 数秒完成；挂死时 120s 后以 124 快速失败。
-        # 注意 pwsh 下不能用 timeout.exe —— 那是"暂停 N 秒"，不是超时杀进程。
+        # Exercise the deployed plugins without install-qt-action's fallback
+        # path. Keep a hard timeout for unattended GUI startup failures.
         run: |
+          Remove-Item Env:QT_PLUGIN_PATH -ErrorAction SilentlyContinue
+          $platforms = (Resolve-Path "./build/ci-vs2026/bin/Release/platforms").Path
+          if (-not (Test-Path "$platforms/qoffscreen.dll")) { throw "Deployed offscreen plugin is missing" }
+          $env:QT_QPA_PLATFORM_PLUGIN_PATH = $platforms
           $env:QT_QPA_PLATFORM = "offscreen"
           $p = Start-Process -FilePath "./build/ci-vs2026/bin/Release/workbench.exe" -ArgumentList "--probe" -PassThru -NoNewWindow
           if (-not $p.WaitForExit(120000)) {
@@ -60,7 +72,8 @@ jobs:
             $p.Kill($true)
             exit 124
           }
-          exit $p.ExitCode.Value
+          if ($null -eq $p.ExitCode) { throw "Qt probe did not report an exit code" }
+          exit $p.ExitCode
       - name: Run standalone module tests
         run: |
           foreach ($module in @('calendar', 'cart', 'dashboard', 'frameworklab', 'notes', 'tools')) {
@@ -85,7 +98,8 @@ jobs:
             $p.Kill($true)
             exit 124
           }
-          exit $p.ExitCode.Value
+          if ($null -eq $p.ExitCode) { throw "Web probe did not report an exit code" }
+          exit $p.ExitCode
 
   windows:
     name: Qt and Web probes (Windows UCRT64)
@@ -114,16 +128,16 @@ jobs:
         run: |
           cmake -S Workbench -B build/ci-win -G Ninja -DCMAKE_BUILD_TYPE=Release -DWORKBENCH_TARGET_QT=ON
           cmake --build build/ci-win --parallel 3
-      # 已知问题：MSYS2 offscreen 环境下 workbench --probe 确定性挂死（stdout 被
-      # 管道缓冲吞掉、零日志，timeout -s KILL 120s 兜底强杀）。同款 probe 在
-      # VS2026 job 全绿，属 MSYS2 运行时特有问题，待 Windows 环境复现根因。
-      # continue-on-error：构建失败仍会挂 job，只有这个已知挂死不拖死 GCC-on-
-      # Windows 链路的 module tests / web probe 验证。
-      - name: Probe Qt views (known MSYS2 hang, non-blocking)
-        continue-on-error: true
+      # The Qt probe must finish within the existing 120-second limit.
+      # A timeout or probe failure fails the job, just like the other platforms.
+      - name: Probe Qt views
         env:
           QT_QPA_PLATFORM: offscreen
-        run: timeout -s KILL 120 ./build/ci-win/bin/workbench.exe --probe
+        run: |
+          test -f ./build/ci-win/bin/platforms/qoffscreen.dll
+          unset QT_PLUGIN_PATH
+          export QT_QPA_PLATFORM_PLUGIN_PATH="$(cygpath -w "$PWD/build/ci-win/bin/platforms")"
+          timeout -s KILL 120 ./build/ci-win/bin/workbench.exe --probe
       - name: Run standalone module tests
         run: |
           for module in calendar cart dashboard frameworklab notes tools; do

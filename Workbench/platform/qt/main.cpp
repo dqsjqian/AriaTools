@@ -19,6 +19,7 @@
 #include <QStackedWidget>
 #include <QWidget>
 
+#include <cstdio>
 #include <memory>
 #include <string_view>
 #include <vector>
@@ -68,6 +69,15 @@ int run_probe(wb::qt::QtAppShell& shell) {
 }  // namespace
 
 int main(int argc, char** argv) {
+    const bool probe_mode = has_arg(argc, argv, "--probe");
+    if (probe_mode) {
+        // A Windows GUI executable normally sends Qt diagnostics to the
+        // debugger. Make platform-plugin failures visible before QApplication
+        // can show a native error dialog in an unattended probe.
+        qputenv("QT_FORCE_STDERR_LOGGING", "1");
+        std::fputs("probe: initializing Qt platform\n", stderr);
+        std::fflush(stderr);
+    }
     QApplication app(argc, argv);
 
     wb::log::init_default_sink();
@@ -76,7 +86,7 @@ int main(int argc, char** argv) {
     wb::qt::QtAppShell shell{&app};
     auto& core = shell.core();
 
-    if (has_arg(argc, argv, "--probe")) {
+    if (probe_mode) {
         return run_probe(shell);
     }
 

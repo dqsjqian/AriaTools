@@ -16,6 +16,8 @@ One C++23 core, four platform view shells: Qt / iOS / Android / Web
 
 </div>
 
+See the [Workbench architecture guide](Workbench/docs/ARCHITECTURE.md) for directory responsibilities and module layering.
+
 ---
 
 ## 🎯 What is this?
@@ -186,13 +188,14 @@ pwsh Workbench/scripts/gen-win.ps1 probe     # build + verify every module and Q
 pwsh Workbench/scripts/gen-win.ps1 tests     # build + run module tests
 ```
 
-Toolchain auto-detection: vswhere probes the Visual Studio install (2022/2026), Windows Kits path is read from the registry, and Qt6 is auto-detected (e.g. `C:\DevTools\Qt`). Optional env vars: `$env:QT_DIR` to pin the Qt prefix, `$env:ARIA_VS_GENERATOR` to override the CMake generator.
+Toolchain auto-detection: vswhere probes the Visual Studio install (2022/2026), Windows Kits path is read from the registry, and Qt6 is auto-detected from `QT_DIR` or standard Qt installation folders. Optional env vars: `$env:QT_DIR` to pin the Qt prefix, `$env:ARIA_VS_GENERATOR` to override the CMake generator.
 
 ### iOS (needs Xcode)
 
 ```bash
 bash Workbench/scripts/gen-ios.sh            # generate Xcode project
-bash Workbench/scripts/gen-ios.sh build      # generate + build simulator
+bash Workbench/scripts/gen-ios.sh build      # generate + build simulator (no signing)
+WB_IOS_DEV_TEAM=YOUR_TEAM_ID bash Workbench/scripts/gen-ios.sh device # build and install on a device
 ```
 
 ### Android (needs NDK r26+ / SDK CMake 3.22.1)

@@ -70,11 +70,23 @@ if(WIN32)
             HINTS "${Qt6_DIR}/../../../bin")
     endif()
 
+    # windeployqt deploys qwindows by default, but --probe also supports the
+    # offscreen platform. Ship it explicitly: developer QT_PLUGIN_PATH values
+    # must not hide an incomplete deployment on a clean machine.
+    if(NOT TARGET Qt6::QOffscreenIntegrationPlugin)
+        message(FATAL_ERROR "The Qt desktop probe requires Qt's offscreen platform plugin")
+    endif()
+
     add_custom_command(TARGET workbench POST_BUILD
         COMMAND "${WINDEPLOYQT_EXECUTABLE}"
                 --no-translations --no-system-d3d-compiler
                 --no-opengl-sw --no-compiler-runtime
                 "$<TARGET_FILE:workbench>"
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+                "$<TARGET_FILE_DIR:workbench>/platforms"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "$<TARGET_FILE:Qt6::QOffscreenIntegrationPlugin>"
+                "$<TARGET_FILE_DIR:workbench>/platforms/"
         VERBATIM)
 
     add_custom_command(TARGET workbench POST_BUILD

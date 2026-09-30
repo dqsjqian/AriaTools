@@ -1,53 +1,44 @@
 # Workbench 架构说明
 
-跨平台工作台，基于 [Aria](https://github.com/dqsjqian/Aria) C++20 MVVM 框架。
+跨平台工作台，基于 [Aria](https://github.com/dqsjqian/Aria) C++23 MVVM 框架。
 核心理念：**一份 C++ 核心（Model + ViewModel + Service），多套平台 View 壳**。
 
-## 分层
+## 目录与职责
 
-```
-Workbench/
-├── core/                      纯 C++20 核心（零平台 UI 依赖）——所有平台共享
-│   ├── app/AppCore            装配根：拥有 Services + 6 个模块 VM
-│   ├── modules/<mod>/         每个模块的 Model + ViewModel
-│   └── services/              数据层抽象接口 + 桩实现
-│       ├── I*.h               IStorage / ISettings / ISync / ISecretStore / ICrypto
-│       └── stub/              非目标平台的最小回退；发布前替换为真实平台实现
-├── platform/                  各端 View 壳，结构对称，各自持有平台适配器
-│   ├── qt/                    Qt6 桌面（Win/Mac/Linux 共用）：入口 + AppShell + Views
-│   ├── ios/                   iOS UIKit：入口 + IosShell + Views（.mm）
-│   └── android/               预留（JNI，见 README）
-├── scripts/                   各平台一键生成/构建脚本
-│   ├── gen-mac.sh             Mac (Qt6)      ✅ 可用
-│   ├── gen-ios.sh             iOS (UIKit)    ✅ 可用（Xcode 工程）
-│   ├── gen-win.ps1            Windows (Qt6)  ✅ 可用（Ninja 默认）
-│   ├── gen-android.sh         Android        预留
-│   └── gen-web.sh             Web (HTTP)     预留
-└── build/deps/aria            pinned fetch 框架（add_subdirectory）
+```text
+AriaTools/
+├── Workbench/
+│   ├── core/
+│   │   ├── app/               AppCore、模块装配与导航
+│   │   ├── infra/             i18n、存储、设置、同步等服务接口与实现
+│   │   ├── module_api/        模块契约、上下文与跨模块能力
+│   │   └── utils/             平台无关工具函数
+│   ├── modules/<module>/      每模块的 Model、Service、VM、View 与测试
+│   ├── platform/              Qt、UIKit、Android、Web 入口与平台壳
+│   ├── cmake/                 模块注册与独立测试构建 helper
+│   └── scripts/               各平台构建入口与共享 MSVC helper
+├── tools/ci/                  固定版本依赖获取与安全回归
+├── docs/marketing/            有日期的发布介绍与配图
+└── build/deps/aria/           Git 忽略的固定版本框架缓存
 ```
 
-## 关键设计
+## 装配与平台边界
 
-### 1. core 绝不依赖平台 UI
-`workbench_core` 只链 `aria::binding/runtime/async/core`，编译产物中无任何
-Qt/UIKit 符号。这是「多端复用」成立的前提，已用 `nm` 验证。
+`core/` 的业务接口和 VM 不直接操作平台控件。`wb_core_app` 装配模块，
+模块 CMake 根据目标平台选择 Qt / UIKit 等 View 源文件；平台壳负责
+适配器、UI 调度和 BindingEngine。Android 的 Compose 入口由
+`ModulePages.kt` 显式注册，Web 壳提供 HTTP / REST / SSE 访问。
 
-### 2. 每端外壳 = 适配器 + BindingEngine + AppCore
-| 端 | 适配器 | Dispatch 策略 | View |
-|----|--------|--------------|------|
-| Qt | `aria::qt6::QtAdapter` | SmartMarshal（有 QtDispatcher） | QWidget |
-| iOS | `aria::adapters::uikit::UIKitAdapter` | Direct（UIKit 回调即主线程） | UIView |
+Qt / UIKit 模块由 CMake 扫描 `modules/*/CMakeLists.txt` 生成的
+`GeneratedModuleList.h` 注册；增加模块时同时提供相应平台 View 入口。
 
-外壳把 `core_.<module>()` 的 VM 通过 `be.bind_text/bind_command/...` 绑到原生控件。
-换平台 = 换一套 View + 适配器，`AppCore` 与所有 VM 原样复用。
+## 数据与服务实现
 
-### 3. 数据统一目录 + git 同步（面向多用户分发）
-- 所有数据在单一根目录（默认 `~/WorkbenchData`，可配），整体作为一个 git 仓库。
-- git 仓库地址/分支/用户名/Token 全部是**运行时用户设置**（`SyncSettings`），
-  绝不写死——每个用户填自己的私有 Gitee 仓库。Token 走 `ISecretStore` 安全存储。
-- 全自动同步（定时 + 条件触发）、opt-in 加密（可选范围）、Git LFS：接口已预留，
-  同步使用 libgit2；Apple 端加密使用 CommonCrypto + Security 原生框架。
-- 记事本采用「一条笔记一个 .md 文件（UUID 命名）」，从根上规避多端 git 冲突。
+数据根目录默认是 `~/WorkbenchData`。Notes 使用 Markdown 文件持久化，
+Apple 平台提供原生加解密；设置、同步、密钥和 HTTP 的默认实现中仍有
+内存或 Stub 服务。远端仓库与凭据由用户在运行时配置，同步与安全存储
+接口不等于已经接入真实 Git 同步或系统密钥链。
+具体装配以 `core/infra/ServiceHub.cpp` 和 `ServiceFactories.h` 为准。
 
 ## 模块内 MVVM 分层
 
@@ -104,31 +95,8 @@ AppCore
         └── Notes VM（共享 NotesModel）
 ```
 
-## 6 个模块
-| 模块 | 说明 | 骨架状态 |
-|------|------|---------|
-| Dashboard | 首页概览 | 占位 |
-| Notes | 记事本（图文增删改查） | 空列表 + 增删占位 |
-| Calendar | 日历（.ics 第三方订阅） | 订阅入口占位 |
-| Tools | 小工具 | base64/随机串**已可用**；json/文件加解密占位 |
-| Settings | 设置（含同步配置） | 可编辑，双向绑定 |
-| Sync | 数据同步 | 调 ISyncService 桩（模拟） |
+## 模块与构建
 
-## 构建
-
-```bash
-# Mac 桌面（Qt6）
-bash Workbench/scripts/gen-mac.sh run
-
-# iOS 模拟器（需完整 Xcode；脚本会自动用 DEVELOPER_DIR 指向 Xcode）
-bash Workbench/scripts/gen-ios.sh open   # 生成并打开 Xcode
-```
-
-```powershell
-# Windows 桌面（Qt6 + MSVC，默认 Ninja 并行编译）
-powershell -File Workbench/scripts/gen-win.ps1
-```
-
-## 后续阶段
-1. 业务实现：Tools → Notes → Calendar → Settings/Sync（Apple 加密使用 CommonCrypto，同步接 libgit2）。
-2. 补齐平台：Android(JNI) / Web(HTTP)，均复用 `core/`。
+当前模块列表、平台依赖和完整构建命令统一维护在[仓库 README](../../README.md)。
+平台脚本位于 `Workbench/scripts/`，所有构建产物进入根目录的 `build/`；
+先运行 `python3 tools/ci/fetch_aria.py` 获取固定版本的 Aria，再选择平台入口。
