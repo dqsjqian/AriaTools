@@ -10,7 +10,7 @@
 
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 [![Release](https://img.shields.io/badge/AriaTools-v1.0.2-green.svg)](https://github.com/dqsjqian/AriaTools/releases)
-[![Framework](https://img.shields.io/badge/Aria-v3.1.0-blueviolet.svg)](https://github.com/dqsjqian/Aria)
+[![Framework](https://img.shields.io/badge/Aria-v3.1.1-blueviolet.svg)](https://github.com/dqsjqian/Aria)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Qt6%20%7C%20iOS%20%7C%20Android%20%7C%20Web-lightgrey.svg)](#)
 
@@ -216,7 +216,7 @@ python tools/ci/fetch_aria.py
 
 C++ 构建需要 CMake 3.21 或更新版本（与 Mira 1.0.0 的最低要求一致）。
 
-根目录唯一的 `dependencies.json` 同时保存版本请求与每项的 `resolved` 结果。没有显式版本、也没有匹配锁时，首次解析最新稳定版并记录版本、提交和 SHA256；已有锁会直接复用，普通构建不会追随新发布。显式版本优先，例如 `python tools/ci/fetch_aria.py --version 3.1.0`（优先于 `ARIA_DEP_ARIA_VERSION`）；主动升级 Aria 使用 `python tools/ci/fetch_aria.py --update`。
+根目录唯一的 `dependencies.json` 同时保存版本请求与每项的 `resolved` 结果。没有显式版本、也没有匹配锁时，首次解析最新稳定版并记录版本、提交和 SHA256；已有锁会直接复用，普通构建不会追随新发布。显式版本优先，例如 `python tools/ci/fetch_aria.py --version 3.1.1`（优先于 `ARIA_DEP_ARIA_VERSION`）；主动升级 Aria 使用 `python tools/ci/fetch_aria.py --update`。
 
 C++ 库可用 `-DARIA_DEP_JSON_VERSION=3.12.0`、`-DARIA_DEP_MIRA_VERSION=1.0.0`、`-DARIA_DEP_OPENSSL_VERSION=4.0.3` 等覆盖；CMake 将临时覆盖写入构建目录的解析缓存，不修改源码中的 `dependencies.json`。要更新并保存共享锁，运行 `python tools/ci/update_dependencies.py`，审查变更后提交这一份依赖文件。显式源码覆盖和父工程已提供的依赖目标继续优先。
 

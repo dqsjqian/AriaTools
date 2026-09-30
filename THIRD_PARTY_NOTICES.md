@@ -6,7 +6,7 @@ AriaTools' original code is MIT-licensed; see [LICENSE](LICENSE). Dependencies r
 
 | Component | Reviewed selection | Use | License and source |
 |---|---|---|---|
-| Aria | 3.1.0 | Application runtime and adapters | MIT; selected checkout's `LICENSE`, [upstream](https://github.com/dqsjqian/Aria) |
+| Aria | 3.1.1 | Application runtime and adapters | MIT; selected checkout's `LICENSE`, [upstream](https://github.com/dqsjqian/Aria) |
 | nlohmann/json | 3.12.0 | Native application data and HTTP serialization | MIT; `LICENSE.MIT` plus all header SPDX copyright notices, [upstream](https://github.com/nlohmann/json/tree/v3.12.0) |
 | Mira | 1.0.0 | Web HTTP/1 transport through Aria | MIT; [upstream license](https://github.com/dqsjqian/Mira/blob/v1.0.0/LICENSE) and [third-party notices](https://github.com/dqsjqian/Mira/blob/v1.0.0/THIRD_PARTY_NOTICES.md) |
 | Qt 6 Core/Gui/Widgets | Installed SDK selected by CMake | Qt desktop shell | The selected Qt distribution's LGPL/GPL/commercial terms and bundled notices apply; [Qt licensing](https://doc.qt.io/qt-6/licensing.html) |

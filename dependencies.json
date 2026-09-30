@@ -7,11 +7,11 @@
       "resolved": {
         "request_hash": "2c6620ad60a1854f8c761cdfd7caebc063116d49a2d34f36c920a1a617d014ce",
         "requested": "latest",
-        "revision": "7f957a8764e69d02e8487a2d128ace9f0605ccdd",
+        "revision": "a56ad396433f5278fba81d920ddd86d1fe5aa923",
         "sha256": "",
-        "tag": "v3.1.0",
+        "tag": "v3.1.1",
         "url": "https://github.com/dqsjqian/Aria.git",
-        "version": "3.1.0"
+        "version": "3.1.1"
       },
       "tag_prefix": "v"
     },

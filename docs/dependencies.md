@@ -89,7 +89,7 @@ python tools/ci/dependencies.py resolve --file dependencies.json --offline
 
 离线解析成功只说明有匹配元数据；离线构建还需要对应源码/归档缓存与工具链。`update --offline` 无法发现上游新版本，应使用 `resolve --offline`。
 
-下游 Aria 获取器也支持 `--offline`、`--version 3.1.0`、`--update`。`--version` 优先于 `ARIA_DEP_ARIA_VERSION` 环境变量。`--source /path/to/Aria` 或 `ARIA_SOURCE` 可指定本地 Git 源，但仍必须包含锁定提交；它不是绕过版本校验的开关。获取器拒绝覆盖本地修改，并保留成功替换前的完整 checkout 在 `build/deps/aria-backup-*`。
+下游 Aria 获取器也支持 `--offline`、`--version 3.1.1`、`--update`。`--version` 优先于 `ARIA_DEP_ARIA_VERSION` 环境变量。`--source /path/to/Aria` 或 `ARIA_SOURCE` 可指定本地 Git 源，但仍必须包含锁定提交；它不是绕过版本校验的开关。获取器拒绝覆盖本地修改，并保留成功替换前的完整 checkout 在 `build/deps/aria-backup-*`。
 
 支持 Aria 源码集成的 CMake 库可用 `-DARIA_DEP_JSON_VERSION=3.12.0` 等选择本次构建版本。CMake 使用构建目录中的临时有效结果，不修改源码根目录的 `dependencies.json`；清空相应缓存参数可恢复项目默认。明确的源码目录覆盖或父工程预先提供的目标优先，由调用者负责版本和内容。Qt 用 `-DARIA_DEP_QT_VERSION=6.10.0` 选择已安装的精确版本；没有指定时从 CMake 可见的安装位置选择，仍尊重 `Qt6_DIR`、`CMAKE_PREFIX_PATH` 和工具链设置。更新脚本不会安装 Qt。
 

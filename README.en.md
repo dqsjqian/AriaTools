@@ -10,7 +10,7 @@ One C++23 core, four platform view shells: Qt / iOS / Android / Web
 
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 [![Release](https://img.shields.io/badge/AriaTools-v1.0.2-green.svg)](https://github.com/dqsjqian/AriaTools/releases)
-[![Framework](https://img.shields.io/badge/Aria-v3.1.0-blueviolet.svg)](https://github.com/dqsjqian/Aria)
+[![Framework](https://img.shields.io/badge/Aria-v3.1.1-blueviolet.svg)](https://github.com/dqsjqian/Aria)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Qt6%20%7C%20iOS%20%7C%20Android%20%7C%20Web-lightgrey.svg)](#)
 
@@ -161,7 +161,7 @@ python tools/ci/fetch_aria.py
 
 C++ builds require CMake 3.21 or newer, matching Mira 1.0.0.
 
-The single root `dependencies.json` contains version requests and each dependency’s `resolved` result. Without an explicit version or a matching lock, the first resolution selects the latest stable release and records its version, commit, and SHA256. Existing locks are reused, so ordinary builds do not follow new releases. Explicit versions take priority: for example, `python tools/ci/fetch_aria.py --version 3.1.0` overrides `ARIA_DEP_ARIA_VERSION`. Run `python tools/ci/fetch_aria.py --update` to upgrade Aria deliberately.
+The single root `dependencies.json` contains version requests and each dependency’s `resolved` result. Without an explicit version or a matching lock, the first resolution selects the latest stable release and records its version, commit, and SHA256. Existing locks are reused, so ordinary builds do not follow new releases. Explicit versions take priority: for example, `python tools/ci/fetch_aria.py --version 3.1.1` overrides `ARIA_DEP_ARIA_VERSION`. Run `python tools/ci/fetch_aria.py --update` to upgrade Aria deliberately.
 
 Override C++ libraries with options such as `-DARIA_DEP_JSON_VERSION=3.12.0`, `-DARIA_DEP_MIRA_VERSION=1.0.0`, and `-DARIA_DEP_OPENSSL_VERSION=4.0.3`. CMake records temporary overrides in a build-directory resolution cache without changing the source `dependencies.json`. To update the shared library lock, run `python tools/ci/update_dependencies.py`, review the changes, and commit this dependency file. Explicit source overrides and dependency targets supplied by a parent project retain priority.
 
