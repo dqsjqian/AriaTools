@@ -31,8 +31,8 @@ target_link_libraries(workbench PRIVATE
 set_target_properties(workbench PROPERTIES
     MACOSX_BUNDLE_BUNDLE_NAME        "Workbench"
     MACOSX_BUNDLE_GUI_IDENTIFIER     "com.workbench.app"
-    MACOSX_BUNDLE_BUNDLE_VERSION     "0.1.0"
-    MACOSX_BUNDLE_SHORT_VERSION_STRING "0.1.0"
+    MACOSX_BUNDLE_BUNDLE_VERSION     "${WB_BUILD_NUMBER}"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
 )
 
 # -- macOS: copy i18n / assets into the .app bundle Resources so it is self-contained --

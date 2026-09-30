@@ -7,7 +7,8 @@
 One C++23 core, four platform view shells: Qt / iOS / Android / Web
 
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
-[![Framework](https://img.shields.io/badge/Aria-v3.0.0-blueviolet.svg)](https://github.com/dqsjqian/Aria)
+[![Release](https://img.shields.io/badge/AriaTools-v1.0.1-green.svg)](https://github.com/dqsjqian/AriaTools/releases)
+[![Framework](https://img.shields.io/badge/Aria-v3.0.1-blueviolet.svg)](https://github.com/dqsjqian/Aria)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Qt6%20%7C%20iOS%20%7C%20Android%20%7C%20Web-lightgrey.svg)](#)
 
@@ -152,7 +153,7 @@ cd AriaTools
 python tools/ci/fetch_aria.py
 ```
 
-Aria is pinned to commit `362f5511244b0184d511a4ea43a77cecf3114686`. Run the fetcher again after dependency updates: it verifies the actual Git HEAD, refuses to overwrite local edits, keeps the current checkout if fetching fails, and retains a successful upgrade's previous checkout under `build/deps/aria-backup-*`.
+Aria is pinned to commit `3ff3f1047679363f576e5149b44f1119ec4d9efe`. Run the fetcher again after dependency updates: it verifies the actual Git HEAD, refuses to overwrite local edits, keeps the current checkout if fetching fails, and retains a successful upgrade's previous checkout under `build/deps/aria-backup-*`.
 
 Aria lives in Git-ignored `build/deps/aria`; external dependencies such as JSON enter the build cache after version and SHA256 verification. The project uses no `third_party` source copies or Git submodules.
 

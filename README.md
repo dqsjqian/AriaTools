@@ -7,7 +7,8 @@
 一份 C++23 核心，驱动 Qt / iOS / Android / Web 四个 View 壳
 
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
-[![Framework](https://img.shields.io/badge/Aria-v3.0.0-blueviolet.svg)](https://github.com/dqsjqian/Aria)
+[![Release](https://img.shields.io/badge/AriaTools-v1.0.1-green.svg)](https://github.com/dqsjqian/AriaTools/releases)
+[![Framework](https://img.shields.io/badge/Aria-v3.0.1-blueviolet.svg)](https://github.com/dqsjqian/Aria)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Qt6%20%7C%20iOS%20%7C%20Android%20%7C%20Web-lightgrey.svg)](#)
 
@@ -207,7 +208,7 @@ cd AriaTools
 python tools/ci/fetch_aria.py
 ```
 
-当前固定 Aria 提交 `362f5511244b0184d511a4ea43a77cecf3114686`。每次更新依赖后重新运行获取脚本：它会核验实际 Git HEAD，拒绝覆盖本地修改，在下载失败时保留原目录，并将成功升级前的旧目录保存在 `build/deps/aria-backup-*`。
+当前固定 Aria 提交 `3ff3f1047679363f576e5149b44f1119ec4d9efe`。每次更新依赖后重新运行获取脚本：它会核验实际 Git HEAD，拒绝覆盖本地修改，在下载失败时保留原目录，并将成功升级前的旧目录保存在 `build/deps/aria-backup-*`。
 
 Aria 保存在 Git 忽略的 `build/deps/aria`；JSON 等外部依赖按版本与 SHA256 验证后进入构建缓存。项目不使用 `third_party` 源码副本或 Git submodule。
 
