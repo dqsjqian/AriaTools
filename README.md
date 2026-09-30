@@ -210,7 +210,7 @@ cd AriaTools
 python tools/ci/fetch_aria.py
 ```
 
-当前固定 Aria 提交 `3ff3f1047679363f576e5149b44f1119ec4d9efe`。每次更新依赖后重新运行获取脚本：它会核验实际 Git HEAD，拒绝覆盖本地修改，在下载失败时保留原目录，并将成功升级前的旧目录保存在 `build/deps/aria-backup-*`。
+当前固定 Aria 提交 `202f0b8e56a5572bf6f6e1f018ccbdd112690ed6`。每次更新依赖后重新运行获取脚本：它会核验实际 Git HEAD，拒绝覆盖本地修改，在下载失败时保留原目录，并将成功升级前的旧目录保存在 `build/deps/aria-backup-*`。
 
 Aria 保存在 Git 忽略的 `build/deps/aria`；JSON 等外部依赖按版本与 SHA256 验证后进入构建缓存。项目不使用 `third_party` 源码副本或 Git submodule。
 

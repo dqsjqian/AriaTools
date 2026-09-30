@@ -14,7 +14,7 @@ import tempfile
 from pathlib import Path
 
 ARIA_URL = "https://github.com/dqsjqian/Aria.git"
-ARIA_SHA = "3ff3f1047679363f576e5149b44f1119ec4d9efe"
+ARIA_SHA = "202f0b8e56a5572bf6f6e1f018ccbdd112690ed6"
 DEST = Path(__file__).resolve().parents[2] / "build" / "deps" / "aria"
 
 

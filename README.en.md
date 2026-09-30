@@ -155,7 +155,7 @@ cd AriaTools
 python tools/ci/fetch_aria.py
 ```
 
-Aria is pinned to commit `3ff3f1047679363f576e5149b44f1119ec4d9efe`. Run the fetcher again after dependency updates: it verifies the actual Git HEAD, refuses to overwrite local edits, keeps the current checkout if fetching fails, and retains a successful upgrade's previous checkout under `build/deps/aria-backup-*`.
+Aria is pinned to commit `202f0b8e56a5572bf6f6e1f018ccbdd112690ed6`. Run the fetcher again after dependency updates: it verifies the actual Git HEAD, refuses to overwrite local edits, keeps the current checkout if fetching fails, and retains a successful upgrade's previous checkout under `build/deps/aria-backup-*`.
 
 Aria lives in Git-ignored `build/deps/aria`; external dependencies such as JSON enter the build cache after version and SHA256 verification. The project uses no `third_party` source copies or Git submodules.
 
