@@ -39,6 +39,7 @@ class StageJsonHeadersTests(unittest.TestCase):
         result = self.stage()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual((self.destination / "json.hpp").read_text(), "selected release")
+        self.assertEqual((self.destination.parent / "nlohmann-source.txt").read_text().strip(), str((selected / "nlohmann").resolve()))
         self.assertFalse((self.destination / "removed-in-new-release.hpp").exists())
 
     def test_invalid_selection_preserves_existing_export(self):

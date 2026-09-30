@@ -2,7 +2,7 @@
 #   cmake -S Workbench/modules/notes/tests -B build/mac/modules/notes
 #   cmake --build build/mac/modules/notes
 #   ctest --test-dir build/mac/modules/notes --output-on-failure
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 project(wb_module_notes_tests LANGUAGES CXX)
 
 enable_testing()

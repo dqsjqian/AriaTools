@@ -2,7 +2,7 @@
 #   cmake -S Workbench/modules/dashboard/tests -B build/mac/modules/dashboard
 #   cmake --build build/mac/modules/dashboard
 #   ctest --test-dir build/mac/modules/dashboard --output-on-failure
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 project(wb_module_dashboard_tests LANGUAGES CXX)
 
 enable_testing()

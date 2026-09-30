@@ -26,8 +26,8 @@ android {
         applicationId = "com.dqsjqian.ariatools"
         minSdk = 24
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.0.2"
 
         ndk {
             abiFilters += listOf("arm64-v8a")
@@ -85,6 +85,44 @@ android {
     }
 
 }
+
+
+// Preserve original notices from the exact native SDK and resolved runtime jars.
+val licenseAssets = layout.buildDirectory.dir("generated/thirdPartyAssets")
+val runtimeLicenseConfigurations = providers.provider {
+    listOf("debugRuntimeClasspath", "releaseRuntimeClasspath").map { configurations.getByName(it) }
+}
+val runtimeLicenseArtifacts = files(runtimeLicenseConfigurations)
+val selectedNdk = androidComponents.sdkComponents.sdkDirectory.map {
+    it.dir("ndk/${dependencyVersion("ndk")}").asFile
+}
+val nativeRootForNotices = file(wbNativeRoot)
+val noticesPython = providers.environmentVariable("PYTHON").orElse(
+    if (System.getProperty("os.name").startsWith("Windows")) "python" else "python3"
+)
+val stageThirdPartyNotices = tasks.register<Exec>("stageThirdPartyNotices") {
+    inputs.files(runtimeLicenseArtifacts)
+    outputs.dir(licenseAssets)
+    // Native source overrides can change independently of the Gradle graph.
+    outputs.upToDateWhen { false }
+    doFirst {
+        val components = runtimeLicenseConfigurations.get().flatMap { configuration ->
+            configuration.incoming.resolutionResult.allComponents.mapNotNull { component ->
+                val id = component.id as? org.gradle.api.artifacts.component.ModuleComponentIdentifier
+                id?.let { "${it.group}:${it.module}:${it.version}=${configuration.name}" }
+            }
+        }.sorted()
+        commandLine(listOf(
+            noticesPython.get(), nativeRootForNotices.resolve("tools/ci/stage_android_notices.py").path,
+            "--native-root", nativeRootForNotices.path,
+            "--ndk", selectedNdk.get().path,
+            "--output", licenseAssets.get().asFile.path
+        ) + runtimeLicenseArtifacts.files.sortedBy { it.name }.flatMap { listOf("--artifact", it.path) }
+          + components.flatMap { listOf("--runtime-component", it) })
+    }
+}
+android.sourceSets["main"].assets.directories.add(licenseAssets.get().asFile.path)
+tasks.named("preBuild").configure { dependsOn(stageThirdPartyNotices) }
 
 dependencies {
     val composeBom = platform("androidx.compose:compose-bom:${dependencyVersion("compose_bom")}")

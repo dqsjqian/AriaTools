@@ -13,7 +13,7 @@
 #   WB_MOD_NAME     module name (e.g. notes)
 #   WB_MOD_DIR      module root directory (modules/<mod>)
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

@@ -7,11 +7,11 @@
       "resolved": {
         "request_hash": "2c6620ad60a1854f8c761cdfd7caebc063116d49a2d34f36c920a1a617d014ce",
         "requested": "latest",
-        "revision": "c39ad3f21c706b36e1480f325838381423495fcf",
+        "revision": "7f957a8764e69d02e8487a2d128ace9f0605ccdd",
         "sha256": "",
-        "tag": "v3.0.1",
+        "tag": "v3.1.0",
         "url": "https://github.com/dqsjqian/Aria.git",
-        "version": "3.0.1"
+        "version": "3.1.0"
       },
       "tag_prefix": "v"
     },
@@ -58,11 +58,11 @@
         "checksum_source": "github-release-asset",
         "request_hash": "8586774eb848fe437236e66f9f300291a015b405e00aee192b38e0fec53db970",
         "requested": "latest",
-        "revision": "4fe72621c9f5b904aae2ac49bb61fd581ff046f9",
-        "sha256": "3290abda456d4897103f160e0905d09c5b29dfc973ec15024b8f76ce705dd856",
-        "tag": "v0.4.0",
-        "url": "https://github.com/dqsjqian/Mira/releases/download/v0.4.0/Mira-0.4.0.tar.gz",
-        "version": "0.4.0"
+        "revision": "9386d89d2a259303a0a2c3b1539a5cb0e3fc0be5",
+        "sha256": "4faf1f34c6dc8f7d5cd92fd24f657a28153caac789d121a2fdf2259d9d0cd508",
+        "tag": "v1.0.0",
+        "url": "https://github.com/dqsjqian/Mira/releases/download/v1.0.0/Mira-1.0.0.tar.gz",
+        "version": "1.0.0"
       },
       "tag_prefix": "v"
     },

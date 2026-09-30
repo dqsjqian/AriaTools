@@ -1,5 +1,5 @@
 # cart module standalone test project.
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 project(wb_module_cart_tests LANGUAGES CXX)
 
 enable_testing()

@@ -2,7 +2,7 @@
 #   cmake -S Workbench/modules/calendar/tests -B build/mac/modules/calendar
 #   cmake --build build/mac/modules/calendar
 #   ctest --test-dir build/mac/modules/calendar --output-on-failure
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 project(wb_module_calendar_tests LANGUAGES CXX)
 
 enable_testing()
