@@ -14,6 +14,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  dependency-fetcher:
+    name: Dependency fetcher safety regressions
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Test local dependency transactions
+        run: python tools/ci/test_fetch_aria.py
+
   vs2026:
     name: Qt and Web (VS2026 MSVC)
     runs-on: windows-2025-vs2026

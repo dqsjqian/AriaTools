@@ -29,7 +29,7 @@ function(wb_add_module)
     if(WBM_EXTRA_LIBS)
         target_link_libraries(${_tgt} PUBLIC ${WBM_EXTRA_LIBS})
     endif()
-    target_compile_features(${_tgt} PUBLIC cxx_std_20)
+    target_compile_features(${_tgt} PUBLIC cxx_std_23)
 
     if(WORKBENCH_TARGET_QT AND WBM_QT_SOURCES)
         target_sources(${_tgt} PRIVATE ${WBM_QT_SOURCES})

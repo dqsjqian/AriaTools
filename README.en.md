@@ -7,7 +7,7 @@
 One C++23 core, four platform view shells: Qt / iOS / Android / Web
 
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
-[![Framework](https://img.shields.io/badge/Aria-v1.1.0-blueviolet.svg)](https://github.com/dqsjqian/Aria)
+[![Framework](https://img.shields.io/badge/Aria-v3.0.0-blueviolet.svg)](https://github.com/dqsjqian/Aria)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Qt6%20%7C%20iOS%20%7C%20Android%20%7C%20Web-lightgrey.svg)](#)
 
@@ -148,9 +148,26 @@ AriaTools runs on the Aria framework plus native view shells per platform; one C
 
 ```bash
 git clone https://github.com/dqsjqian/AriaTools.git
-python tools/ci/fetch_aria.py
 cd AriaTools
+python tools/ci/fetch_aria.py
 ```
+
+Aria is pinned to commit `362f5511244b0184d511a4ea43a77cecf3114686`. Run the fetcher again after dependency updates: it verifies the actual Git HEAD, refuses to overwrite local edits, keeps the current checkout if fetching fails, and retains a successful upgrade's previous checkout under `build/deps/aria-backup-*`.
+
+Aria lives in Git-ignored `build/deps/aria`; external dependencies such as JSON enter the build cache after version and SHA256 verification. The project uses no `third_party` source copies or Git submodules.
+
+For an unpublished local Aria commit, run `python tools/ci/fetch_aria.py --source /path/to/Aria`, or set `ARIA_SOURCE`; `--source` takes precedence. The source must contain the same pinned commit.
+
+Both the main project and standalone module tests support `-DARIA_DIR=/path/to/Aria`, for example:
+
+```bash
+cmake -S Workbench/modules/cart/tests -B build/mac/modules/cart -DARIA_DIR=/path/to/Aria
+cmake --build build/mac/modules/cart -j3
+ctest --test-dir build/mac/modules/cart --output-on-failure
+python tools/ci/test_fetch_aria.py  # local fetcher safety regressions
+```
+
+`ARIA_DIR` uses that source tree directly without pin verification; the default dependency path remains `build/deps/aria`. CMake configuration does not run the fetcher automatically.
 
 ### Qt desktop (macOS / Linux)
 

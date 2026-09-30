@@ -15,4 +15,4 @@ target_link_libraries(wb_core_app PUBLIC
     ${WB_MODULE_LIBS}
 )
 
-target_compile_features(wb_core_app PUBLIC cxx_std_20)
+target_compile_features(wb_core_app PUBLIC cxx_std_23)

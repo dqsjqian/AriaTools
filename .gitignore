@@ -24,3 +24,12 @@ DerivedData/
 .DS_Store
 _run_web.bat
 web_cfg*.log
+
+# Local Python environments, caches and private settings
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.skills_data/
+.workbuddy/

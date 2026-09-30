@@ -30,7 +30,7 @@ endif()
 get_filename_component(_WB_ROOT "${WB_MOD_DIR}/../.." ABSOLUTE)   # Workbench/
 get_filename_component(_REPO_ROOT "${_WB_ROOT}/.." ABSOLUTE)
 
-list(APPEND CMAKE_MODULE_PATH ${_WB_ROOT}/cmake)
+list(APPEND CMAKE_MODULE_PATH "${_WB_ROOT}/cmake")
 include(WbModule)
 
 set(WB_RUNTIME_I18N_DIR "${CMAKE_BINARY_DIR}/i18n" CACHE INTERNAL "")
@@ -47,20 +47,23 @@ set(ARIA_BUILD_BENCHMARK OFF CACHE BOOL "" FORCE)
 if(WORKBENCH_TARGET_QT)
     set(ARIA_BUILD_QT6 ON CACHE BOOL "" FORCE)
 endif()
-if(NOT EXISTS "${_REPO_ROOT}/build/deps/aria/CMakeLists.txt")
+set(ARIA_DIR "${_REPO_ROOT}/build/deps/aria" CACHE PATH
+    "Pinned Aria source tree, created by tools/ci/fetch_aria.py")
+if(NOT EXISTS "${ARIA_DIR}/CMakeLists.txt")
     message(FATAL_ERROR
-        "Aria not found at ${_REPO_ROOT}/build/deps/aria.\n"
+        "Aria not found at ${ARIA_DIR}.\n"
         "Run once before configuring (from the repository root):\n"
-        "  python tools/ci/fetch_aria.py")
+        "  python tools/ci/fetch_aria.py\n"
+        "Or configure with -DARIA_DIR=/path/to/Aria.")
 endif()
-add_subdirectory(${_REPO_ROOT}/build/deps/aria ${CMAKE_BINARY_DIR}/aria EXCLUDE_FROM_ALL)
+add_subdirectory("${ARIA_DIR}" "${CMAKE_BINARY_DIR}/aria" EXCLUDE_FROM_ALL)
 
 # Base libraries.
-add_subdirectory(${_WB_ROOT}/core/utils      ${CMAKE_BINARY_DIR}/wb_utils)
-add_subdirectory(${_WB_ROOT}/core/infra      ${CMAKE_BINARY_DIR}/wb_infra)
-add_subdirectory(${_WB_ROOT}/core/module_api ${CMAKE_BINARY_DIR}/wb_module_api)
+add_subdirectory("${_WB_ROOT}/core/utils" "${CMAKE_BINARY_DIR}/wb_utils")
+add_subdirectory("${_WB_ROOT}/core/infra" "${CMAKE_BINARY_DIR}/wb_infra")
+add_subdirectory("${_WB_ROOT}/core/module_api" "${CMAKE_BINARY_DIR}/wb_module_api")
 
 # Test projects do not build platform views by default; only the module core is verified.
 
 # This module's library.
-add_subdirectory(${WB_MOD_DIR} ${CMAKE_BINARY_DIR}/wb_module_${WB_MOD_NAME})
+add_subdirectory("${WB_MOD_DIR}" "${CMAKE_BINARY_DIR}/wb_module_${WB_MOD_NAME}")

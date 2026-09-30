@@ -106,8 +106,8 @@ mkdir -p "$BUILD_DIR/lib"
 find "$BUILD_DIR" -name "*.a" -not -path "*CMakeFiles*" \
     -exec cp -f {} "$BUILD_DIR/lib/" \;
 
-# json headers come from Aria's pinned fetch (no vendored third_party since
-# the Mira integration); export them to a stable path for the Gradle
+# JSON headers come from Workbench's hash-pinned dependency in the build
+# cache; export them to a stable path for the Gradle
 # JNI bridge, which is a separate CMake project and links no Aria targets.
 JSON_HPP=$(find "$BUILD_DIR/_deps" -type f -path "*nlohmann*" -name json.hpp 2>/dev/null | head -1)
 if [[ -n "$JSON_HPP" ]]; then

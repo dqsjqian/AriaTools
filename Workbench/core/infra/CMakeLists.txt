@@ -41,7 +41,7 @@ else()
     target_compile_definitions(wb_infra PUBLIC WB_HAVE_APPLE_CRYPTO=0)
 endif()
 
-target_compile_features(wb_infra PUBLIC cxx_std_20)
+target_compile_features(wb_infra PUBLIC cxx_std_23)
 
 # HTTP backend: off by default (uses StubHttpClient). Once vendored libcurl+mbedTLS is integrated,
 # the upper layer enables WB_HAVE_CURL_HTTP=1 here, compiles in http/CurlHttpClient.cpp, and links curl.

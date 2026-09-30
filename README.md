@@ -7,7 +7,7 @@
 一份 C++23 核心，驱动 Qt / iOS / Android / Web 四个 View 壳
 
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
-[![Framework](https://img.shields.io/badge/Aria-v1.1.0-blueviolet.svg)](https://github.com/dqsjqian/Aria)
+[![Framework](https://img.shields.io/badge/Aria-v3.0.0-blueviolet.svg)](https://github.com/dqsjqian/Aria)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Qt6%20%7C%20iOS%20%7C%20Android%20%7C%20Web-lightgrey.svg)](#)
 
@@ -203,9 +203,26 @@ if (auto m = ctx.mounts().Resolve(slots::kDashboardContent)) {
 ```bash
 # 克隆后拉取钉定版本的 Aria（无 submodule）
 git clone https://github.com/dqsjqian/AriaTools.git
-python tools/ci/fetch_aria.py
 cd AriaTools
+python tools/ci/fetch_aria.py
 ```
+
+当前固定 Aria 提交 `362f5511244b0184d511a4ea43a77cecf3114686`。每次更新依赖后重新运行获取脚本：它会核验实际 Git HEAD，拒绝覆盖本地修改，在下载失败时保留原目录，并将成功升级前的旧目录保存在 `build/deps/aria-backup-*`。
+
+Aria 保存在 Git 忽略的 `build/deps/aria`；JSON 等外部依赖按版本与 SHA256 验证后进入构建缓存。项目不使用 `third_party` 源码副本或 Git submodule。
+
+尚未推送的本地 Aria 提交可通过 `python tools/ci/fetch_aria.py --source /path/to/Aria` 获取；也可设置环境变量 `ARIA_SOURCE`，`--source` 优先。指定源必须包含同一个固定提交。
+
+主工程和独立模块测试均支持 `-DARIA_DIR=/path/to/Aria`，例如：
+
+```bash
+cmake -S Workbench/modules/cart/tests -B build/mac/modules/cart -DARIA_DIR=/path/to/Aria
+cmake --build build/mac/modules/cart -j3
+ctest --test-dir build/mac/modules/cart --output-on-failure
+python tools/ci/test_fetch_aria.py  # 获取脚本的本地安全回归测试
+```
+
+使用 `ARIA_DIR` 会直接使用该源码目录，不执行固定版本校验；默认依赖路径仍为 `build/deps/aria`。CMake 配置不会自动运行获取脚本。
 
 ### Qt 桌面（macOS / Linux）
 

@@ -31,7 +31,7 @@ android {
 
         externalNativeBuild {
             cmake {
-                cppFlags += "-std=c++20"
+                cppFlags += "-std=c++23"
                 arguments += listOf(
                     "-DWB_NATIVE_ROOT=$wbNativeRoot"
                 )

@@ -9,4 +9,4 @@ target_include_directories(wb_utils PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..   # include like "utils/Base64.h"
 )
 
-target_compile_features(wb_utils PUBLIC cxx_std_20)
+target_compile_features(wb_utils PUBLIC cxx_std_23)
