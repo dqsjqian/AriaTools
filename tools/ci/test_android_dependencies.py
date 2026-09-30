@@ -166,6 +166,40 @@ class AndroidDependencyTests(unittest.TestCase):
                 with module.project_lock(self.project):
                     self.fail("Concurrent lock unexpectedly acquired")
 
+    def test_verification_uses_cold_cache_and_replays_that_same_cache(self):
+        homes = []
+        def run(command, **kwargs):
+            home = Path(kwargs["env"]["GRADLE_USER_HOME"])
+            self.assertNotEqual(str(home), "existing-warm-cache")
+            self.assertEqual(command[command.index("--gradle-user-home") + 1], str(home))
+            self.assertTrue(kwargs["check"])
+            if not homes:
+                self.assertEqual(list(home.iterdir()), [])
+                self.assertIn("--write-verification-metadata", command)
+                (home / "downloaded-artifact").write_text("verified")
+            else:
+                self.assertEqual(home, homes[0])
+                self.assertTrue((home / "downloaded-artifact").is_file())
+                self.assertIn("--offline", command)
+                self.assertEqual(command[-2:], ["--dependency-verification", "strict"])
+            homes.append(home)
+        with patch.dict(module.os.environ, {"GRADLE_USER_HOME": "existing-warm-cache", "ANDROID_SDK_ROOT": "selected-sdk"}), patch.object(module.subprocess, "run", side_effect=run), patch.object(module, "seed_aapt2_platforms"):
+            module.validate_gradle_project(self.project, self.project, "java")
+        self.assertEqual(len(homes), 2)
+        self.assertFalse(homes[0].exists())
+
+    def test_selected_sdk_precedence_is_applied_only_to_gradle_children(self):
+        with patch.dict(module.os.environ, {"ANDROID_HOME": "old-sdk", "ANDROID_SDK_ROOT": "selected-sdk"}):
+            parent_environment = dict(module.os.environ)
+            with patch.object(module.subprocess, "run") as run, patch.object(module, "seed_aapt2_platforms"):
+                module.validate_gradle_project(self.project, self.project, "java")
+            self.assertEqual(run.call_count, 2)
+            for call in run.call_args_list:
+                environment = call.kwargs["env"]
+                self.assertEqual(environment["ANDROID_HOME"], "selected-sdk")
+                self.assertEqual(environment["ANDROID_SDK_ROOT"], "selected-sdk")
+            self.assertEqual(dict(module.os.environ), parent_environment)
+
     def test_missing_validation_record_rejected(self):
         self.lock()
         p = self.project / module.LOCK_FILES[0]

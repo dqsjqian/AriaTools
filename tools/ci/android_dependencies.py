@@ -188,10 +188,33 @@ def seed_aapt2_platforms(project, download=fetch):
     tree.write(path, encoding="utf-8", xml_declaration=True)
 
 
-def validate_candidate(project, native_root, versions, request, profiles):
+def selected_android_sdk():
     sdk = os.environ.get("ANDROID_SDK_ROOT") or os.environ.get("ANDROID_HOME")
     if not sdk:
         raise ValueError("Set ANDROID_SDK_ROOT to an installed SDK; no SDK is installed automatically")
+    return sdk
+
+
+def validate_gradle_project(project, native_root, java):
+    # Parsed metadata in a warm Gradle cache can hide parent POMs and module
+    # descriptors from checksum generation. Resolve the complete graph cold.
+    with tempfile.TemporaryDirectory(prefix="aria-android-gradle-") as home:
+        sdk = selected_android_sdk()
+        environment = dict(os.environ, GRADLE_USER_HOME=home, ANDROID_HOME=sdk, ANDROID_SDK_ROOT=sdk)
+        command = [java, "-classpath", str(project / "gradle/wrapper/gradle-wrapper.jar"),
+                   "org.gradle.wrapper.GradleWrapperMain", "--gradle-user-home", home,
+                   "--no-daemon", "--max-workers=3", f"-PwbNativeRoot={native_root}",
+                   ":app:assembleDebug", ":app:assembleRelease"]
+        subprocess.run(command + ["--write-locks", "--write-verification-metadata", "sha256"],
+                       cwd=project, env=environment, check=True)
+        seed_aapt2_platforms(project)
+        # Only the fresh cache populated above may supply this offline replay.
+        subprocess.run(command + ["--offline", "--dependency-verification", "strict"],
+                       cwd=project, env=environment, check=True)
+
+
+def validate_candidate(project, native_root, versions, request, profiles):
+    sdk = selected_android_sdk()
     needed = [f"platforms/{platform_package(versions['compile_sdk'])}", f"build-tools/{versions['build_tools']}",
               f"ndk/{versions['ndk']}", f"cmake/{versions['cmake']}", "platform-tools"]
     missing = [item for item in needed if not (Path(sdk) / item).is_dir()]
@@ -236,12 +259,7 @@ def validate_candidate(project, native_root, versions, request, profiles):
     java = str(Path(os.environ["JAVA_HOME"]) / "bin" / ("java.exe" if os.name == "nt" else "java")) if os.environ.get("JAVA_HOME") else shutil.which("java")
     if not java:
         raise ValueError("A JDK is required; set JAVA_HOME")
-    command = [java, "-classpath", str(project / "gradle/wrapper/gradle-wrapper.jar"), "org.gradle.wrapper.GradleWrapperMain", "--no-daemon", "--max-workers=3", f"-PwbNativeRoot={native_root}",
-               ":app:assembleDebug", ":app:assembleRelease"]
-    subprocess.run(command + ["--write-locks", "--write-verification-metadata", "sha256"], cwd=project, check=True)
-    seed_aapt2_platforms(project)
-    # Re-run with the actual strict lock and checksum enforcement before publishing.
-    subprocess.run(command + ["--offline", "--dependency-verification", "strict"], cwd=project, check=True)
+    validate_gradle_project(project, native_root, java)
     profile_lock["validated_profile_sha256"] = profile_digest(profile_lock)
     profile_lock["validated_files"] = {name: digest(project / name) for name in LOCK_FILES[1:]}
     lock_path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")

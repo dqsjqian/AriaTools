@@ -36,12 +36,12 @@
       "activity": "1.13.0",
       "lifecycle": "2.11.0"
     },
+    "validated_profile_sha256": "09fed855356150c4a7183fde969a9cd6b77a7770e5432764a0c461ce20a2cc59",
     "validated_files": {
       "gradle/wrapper/gradle-wrapper.properties": "92fd695b18b5612df2cd2e11459a707881b5d299fc9bcd64c7739b7688fb7689",
-      "gradle/verification-metadata.xml": "e17ac93cc65ea89a50a4a927dd96b1347a783f8aed84d09f66f8f979811aa163",
+      "gradle/verification-metadata.xml": "b238d2209a41f06acfac3ebe7092cbcda23bd19ee1f5e2cf66aa6d969396e232",
       "buildscript-gradle.lockfile": "3d22248b82267f2f2c43c4f275ccdbe818be9fdbd574be4e1ace375def469d70",
       "app/gradle.lockfile": "b0bde1363b182d9e414be413eb4c38c697bb3d99f0d64278a2c0bf6a97fab83c"
-    },
-    "validated_profile_sha256": "09fed855356150c4a7183fde969a9cd6b77a7770e5432764a0c461ce20a2cc59"
+    }
   }
 }

@@ -55,7 +55,7 @@ Updates require installed SDK packages, a suitable JDK, and the native archives
 produced by `bash Workbench/scripts/gen-android.sh`. Set `ANDROID_SDK_ROOT` and
 `JAVA_HOME` to select installations. No global SDK, JDK, or user configuration is
 installed or changed by the resolver. An update builds Debug and Release APKs in
-a temporary Gradle project, writes native Gradle dependency locks and SHA256
+a temporary Gradle project with a fresh Gradle user cache, writes native Gradle dependency locks and SHA256
 verification metadata, then repeats the builds offline with strict verification.
 Only after both passes succeed are `resolved` and the native Gradle files replaced.
 A failed candidate leaves the existing dependency document and Gradle files intact.

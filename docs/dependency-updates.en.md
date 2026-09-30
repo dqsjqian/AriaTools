@@ -77,7 +77,7 @@ Kotlin 2.4.20, JDK 17, compile SDK 37, and NDK 29.
 Install the required SDK packages separately and first build matching native
 archives with `bash Workbench/scripts/gen-android.sh`. Set `ANDROID_SDK_ROOT`
 and `JAVA_HOME` to select installations. Candidate updates build Debug and
-Release APKs in a temporary project and replay them offline with strict
+Release APKs in a temporary project with a fresh Gradle user cache, then replay them offline with strict
 verification before replacing profile locks, native Gradle locks, Maven checksum
 metadata, and the Gradle distribution checksum. Concurrent updates are rejected;
 a failed or interrupted transaction preserves the previous locks. Review and
