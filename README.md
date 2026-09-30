@@ -2,6 +2,8 @@
 
 # ✦ AriaTools
 
+[依赖更新完整指南](docs/dependencies.md) — 版本固定、选择性更新、离线、回退与提交步骤。
+
 **Aria 的跨平台 MVVM 最佳实践** · 插件化 · 模块化 · View 零逻辑
 
 一份 C++23 核心，驱动 Qt / iOS / Android / Web 四个 View 壳
@@ -210,11 +212,17 @@ cd AriaTools
 python tools/ci/fetch_aria.py
 ```
 
-当前固定 Aria 提交 `202f0b8e56a5572bf6f6e1f018ccbdd112690ed6`。每次更新依赖后重新运行获取脚本：它会核验实际 Git HEAD，拒绝覆盖本地修改，在下载失败时保留原目录，并将成功升级前的旧目录保存在 `build/deps/aria-backup-*`。
+根目录唯一的 `dependencies.json` 同时保存版本请求与每项的 `resolved` 结果。没有显式版本、也没有匹配锁时，首次解析最新稳定版并记录版本、提交和 SHA256；已有锁会直接复用，普通构建不会追随新发布。显式版本优先，例如 `python tools/ci/fetch_aria.py --version 3.0.1`（优先于 `ARIA_DEP_ARIA_VERSION`）；主动升级 Aria 使用 `python tools/ci/fetch_aria.py --update`。
+
+C++ 库可用 `-DARIA_DEP_JSON_VERSION=3.12.0`、`-DARIA_DEP_MIRA_VERSION=0.4.0`、`-DARIA_DEP_OPENSSL_VERSION=4.0.3` 等覆盖；CMake 将临时覆盖写入构建目录的解析缓存，不修改源码中的 `dependencies.json`。要更新并保存共享锁，运行 `python tools/ci/update_dependencies.py`，审查变更后提交这一份依赖文件。显式源码覆盖和父工程已提供的依赖目标继续优先。
+
+Qt 使用已安装的 SDK，不自动下载安装。未指定版本时优先选择可发现的最新版本；`-DARIA_DEP_QT_VERSION=6.8.3` 要求精确版本，`Qt6_DIR` / `CMAKE_PREFIX_PATH` 可指定 SDK 所在位置。
+
+每次更新依赖后重新运行获取脚本：它会核验实际 Git HEAD，拒绝覆盖本地修改，在下载失败时保留原目录，并将成功升级前的旧目录保存在 `build/deps/aria-backup-*`。
 
 Aria 保存在 Git 忽略的 `build/deps/aria`；JSON 等外部依赖按版本与 SHA256 验证后进入构建缓存。项目不使用 `third_party` 源码副本或 Git submodule。
 
-尚未推送的本地 Aria 提交可通过 `python tools/ci/fetch_aria.py --source /path/to/Aria` 获取；也可设置环境变量 `ARIA_SOURCE`，`--source` 优先。指定源必须包含同一个固定提交。
+锁定的本地 Aria 提交可通过 `python tools/ci/fetch_aria.py --source /path/to/Aria` 获取；也可设置环境变量 `ARIA_SOURCE`，`--source` 优先。指定源必须包含锁中选定的完整提交。
 
 主工程和独立模块测试均支持 `-DARIA_DIR=/path/to/Aria`，例如：
 
@@ -226,6 +234,8 @@ python tools/ci/test_fetch_aria.py  # 获取脚本的本地安全回归测试
 ```
 
 使用 `ARIA_DIR` 会直接使用该源码目录，不执行固定版本校验；默认依赖路径仍为 `build/deps/aria`。CMake 配置不会自动运行获取脚本。
+
+Android 的 Compose / Activity / Lifecycle 采用独立兼容 profile，并用 Gradle 原生锁和 SHA256 校验冻结整个传递依赖图。运行 `python tools/ci/android_dependencies.py update` 主动升级；具体 SDK 前置条件、显式版本覆盖和锁文件见 [Android 依赖说明](docs/android-dependencies.md)。
 
 ### Qt 桌面（macOS / Linux）
 

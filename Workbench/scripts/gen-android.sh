@@ -15,8 +15,8 @@
 #
 #  Env:
 #    ANDROID_SDK_ROOT    Android SDK path (default ~/Library/Android/sdk)
-#    ANDROID_NDK_ROOT    Android NDK path (default latest under SDK)
-#    ARIA_ANDROID_CMAKE  CMake path (default SDK-bundled latest)
+#    ANDROID_NDK_ROOT    Android NDK path (default selected profile)
+#    ARIA_ANDROID_CMAKE  CMake path (default selected profile)
 #    ARIA_ANDROID_NINJA  ninja path (default beside the SDK cmake)
 #    JOBS                parallel jobs (default CPU count)
 # ============================================================================
@@ -50,13 +50,18 @@ if [[ ! -d "$ANDROID_SDK_ROOT" ]]; then
     echo "  Set ANDROID_SDK_ROOT or install Android SDK" >&2
     exit 1
 fi
-ANDROID_NDK_ROOT="${ANDROID_NDK_ROOT:-$ANDROID_SDK_ROOT/ndk/$(ls "$ANDROID_SDK_ROOT/ndk/" 2>/dev/null | sort -V | tail -1)}"
+# The native core and Gradle JNI bridge must use the same toolchain profile.
+ANDROID_PROFILE_DIR="$WB_ROOT/platform/android"
+profile_version() {
+    python3 "$REPO_ROOT/tools/ci/android_dependencies.py" toolchain --field "$1"
+}
+ANDROID_NDK_ROOT="${ANDROID_NDK_ROOT:-$ANDROID_SDK_ROOT/ndk/$(profile_version ndk)}"
 ANDROID_NDK_ROOT="${ANDROID_NDK_ROOT%/}"
 if [[ ! -d "$ANDROID_NDK_ROOT" ]]; then
     echo "✗ Android NDK not found at: $ANDROID_NDK_ROOT" >&2
     exit 1
 fi
-ARIA_ANDROID_CMAKE="${ARIA_ANDROID_CMAKE:-$ANDROID_SDK_ROOT/cmake/$(ls "$ANDROID_SDK_ROOT/cmake/" 2>/dev/null | sort -V | tail -1)/bin/cmake}"
+ARIA_ANDROID_CMAKE="${ARIA_ANDROID_CMAKE:-$ANDROID_SDK_ROOT/cmake/$(profile_version cmake)/bin/cmake}"
 if [[ ! -x "$ARIA_ANDROID_CMAKE" ]]; then
     ARIA_ANDROID_CMAKE="$(command -v cmake 2>/dev/null || true)"
 fi
@@ -105,24 +110,26 @@ mkdir -p "$BUILD_DIR"
 # them from a single flat dir, mirroring demo5's ${ARIA_PREFIX}/lib/*.a layout.
 echo "▶ collecting static archives → $BUILD_DIR/lib/"
 mkdir -p "$BUILD_DIR/lib"
-find "$BUILD_DIR" -name "*.a" -not -path "*CMakeFiles*" \
-    -exec cp -f {} "$BUILD_DIR/lib/" \;
+while IFS= read -r -d '' archive; do
+    cp -f "$archive" "$BUILD_DIR/lib/"
+done < <(find "$BUILD_DIR" -name "*.a" -not -path "*CMakeFiles*" \
+    -not -path "$BUILD_DIR/lib/*" -print0)
 
-# JSON headers come from Workbench's hash-pinned dependency in the build
-# cache; export them to a stable path for the Gradle
-# JNI bridge, which is a separate CMake project and links no Aria targets.
-JSON_HPP=$(find "$BUILD_DIR/_deps" -type f -path "*nlohmann*" -name json.hpp 2>/dev/null | head -1)
-if [[ -n "$JSON_HPP" ]]; then
-    mkdir -p "$BUILD_DIR/include"
-    cp -r "$(dirname "$JSON_HPP")" "$BUILD_DIR/include/"
-    echo "  json headers   : $BUILD_DIR/include/nlohmann/"
+# CMake stages the headers from the selected nlohmann_json target. Cached
+# archives from other versions must never influence the separate JNI build.
+if [[ ! -f "$BUILD_DIR/include/nlohmann/json.hpp" ]]; then
+    echo "✗ selected JSON headers were not staged for the JNI bridge" >&2
+    exit 1
 fi
+echo "  json headers   : $BUILD_DIR/include/nlohmann/"
 
 echo "✓ core static libs: $BUILD_DIR/lib/"
 echo "  i18n resources : $BUILD_DIR/i18n/"
 
 # ── Stage 2: Gradle assemble (optional) ─────────────────────────────────────
 if [[ "$MODE" == "--apk" ]]; then
+    export ANDROID_SDK_ROOT
+    python3 "$REPO_ROOT/tools/ci/android_dependencies.py" resolve
     echo "▶ Gradle assembleDebug (platform/android)"
     APP_DIR="$REPO_ROOT/Workbench/platform/android"
     GRADLE="${GRADLE:-$APP_DIR/gradlew}"

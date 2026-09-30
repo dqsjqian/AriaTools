@@ -30,6 +30,9 @@ endif()
 get_filename_component(_WB_ROOT "${WB_MOD_DIR}/../.." ABSOLUTE)   # Workbench/
 get_filename_component(_REPO_ROOT "${_WB_ROOT}/.." ABSOLUTE)
 
+set(ARIA_DEPENDENCIES_FILE "${_REPO_ROOT}/dependencies.json" CACHE FILEPATH
+    "Shared dependency requests and resolved versions")
+
 list(APPEND CMAKE_MODULE_PATH "${_WB_ROOT}/cmake")
 include(WbModule)
 

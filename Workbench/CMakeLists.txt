@@ -24,6 +24,9 @@ cmake_minimum_required(VERSION 3.20)
 project(workbench VERSION 1.0.1 LANGUAGES CXX)
 set(WB_BUILD_NUMBER 2)
 
+set(ARIA_DEPENDENCIES_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies.json" CACHE FILEPATH
+    "Shared dependency requests and resolved versions")
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -91,6 +94,11 @@ if(NOT EXISTS "${ARIA_DIR}/CMakeLists.txt")
         "Run once before configuring (from the repository root):\n"
         "  python tools/ci/fetch_aria.py\n"
         "(no git submodules -- Aria is fetched at a pinned commit SHA)")
+endif()
+if(WORKBENCH_TARGET_ANDROID)
+    # The separate Gradle JNI build must use the same Aria headers as these archives.
+    file(REAL_PATH "${ARIA_DIR}" _aria_selected_source BASE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+    file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/aria-source.txt" CONTENT "${_aria_selected_source}\n")
 endif()
 add_subdirectory("${ARIA_DIR}"
                  "${CMAKE_BINARY_DIR}/aria"
@@ -198,4 +206,3 @@ if(TARGET workbench)
         endif()
     endforeach()
 endif()
-

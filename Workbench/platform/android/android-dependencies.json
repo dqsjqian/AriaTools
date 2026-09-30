@@ -1,0 +1,47 @@
+{
+  "schema": 2,
+  "profile": "agp-9.4",
+  "versions": {},
+  "profiles": {
+    "agp-9.4": {
+      "agp_series": "9.4.",
+      "kotlin": "2.4.20",
+      "gradle": "9.6.0",
+      "compile_sdk": "37",
+      "build_tools": "36.0.0",
+      "ndk": "29.0.14206865",
+      "cmake": "3.22.1",
+      "java": "17",
+      "references": [
+        "https://developer.android.com/build/releases/agp-9-4-0-release-notes",
+        "https://kotlinlang.org/docs/gradle-configure-project.html",
+        "https://developer.android.com/build/migrate-to-built-in-kotlin",
+        "https://developer.android.com/develop/ui/compose/bom"
+      ]
+    }
+  },
+  "resolved": {
+    "request_hash": "2c8c1dde253d64ce8a00235c3a6579bccecd507eabffe73c35a6e05655cae310",
+    "profile_hash": "03d5052ef70cda40230e3079f2d2ad563a41de64bbe8888b532089eb2423dde1",
+    "versions": {
+      "kotlin": "2.4.20",
+      "gradle": "9.6.0",
+      "compile_sdk": "37",
+      "build_tools": "36.0.0",
+      "ndk": "29.0.14206865",
+      "cmake": "3.22.1",
+      "java": "17",
+      "agp": "9.4.1",
+      "compose_bom": "2026.09.00",
+      "activity": "1.13.0",
+      "lifecycle": "2.11.0"
+    },
+    "validated_files": {
+      "gradle/wrapper/gradle-wrapper.properties": "92fd695b18b5612df2cd2e11459a707881b5d299fc9bcd64c7739b7688fb7689",
+      "gradle/verification-metadata.xml": "e17ac93cc65ea89a50a4a927dd96b1347a783f8aed84d09f66f8f979811aa163",
+      "buildscript-gradle.lockfile": "3d22248b82267f2f2c43c4f275ccdbe818be9fdbd574be4e1ace375def469d70",
+      "app/gradle.lockfile": "b0bde1363b182d9e414be413eb4c38c697bb3d99f0d64278a2c0bf6a97fab83c"
+    },
+    "validated_profile_sha256": "09fed855356150c4a7183fde969a9cd6b77a7770e5432764a0c461ce20a2cc59"
+  }
+}

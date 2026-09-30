@@ -5,8 +5,11 @@
 //   ./gradlew assembleDebug -PwbNativeRoot=<AriaTools repo root>
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
+
+val dependencyVersions = rootProject.extra["androidDependencyVersions"] as Map<*, *>
+fun dependencyVersion(name: String) = (dependencyVersions[name] ?: error("Missing Android dependency version: $name")).toString()
 
 // AriaTools repository root (contains Workbench/ and build/deps/aria).
 val wbNativeRoot: String = providers.gradleProperty("wbNativeRoot")
@@ -15,7 +18,9 @@ val wbNativeRoot: String = providers.gradleProperty("wbNativeRoot")
 
 android {
     namespace = "com.dqsjqian.ariatools"
-    compileSdk = 34
+    compileSdk = dependencyVersion("compile_sdk").toInt()
+    buildToolsVersion = dependencyVersion("build_tools")
+    ndkVersion = dependencyVersion("ndk")
 
     defaultConfig {
         applicationId = "com.dqsjqian.ariatools"
@@ -27,7 +32,6 @@ android {
         ndk {
             abiFilters += listOf("arm64-v8a")
         }
-        ndkVersion = "29.0.14206865"
 
         externalNativeBuild {
             cmake {
@@ -39,12 +43,12 @@ android {
         }
     }
 
-    sourceSets["main"].assets.srcDirs("$wbNativeRoot/build/platforms/android/i18n")
+    sourceSets["main"].assets.directories.add("$wbNativeRoot/build/platforms/android/i18n")
 
     // Module Android views live beside the C++ module sources (one Compose
     // page per module in platforms/android/), mirroring QT_SOURCES /
     // IOS_SOURCES — the Android twin of the per-platform View layout.
-    sourceSets["main"].java.srcDirs(
+    sourceSets["main"].kotlin.directories.addAll(listOf(
         "$wbNativeRoot/Workbench/modules/dashboard/platforms/android",
         "$wbNativeRoot/Workbench/modules/echo/platforms/android",
         "$wbNativeRoot/Workbench/modules/frameworklab/platforms/android",
@@ -62,43 +66,36 @@ android {
         "$wbNativeRoot/Workbench/modules/chat/platforms/android",
         "$wbNativeRoot/Workbench/modules/theme/platforms/android",
         "$wbNativeRoot/Workbench/modules/wizard/platforms/android",
-    )
+    ))
 
     buildFeatures {
         compose = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.8"
-    }
-
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.22.1"
+            version = dependencyVersion("cmake")
         }
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.toVersion(dependencyVersion("java"))
+        targetCompatibility = JavaVersion.toVersion(dependencyVersion("java"))
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
 }
 
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2024.06.00")
+    val composeBom = platform("androidx.compose:compose-bom:${dependencyVersion("compose_bom")}")
     implementation(composeBom)
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.activity:activity-compose:1.8.2")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
+    implementation("androidx.activity:activity-compose:${dependencyVersion("activity")}")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:${dependencyVersion("lifecycle")}")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:${dependencyVersion("lifecycle")}")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

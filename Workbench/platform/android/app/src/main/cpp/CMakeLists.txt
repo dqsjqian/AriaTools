@@ -17,14 +17,17 @@ if(NOT WB_NATIVE_ROOT)
 endif()
 
 set(WB_ROOT  "${WB_NATIVE_ROOT}/Workbench")
-set(ARIA_ROOT "${WB_NATIVE_ROOT}/build/deps/aria")
+set(WB_NATIVE_BUILD "${WB_NATIVE_ROOT}/build/platforms/android")
+if(NOT EXISTS "${WB_NATIVE_BUILD}/aria-source.txt")
+    message(FATAL_ERROR "Native Aria source manifest is missing; run gen-android.sh first")
+endif()
+file(STRINGS "${WB_NATIVE_BUILD}/aria-source.txt" ARIA_ROOT LIMIT_COUNT 1)
 if(NOT EXISTS "${ARIA_ROOT}/CMakeLists.txt")
     message(FATAL_ERROR
-        "Aria not found at ${ARIA_ROOT}.\n"
-        "Run once before building (from the repository root):\n"
-        "  python tools/ci/fetch_aria.py")
+        "The native core's selected Aria source is missing: ${ARIA_ROOT}.\n"
+        "Restore the source and rebuild with gen-android.sh.")
 endif()
-set(WB_LIB   "${WB_NATIVE_ROOT}/build/platforms/android/lib")
+set(WB_LIB   "${WB_NATIVE_BUILD}/lib")
 
 # ── JNI side-channel bridge ─────────────────────────────────────────────
 # C++ AppCore / VMs → Property on_changed → JNI callback →

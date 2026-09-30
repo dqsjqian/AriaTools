@@ -8,16 +8,25 @@
 # an unrelated adapter having already created this target.
 if(NOT TARGET nlohmann_json::nlohmann_json)
     include("${ARIA_DIR}/cmake/ariaFetchPinned.cmake")
-    aria_fetch_pinned_archive(
-        NAME json
-        VERSION 3.12.0
-        URL "https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz"
-        SHA256 42f6e95cad6ec532fd372391373363b62a14af6d771056dbfc86160e6dfff7aa
-    )
+    aria_fetch_pinned_archive(NAME json)
     add_library(wb_json INTERFACE)
     target_include_directories(wb_json SYSTEM INTERFACE
         "${ARIA_PINNED_JSON_SOURCE_DIR}/include")
     add_library(nlohmann_json::nlohmann_json ALIAS wb_json)
+endif()
+
+if(WORKBENCH_TARGET_ANDROID)
+    # The JNI bridge is a separate CMake project. Export the headers selected
+    # by the actual target, including parent targets and source overrides;
+    # searching a shared cache can silently pick a different JSON version.
+    file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/wb-json-includes-$<CONFIG>.txt"
+        CONTENT "$<JOIN:$<TARGET_PROPERTY:nlohmann_json::nlohmann_json,INTERFACE_INCLUDE_DIRECTORIES>,\n>\n")
+    add_custom_target(wb_stage_json_headers ALL
+        COMMAND ${CMAKE_COMMAND}
+            "-DWB_JSON_MANIFEST=${CMAKE_BINARY_DIR}/wb-json-includes-$<CONFIG>.txt"
+            "-DWB_JSON_DESTINATION=${CMAKE_BINARY_DIR}/include/nlohmann"
+            -P "${CMAKE_CURRENT_LIST_DIR}/../../cmake/StageJsonHeaders.cmake"
+        VERBATIM)
 endif()
 
 add_library(wb_module_api STATIC
