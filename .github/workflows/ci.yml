@@ -195,10 +195,8 @@ jobs:
 
       - name: Configure
         run: |
-          cmake -S Workbench -B build/ci-qt -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH:-}" \
-            -DWORKBENCH_TARGET_QT=ON
+          python3 tools/build.py --platform qt --build-dir build/ci-qt \
+            --generator Ninja --configure-only --jobs 3
 
       - name: Build
         run: cmake --build build/ci-qt -j
