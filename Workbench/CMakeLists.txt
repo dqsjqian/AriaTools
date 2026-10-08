@@ -21,7 +21,7 @@
 #                                   the .a archives produced here.
 # ============================================================================
 cmake_minimum_required(VERSION 3.21)
-project(workbench VERSION 1.0.2 LANGUAGES CXX)
+project(workbench VERSION 1.1.0 LANGUAGES CXX)
 set(WB_BUILD_NUMBER 2)
 
 set(ARIA_DEPENDENCIES_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies.json" CACHE FILEPATH

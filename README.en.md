@@ -9,7 +9,7 @@
 One C++23 core, four platform view shells: Qt / iOS / Android / Web
 
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
-[![Release](https://img.shields.io/badge/AriaTools-v1.0.2-green.svg)](https://github.com/dqsjqian/AriaTools/releases)
+[![Release](https://img.shields.io/badge/AriaTools-v1.1.0-green.svg)](https://github.com/dqsjqian/AriaTools/releases)
 [![Framework](https://img.shields.io/badge/Aria-v3.1.1-blueviolet.svg)](https://github.com/dqsjqian/Aria)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Qt6%20%7C%20iOS%20%7C%20Android%20%7C%20Web-lightgrey.svg)](#)
@@ -161,6 +161,13 @@ toolchain, configuration, architecture and iOS SDK. Android requires `--ndk`;
 iOS requires macOS/Xcode. This entry does not package APKs or deploy/sign device
 apps: retain the existing platform scripts for those actions. Windows MSVC with
 external TLS dependencies still requires a developer environment and Perl/NASM.
+
+On macOS, `--arch x86_64` / `--arch arm64` selects the actual architecture of
+both the app and module tests. Visual Studio accepts `--generator-platform x64`
+(or `ARM64`). `--cmake-arg=-DNAME[:TYPE]=VALUE` adds CMake definitions without
+overriding the selected configuration, source or platform. Existing build caches
+are checked for compiler, toolchain, architecture and dependency-path conflicts
+before fetching or configuring; choose another build directory on conflict.
 
 ## 🚀 Quick Start
 
