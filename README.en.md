@@ -151,6 +151,17 @@ AriaTools runs on the Aria framework plus native view shells per platform; one C
 > duplicate screenshots would add nothing. Windows additionally has two independently
 > validated toolchains — MSVC + Qt6 and MSYS2 UCRT64.
 
+## Portable Python entry
+
+`python tools/build.py --platform qt` reuses the locked dependency fetcher and
+builds the Qt app; `--platform web|ios|android` selects the implemented native
+shell/core. Use `--dry-run` for a read-only command plan, `--offline` for cached
+dependencies, and `--test` for host CTest. Build directories isolate platform,
+toolchain, configuration, architecture and iOS SDK. Android requires `--ndk`;
+iOS requires macOS/Xcode. This entry does not package APKs or deploy/sign device
+apps: retain the existing platform scripts for those actions. Windows MSVC with
+external TLS dependencies still requires a developer environment and Perl/NASM.
+
 ## 🚀 Quick Start
 
 ```bash

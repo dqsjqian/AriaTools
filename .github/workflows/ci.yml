@@ -66,9 +66,7 @@ jobs:
           if (-not (Initialize-MsvcToolchain)) { throw "MSVC/Windows SDK discovery failed" }
       - name: Configure and build with Visual Studio 2026
         run: |
-          cmake -S Workbench -B build/ci-vs2026 -G "Visual Studio 18 2026" -A x64 -DWORKBENCH_TARGET_QT=ON
-          if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          cmake --build build/ci-vs2026 --config Release --parallel 3
+          python tools/build.py --platform qt --build-dir build/ci-vs2026 --generator "Visual Studio 18 2026" --jobs 3 --cmake-arg=-A --cmake-arg=x64
       - name: Probe Qt views
         env:
           QT_QPA_PLATFORM: offscreen
