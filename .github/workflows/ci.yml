@@ -205,13 +205,8 @@ jobs:
 
       - name: Run standalone module tests
         run: |
-          for module in calendar cart dashboard frameworklab notes tools; do
-            cmake -S "Workbench/modules/$module/tests" \
-                  -B "build/ci-test-$module" -G Ninja \
-                  -DCMAKE_BUILD_TYPE=Release
-            cmake --build "build/ci-test-$module" -j
-            ctest --test-dir "build/ci-test-$module" --output-on-failure
-          done
+          python3 tools/build.py --platform qt --build-dir build/ci-qt \
+            --generator Ninja --test --jobs 3
 
       - name: Probe every module and Qt View
         env:
