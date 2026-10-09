@@ -109,6 +109,7 @@ def main(argv=None) -> int:
         root=WORKBENCH,
         deps=deps_list,
         cmake_flags=cmake_flags,
+        qt_required=True,
         extra_args=extra_args,
         build_dir_fn=build_dir_fn,
         validate_fn=validate,
