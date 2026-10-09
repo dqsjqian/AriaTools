@@ -207,9 +207,9 @@ if (auto m = ctx.mounts().Resolve(slots::kDashboardContent)) {
 
 ## 统一 Python 入口
 
-`python tools/build.py --platform qt` 串联现有锁定依赖获取与 Qt 构建；`--platform web|ios|android` 选择实际存在的壳或原生核心。`--dry-run` 只输出计划，`--offline` 复用缓存，`--test` 执行本机 CTest。构建目录隔离平台、工具链、配置、架构和 iOS SDK，避免 MSVC/MinGW 与设备/模拟器缓存混用。
+`python tools/build.py --platform qt` 串联现有锁定依赖获取与 Qt 构建；`--platform web|ios|android` 选择实际存在的壳或原生核心。`--dry-run` 只输出计划，`--offline` 复用缓存。桌面构建加 `--test` 会分别配置、构建并运行 calendar、cart、dashboard、frameworklab、notes、tools 六个模块的独立 CTest 工程；移动端执行仍需模拟器或真机 runner。构建目录隔离平台、工具链、配置、架构和 iOS SDK，避免 MSVC/MinGW 与设备/模拟器缓存混用。
 
-Android 需 `--ndk`，iOS 需 macOS/Xcode；入口不代替 APK 打包、真机签名和部署，保留现有平台脚本处理这些环节。Windows 外部 TLS 构建仍需 Developer PowerShell 与 Perl/NASM。`--qt-prefix` 可显式选择匹配编译器的 Qt。
+Android 需 `--ndk`，iOS 需 macOS/Xcode；入口不代替 APK 打包、真机签名和部署，保留现有平台脚本处理这些环节。Windows MSVC 外部 TLS 构建仍需 Developer PowerShell 与 Perl/NASM；MSYS2 UCRT64 需 make、perl 和 git。`--qt-prefix` 可显式选择匹配编译器的 Qt。
 
 macOS 的 `--arch x86_64` / `--arch arm64` 同时选择应用和模块测试的实际目标架构；Visual Studio 使用 `--generator-platform x64`（或 `ARM64`）。`--cmake-arg=-DNAME[:TYPE]=VALUE` 只补充 CMake 定义，不能覆盖入口已选择的配置、源码或平台。复用 `--build-dir` 时会先检查已有编译器、工具链、架构和依赖路径；冲突需另选目录，原缓存不会删除。
 
@@ -275,7 +275,9 @@ bash Workbench/scripts/gen-ios.sh build      # 生成 + 构建模拟器（免签
 WB_IOS_DEV_TEAM=YOUR_TEAM_ID bash Workbench/scripts/gen-ios.sh device # 真机构建与安装
 ```
 
-### Android（需 NDK r26+ / SDK CMake 3.22.1）
+### Android（使用锁定的工具链 profile）
+
+先按 [Android 依赖说明](docs/android-dependencies.md) 安装所选 profile 的 SDK/NDK/CMake 与 JDK；当前 profile 使用 NDK 29、compile SDK 37 和 JDK 17。脚本从 `android-dependencies.json` 读取具体工具链版本，原生核心与 APK 必须使用一致的选择。
 
 ```bash
 bash Workbench/scripts/gen-android.sh        # 仅核心静态库

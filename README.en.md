@@ -156,11 +156,14 @@ AriaTools runs on the Aria framework plus native view shells per platform; one C
 `python tools/build.py --platform qt` reuses the locked dependency fetcher and
 builds the Qt app; `--platform web|ios|android` selects the implemented native
 shell/core. Use `--dry-run` for a read-only command plan, `--offline` for cached
-dependencies, and `--test` for host CTest. Build directories isolate platform,
-toolchain, configuration, architecture and iOS SDK. Android requires `--ndk`;
+dependencies. For desktop builds, `--test` separately configures, builds and runs
+the six module CTest projects: calendar, cart, dashboard, frameworklab, notes and
+tools. Mobile execution still requires a simulator or device runner. Build
+directories isolate platform, toolchain, configuration, architecture and iOS SDK. Android requires `--ndk`;
 iOS requires macOS/Xcode. This entry does not package APKs or deploy/sign device
 apps: retain the existing platform scripts for those actions. Windows MSVC with
-external TLS dependencies still requires a developer environment and Perl/NASM.
+external TLS dependencies still requires a developer environment and Perl/NASM;
+MSYS2 UCRT64 requires make, perl and git.
 
 On macOS, `--arch x86_64` / `--arch arm64` selects the actual architecture of
 both the app and module tests. Visual Studio accepts `--generator-platform x64`
@@ -230,7 +233,12 @@ bash Workbench/scripts/gen-ios.sh build      # generate + build simulator (no si
 WB_IOS_DEV_TEAM=YOUR_TEAM_ID bash Workbench/scripts/gen-ios.sh device # build and install on a device
 ```
 
-### Android (needs NDK r26+ / SDK CMake 3.22.1)
+### Android (locked toolchain profile)
+
+Install the SDK/NDK/CMake and JDK selected by the
+[Android dependency profile](docs/android-dependencies.md). The current profile
+uses NDK 29, compile SDK 37 and JDK 17. The script reads exact toolchain versions
+from `android-dependencies.json`; the native core and APK must use the same selection.
 
 ```bash
 bash Workbench/scripts/gen-android.sh        # core static libs only
