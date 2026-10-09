@@ -70,7 +70,7 @@ AriaTools/
 │       ├── ios/                  #   iOS shell (UIViewFactory + IosUi)
 │       ├── android/              #   Compose + typed JniAdapter lab
 │       └── web/                  #   HTTP/REST/SSE shell + thin browser client
-└── build/deps/aria               # Aria framework (pinned fetch: tools/ci/fetch_aria.py)
+└── build/deps/aria               # Aria framework (pinned fetch: scripts/ci/fetch_aria.py)
 ```
 
 **Data flow (JNI side-channel; identical shape on every platform)**:
@@ -177,14 +177,14 @@ before fetching or configuring; choose another build directory on conflict.
 ```bash
 git clone https://github.com/dqsjqian/AriaTools.git
 cd AriaTools
-python tools/ci/fetch_aria.py
+python scripts/ci/fetch_aria.py
 ```
 
 C++ builds require CMake 3.21 or newer, matching Mira 1.0.0.
 
-The single root `dependencies.json` contains version requests and each dependency’s `resolved` result. Without an explicit version or a matching lock, the first resolution selects the latest stable release and records its version, commit, and SHA256. Existing locks are reused, so ordinary builds do not follow new releases. Explicit versions take priority: for example, `python tools/ci/fetch_aria.py --version 3.1.1` overrides `ARIA_DEP_ARIA_VERSION`. Run `python tools/ci/fetch_aria.py --update` to upgrade Aria deliberately.
+The single root `dependencies.json` contains version requests and each dependency’s `resolved` result. Without an explicit version or a matching lock, the first resolution selects the latest stable release and records its version, commit, and SHA256. Existing locks are reused, so ordinary builds do not follow new releases. Explicit versions take priority: for example, `python scripts/ci/fetch_aria.py --version 3.1.1` overrides `ARIA_DEP_ARIA_VERSION`. Run `python scripts/ci/fetch_aria.py --update` to upgrade Aria deliberately.
 
-Override C++ libraries with options such as `-DARIA_DEP_JSON_VERSION=3.12.0`, `-DARIA_DEP_MIRA_VERSION=1.0.0`, and `-DARIA_DEP_OPENSSL_VERSION=4.0.3`. CMake records temporary overrides in a build-directory resolution cache without changing the source `dependencies.json`. To update the shared library lock, run `python tools/ci/update_dependencies.py`, review the changes, and commit this dependency file. Explicit source overrides and dependency targets supplied by a parent project retain priority.
+Override C++ libraries with options such as `-DARIA_DEP_JSON_VERSION=3.12.0`, `-DARIA_DEP_MIRA_VERSION=1.0.0`, and `-DARIA_DEP_OPENSSL_VERSION=4.0.3`. CMake records temporary overrides in a build-directory resolution cache without changing the source `dependencies.json`. To update the shared library lock, run `python scripts/ci/update_dependencies.py`, review the changes, and commit this dependency file. Explicit source overrides and dependency targets supplied by a parent project retain priority.
 
 Qt uses installed SDKs and never downloads or installs them automatically. The default prefers the latest discoverable version; `-DARIA_DEP_QT_VERSION=6.8.3` requires that exact version. Use `Qt6_DIR` / `CMAKE_PREFIX_PATH` to select an SDK location.
 
@@ -192,7 +192,7 @@ Run the fetcher again after dependency updates: it verifies the actual Git HEAD,
 
 Aria lives in Git-ignored `build/deps/aria`; external dependencies such as JSON enter the build cache after version and SHA256 verification. The project uses no `third_party` source copies or Git submodules.
 
-To obtain the locked Aria commit from a local repository, run `python tools/ci/fetch_aria.py --source /path/to/Aria`, or set `ARIA_SOURCE`; `--source` takes precedence. The source must contain the exact commit selected by the lock.
+To obtain the locked Aria commit from a local repository, run `python scripts/ci/fetch_aria.py --source /path/to/Aria`, or set `ARIA_SOURCE`; `--source` takes precedence. The source must contain the exact commit selected by the lock.
 
 Both the main project and standalone module tests support `-DARIA_DIR=/path/to/Aria`, for example:
 
@@ -200,12 +200,12 @@ Both the main project and standalone module tests support `-DARIA_DIR=/path/to/A
 cmake -S Workbench/modules/cart/tests -B build/mac/modules/cart -DARIA_DIR=/path/to/Aria
 cmake --build build/mac/modules/cart -j3
 ctest --test-dir build/mac/modules/cart --output-on-failure
-python tools/ci/test_fetch_aria.py  # local fetcher safety regressions
+python scripts/ci/test_fetch_aria.py  # local fetcher safety regressions
 ```
 
 `ARIA_DIR` uses that source tree directly without pin verification; the default dependency path remains `build/deps/aria`. CMake configuration does not run the fetcher automatically.
 
-Android Compose / Activity / Lifecycle use a compatibility profile, native Gradle dependency locks, and SHA256 verification for the transitive graph. Run `python tools/ci/android_dependencies.py update` for a deliberate upgrade; see [Android dependencies](docs/android-dependencies.md) for SDK prerequisites, explicit overrides, and lock files.
+Android Compose / Activity / Lifecycle use a compatibility profile, native Gradle dependency locks, and SHA256 verification for the transitive graph. Run `python scripts/ci/android_dependencies.py update` for a deliberate upgrade; see [Android dependencies](docs/android-dependencies.md) for SDK prerequisites, explicit overrides, and lock files.
 
 ### Qt desktop (macOS / Linux)
 
