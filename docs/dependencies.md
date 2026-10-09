@@ -7,7 +7,7 @@
 | 文件 | 用途 | 是否提交 Git |
 | --- | --- | --- |
 | `dependencies.json` | 每项包含来源、可选长期 `version` 要求，以及工具维护的 `resolved` 版本、完整提交和 SHA256；不填 `version` 表示更新时选最新稳定版 | 是 |
-| `tools/ci/update_dependencies.py` | 手动更新入口，无需修改脚本 | 是 |
+| `scripts/ci/update_dependencies.py` | 手动更新入口，无需修改脚本 | 是 |
 
 已有锁时，普通构建复用锁；没有匹配锁时才解析最新稳定版。**“最新”指执行解析/更新时的最新稳定发布，不是每次构建自动升级，也不包含预发布或开发分支。** 已安装 Qt/编译器/系统 SDK 仍由平台工具配置，详见下文。
 
@@ -17,22 +17,22 @@
 
 ```bash
 # 查看所有参数
-python tools/ci/update_dependencies.py --help
+python scripts/ci/update_dependencies.py --help
 
 # 按 manifest 要求更新全部依赖
-python tools/ci/update_dependencies.py
+python scripts/ci/update_dependencies.py
 
 # 只更新一个依赖，其他锁记录完全保留
-python tools/ci/update_dependencies.py --only mira
+python scripts/ci/update_dependencies.py --only mira
 
 # 更新多个依赖：每个名称使用一个 --only
-python tools/ci/update_dependencies.py --only json --only mira
+python scripts/ci/update_dependencies.py --only json --only mira
 
 # 本次指定两个版本；其他库按 manifest（未填 version 的选择最新稳定版）
-python tools/ci/update_dependencies.py --version json=3.12.0 --version openssl=4.0.3
+python scripts/ci/update_dependencies.py --version json=3.12.0 --version openssl=4.0.3
 
 # 只处理指定的两个库，并给其中一个指定版本
-python tools/ci/update_dependencies.py --only json --only mira --version json=3.12.0
+python scripts/ci/update_dependencies.py --only json --only mira --version json=3.12.0
 ```
 
 `--version` 可重复，但同一个名称不能重复。`--only` 与 `--version` 同用时，每个版本覆盖项都必须出现在 `--only` 中；拼错名称或遗漏选择会报错，不会默默忽略。版本写上游稳定版本号，例如 JSON 的 `3.12.0`；不接受 `main`、`nightly`、`2.0.0-rc1` 作为稳定选择。
@@ -52,7 +52,7 @@ python tools/ci/update_dependencies.py --only json --only mira --version json=3.
 }
 ```
 
-然后运行 `python tools/ci/update_dependencies.py`：两个固定库保持所需版本，未固定库选择最新稳定版。只想升级第三个库时，运行 `python tools/ci/update_dependencies.py --only mira`。以后想解除固定，删除该项的 `version` 字段再主动更新。
+然后运行 `python scripts/ci/update_dependencies.py`：两个固定库保持所需版本，未固定库选择最新稳定版。只想升级第三个库时，运行 `python scripts/ci/update_dependencies.py --only mira`。以后想解除固定，删除该项的 `version` 字段再主动更新。
 
 优先级与持久性：
 
@@ -66,7 +66,7 @@ python tools/ci/update_dependencies.py --only json --only mira --version json=3.
 更新脚本**更新选择与锁文件，不自动编译整个项目，也不保证新 API 兼容**。它成功退出后，再取回锁定的源码并执行正常构建/测试：
 
 ```bash
-python tools/ci/fetch_aria.py
+python scripts/ci/fetch_aria.py
 cmake -S Workbench -B build/flavors/dependency-check -DCMAKE_BUILD_TYPE=Release
 cmake --build build/flavors/dependency-check --config Release --parallel 3
 bash Workbench/scripts/gen-web.sh probe  # Web shell integration; see README for each platform probe
@@ -81,10 +81,10 @@ bash Workbench/scripts/gen-web.sh probe  # Web shell integration; see README for
 只补缺失的选择、保留有效锁，用底层 `resolve`：
 
 ```bash
-python tools/ci/dependencies.py resolve --file dependencies.json
+python scripts/ci/dependencies.py resolve --file dependencies.json
 
 # 只验证/复用匹配的锁；缺失条目或新版本要求会报错
-python tools/ci/dependencies.py resolve --file dependencies.json --offline
+python scripts/ci/dependencies.py resolve --file dependencies.json --offline
 ```
 
 离线解析成功只说明有匹配元数据；离线构建还需要对应源码/归档缓存与工具链。`update --offline` 无法发现上游新版本，应使用 `resolve --offline`。
@@ -125,13 +125,13 @@ python tools/ci/dependencies.py resolve --file dependencies.json --offline
 
 ```bash
 # 普通构建复用已验证锁；缺锁或请求/profile 变化时解析并构建候选组合
-python tools/ci/android_dependencies.py resolve
+python scripts/ci/android_dependencies.py resolve
 # 主动更新 Compose BOM、Activity、Lifecycle，并验证完整工具链组合
-python tools/ci/android_dependencies.py update
+python scripts/ci/android_dependencies.py update
 # 显式版本优先；成功后保存在 Android manifest，后续普通构建仍使用它
-python tools/ci/android_dependencies.py update --version activity=1.13.0
+python scripts/ci/android_dependencies.py update --version activity=1.13.0
 # 不联网、不要求 SDK 的锁完整性检查
-python tools/ci/android_dependencies.py check
+python scripts/ci/android_dependencies.py check
 ```
 
 Android 只维护一个自定义依赖文件 `Workbench/platform/android/android-dependencies.json`：包含版本请求、工具链兼容组，以及 `resolved` 实际版本和验证摘要；请求与兼容组用指纹关联，不再复制到另一份自定义锁。库默认选择解析时的最新稳定版，AGP/Gradle/Kotlin/SDK/NDK 按经过审查的 profile 整组选择，不逐项漂移。`--profile` 高于 `ARIA_ANDROID_PROFILE` 和 manifest；`--version NAME=VERSION` 高于 `ARIA_DEP_ANDROID_<NAME>_VERSION` 和 manifest。当前 profile 使用 AGP 9.4 / Gradle 9.6 / Kotlin 2.4.20 / JDK 17 / compile SDK 37 / NDK 29。

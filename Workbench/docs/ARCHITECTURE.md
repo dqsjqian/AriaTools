@@ -17,7 +17,7 @@ AriaTools/
 │   ├── platform/              Qt、UIKit、Android、Web 入口与平台壳
 │   ├── cmake/                 模块注册与独立测试构建 helper
 │   └── scripts/               各平台构建入口与共享 MSVC helper
-├── tools/ci/                  固定版本依赖获取与安全回归
+├── scripts/ci/                  固定版本依赖获取与安全回归
 ├── docs/marketing/            有日期的发布介绍与配图
 └── build/deps/aria/           Git 忽略的固定版本框架缓存
 ```
@@ -99,4 +99,4 @@ AppCore
 
 当前模块列表、平台依赖和完整构建命令统一维护在[仓库 README](../../README.md)。
 平台脚本位于 `Workbench/scripts/`，所有构建产物进入根目录的 `build/`；
-先运行 `python3 tools/ci/fetch_aria.py` 获取固定版本的 Aria，再选择平台入口。
+先运行 `python3 scripts/ci/fetch_aria.py` 获取固定版本的 Aria，再选择平台入口。

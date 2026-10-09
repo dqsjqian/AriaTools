@@ -2,7 +2,7 @@
 #  Workbench — cross-platform workbench (Aria C++ MVVM flagship example)
 #
 #  Architecture:
-#    build/deps/aria    pinned Aria fetch (tools/ci/fetch_aria.py)
+#    build/deps/aria    pinned Aria fetch (scripts/ci/fetch_aria.py)
 #    core/utils         wb_utils      pure functions + platform macros
 #    core/infra         wb_infra      stable services (i18n/storage/secret/crypto/settings/sync/log)
 #                                     + DI container + EventBus
@@ -88,12 +88,12 @@ endif()
 
 # -- Pull in the Aria framework (pinned fetch; no git submodule) --
 set(ARIA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../build/deps/aria" CACHE PATH
-    "Pinned Aria source tree, created by tools/ci/fetch_aria.py")
+    "Pinned Aria source tree, created by scripts/ci/fetch_aria.py")
 if(NOT EXISTS "${ARIA_DIR}/CMakeLists.txt")
     message(FATAL_ERROR
         "Aria not found at ${ARIA_DIR}.\n"
         "Run once before configuring (from the repository root):\n"
-        "  python tools/ci/fetch_aria.py\n"
+        "  python scripts/ci/fetch_aria.py\n"
         "(no git submodules -- Aria is fetched at a pinned commit SHA)")
 endif()
 if(WORKBENCH_TARGET_ANDROID)

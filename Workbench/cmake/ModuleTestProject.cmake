@@ -51,12 +51,12 @@ if(WORKBENCH_TARGET_QT)
     set(ARIA_BUILD_QT6 ON CACHE BOOL "" FORCE)
 endif()
 set(ARIA_DIR "${_REPO_ROOT}/build/deps/aria" CACHE PATH
-    "Pinned Aria source tree, created by tools/ci/fetch_aria.py")
+    "Pinned Aria source tree, created by scripts/ci/fetch_aria.py")
 if(NOT EXISTS "${ARIA_DIR}/CMakeLists.txt")
     message(FATAL_ERROR
         "Aria not found at ${ARIA_DIR}.\n"
         "Run once before configuring (from the repository root):\n"
-        "  python tools/ci/fetch_aria.py\n"
+        "  python scripts/ci/fetch_aria.py\n"
         "Or configure with -DARIA_DIR=/path/to/Aria.")
 endif()
 add_subdirectory("${ARIA_DIR}" "${CMAKE_BINARY_DIR}/aria" EXCLUDE_FROM_ALL)

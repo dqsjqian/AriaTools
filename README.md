@@ -207,7 +207,7 @@ if (auto m = ctx.mounts().Resolve(slots::kDashboardContent)) {
 
 ## 统一 Python 入口
 
-`python tools/build.py --platform qt` 串联现有锁定依赖获取与 Qt 构建；`--platform web|ios|android` 选择实际存在的壳或原生核心。`--dry-run` 只输出计划，`--offline` 复用缓存。桌面构建加 `--test` 会分别配置、构建并运行 calendar、cart、dashboard、frameworklab、notes、tools 六个模块的独立 CTest 工程；移动端执行仍需模拟器或真机 runner。构建目录隔离平台、工具链、配置、架构和 iOS SDK，避免 MSVC/MinGW 与设备/模拟器缓存混用。
+`python scripts/build.py --platform qt` 串联现有锁定依赖获取与 Qt 构建；`--platform web|ios|android` 选择实际存在的壳或原生核心。`--dry-run` 只输出计划，`--offline` 复用缓存。桌面构建加 `--test` 会分别配置、构建并运行 calendar、cart、dashboard、frameworklab、notes、tools 六个模块的独立 CTest 工程；移动端执行仍需模拟器或真机 runner。构建目录隔离平台、工具链、配置、架构和 iOS SDK，避免 MSVC/MinGW 与设备/模拟器缓存混用。
 
 Android 需 `--ndk`，iOS 需 macOS/Xcode；入口不代替 APK 打包、真机签名和部署，保留现有平台脚本处理这些环节。Windows MSVC 外部 TLS 构建仍需 Developer PowerShell 与 Perl/NASM；MSYS2 UCRT64 需 make、perl 和 git。`--qt-prefix` 可显式选择匹配编译器的 Qt。
 

@@ -53,7 +53,7 @@ fi
 # The native core and Gradle JNI bridge must use the same toolchain profile.
 ANDROID_PROFILE_DIR="$WB_ROOT/platform/android"
 profile_version() {
-    python3 "$REPO_ROOT/tools/ci/android_dependencies.py" toolchain --field "$1"
+    python3 "$REPO_ROOT/scripts/ci/android_dependencies.py" toolchain --field "$1"
 }
 ANDROID_NDK_ROOT="${ANDROID_NDK_ROOT:-$ANDROID_SDK_ROOT/ndk/$(profile_version ndk)}"
 ANDROID_NDK_ROOT="${ANDROID_NDK_ROOT%/}"
@@ -129,7 +129,7 @@ echo "  i18n resources : $BUILD_DIR/i18n/"
 # ── Stage 2: Gradle assemble (optional) ─────────────────────────────────────
 if [[ "$MODE" == "--apk" ]]; then
     export ANDROID_SDK_ROOT
-    python3 "$REPO_ROOT/tools/ci/android_dependencies.py" resolve
+    python3 "$REPO_ROOT/scripts/ci/android_dependencies.py" resolve
     echo "▶ Gradle assembleDebug (platform/android)"
     APP_DIR="$REPO_ROOT/Workbench/platform/android"
     GRADLE="${GRADLE:-$APP_DIR/gradlew}"

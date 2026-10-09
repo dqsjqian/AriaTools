@@ -153,7 +153,7 @@ AriaTools runs on the Aria framework plus native view shells per platform; one C
 
 ## Portable Python entry
 
-`python tools/build.py --platform qt` reuses the locked dependency fetcher and
+`python scripts/build.py --platform qt` reuses the locked dependency fetcher and
 builds the Qt app; `--platform web|ios|android` selects the implemented native
 shell/core. Use `--dry-run` for a read-only command plan, `--offline` for cached
 dependencies. For desktop builds, `--test` separately configures, builds and runs

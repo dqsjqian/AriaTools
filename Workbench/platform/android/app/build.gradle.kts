@@ -113,7 +113,7 @@ val stageThirdPartyNotices = tasks.register<Exec>("stageThirdPartyNotices") {
             }
         }.sorted()
         commandLine(listOf(
-            noticesPython.get(), nativeRootForNotices.resolve("tools/ci/stage_android_notices.py").path,
+            noticesPython.get(), nativeRootForNotices.resolve("scripts/ci/stage_android_notices.py").path,
             "--native-root", nativeRootForNotices.path,
             "--ndk", selectedNdk.get().path,
             "--output", licenseAssets.get().asFile.path

@@ -28,19 +28,19 @@ From the repository root:
 
 ```sh
 # Reuse the validated lock; resolve and validate if this is the first run.
-python tools/ci/android_dependencies.py resolve
+python scripts/ci/android_dependencies.py resolve
 
 # Re-resolve stable library releases and validate the complete candidate graph.
-python tools/ci/android_dependencies.py update
+python scripts/ci/android_dependencies.py update
 
 # Explicit request overrides the manifest and environment.
-python tools/ci/android_dependencies.py update --version activity=1.13.0
+python scripts/ci/android_dependencies.py update --version activity=1.13.0
 
 # Verify lock integrity without accessing the network or requiring an SDK.
-python tools/ci/android_dependencies.py check
+python scripts/ci/android_dependencies.py check
 
 # Print the SDK package names CI must install for the selected lock.
-python tools/ci/android_dependencies.py sdk-packages
+python scripts/ci/android_dependencies.py sdk-packages
 ```
 
 `--profile` overrides `ARIA_ANDROID_PROFILE`, which overrides the manifest.

@@ -7,12 +7,12 @@ The single `dependencies.json` declares sources and optional persistent `version
 ## Commands
 
 ```bash
-python tools/ci/update_dependencies.py --help
-python tools/ci/update_dependencies.py
-python tools/ci/update_dependencies.py --only mira
-python tools/ci/update_dependencies.py --only json --only mira
-python tools/ci/update_dependencies.py --version json=3.12.0 --version openssl=4.0.3
-python tools/ci/update_dependencies.py --only json --only mira --version json=3.12.0
+python scripts/ci/update_dependencies.py --help
+python scripts/ci/update_dependencies.py
+python scripts/ci/update_dependencies.py --only mira
+python scripts/ci/update_dependencies.py --only json --only mira
+python scripts/ci/update_dependencies.py --version json=3.12.0 --version openssl=4.0.3
+python scripts/ci/update_dependencies.py --only json --only mira --version json=3.12.0
 ```
 
 The available, case-sensitive names are: `aria`, `doctest`, `json`, `mira`, `openssl`. Repeat `--only` for multiple selections and `--version` for different overrides. When using both, select every overridden name with `--only`. Unknown names, duplicate overrides and overrides outside the selection are errors.
@@ -26,7 +26,7 @@ Precedence: this invocation's `--version` overrides the manifest; explicit manif
 The updater atomically saves selection metadata; it does **not** compile the entire application or establish API compatibility. After it succeeds:
 
 ```bash
-python tools/ci/fetch_aria.py
+python scripts/ci/fetch_aria.py
 cmake -S Workbench -B build/flavors/dependency-check -DCMAKE_BUILD_TYPE=Release
 cmake --build build/flavors/dependency-check --config Release --parallel 3
 bash Workbench/scripts/gen-web.sh probe  # Web shell integration; see README for each platform probe
@@ -37,8 +37,8 @@ Follow the [README](../README.en.md) for platform SDK selection and additional p
 ## Existing locks, offline operation and overrides
 
 ```bash
-python tools/ci/dependencies.py resolve --file dependencies.json
-python tools/ci/dependencies.py resolve --file dependencies.json --offline
+python scripts/ci/dependencies.py resolve --file dependencies.json
+python scripts/ci/dependencies.py resolve --file dependencies.json --offline
 ```
 
 `resolve` fills missing/mismatched entries and preserves valid selections. Its offline mode requires a matching lock; successful offline resolution does not ensure source archives are cached. `update --offline` cannot discover new releases. A missing `resolved` entry causes fresh resolution for that dependency. Prefer the updater for controlled upgrades; deleting the whole `dependencies.json` also removes the source declarations needed for resolution.
@@ -59,10 +59,10 @@ The C++ updater above does not update Maven dependencies or require an Android
 SDK. Android has a separate, validated update entry point:
 
 ```bash
-python tools/ci/android_dependencies.py resolve
-python tools/ci/android_dependencies.py update
-python tools/ci/android_dependencies.py update --version activity=1.13.0
-python tools/ci/android_dependencies.py check
+python scripts/ci/android_dependencies.py resolve
+python scripts/ci/android_dependencies.py update
+python scripts/ci/android_dependencies.py update --version activity=1.13.0
+python scripts/ci/android_dependencies.py check
 ```
 
 `resolve` reuses the validated lock; `update` selects stable Compose BOM,
