@@ -92,7 +92,7 @@ def extra_definitions(arguments, flags):
 
 
 def locked_aria_version(root):
-    reader = root / "tools/ci/dependencies.py"
+    reader = root / "scripts/ci/dependencies.py"
     if not reader.is_file():
         reader = Path(__file__).resolve().with_name("dependencies.py")
     spec = importlib.util.spec_from_file_location("build_dependencies", reader)
@@ -147,7 +147,7 @@ def plan(args, root=ROOT, host=None):
     commands = []
     aria = args.aria_root.resolve() if args.aria_root else root / "build/deps/aria"
     if kind != "aria" and not args.aria_root and not args.aria_prefix:
-        fetch = [sys.executable, str(root / "tools/ci/fetch_aria.py")]
+        fetch = [sys.executable, str(root / "scripts/ci/fetch_aria.py")]
         if args.offline:
             fetch.append("--offline")
         commands.append(fetch)

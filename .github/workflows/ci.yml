@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Verify selection, rollback and cache contracts
-        run: python -m unittest discover -s tools/ci -p 'test_*.py'
+        run: python -m unittest discover -s scripts/ci -p 'test_*.py'
 
   dependency-fetcher:
     name: Dependency fetcher safety regressions
@@ -32,9 +32,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Test local dependency transactions
-        run: python tools/ci/test_fetch_aria.py
+        run: python scripts/ci/test_fetch_aria.py
       - name: Test selected JSON header staging
-        run: python tools/ci/test_stage_json_headers.py
+        run: python scripts/ci/test_stage_json_headers.py
 
   vs2026:
     name: Qt and Web (VS2026 MSVC)
@@ -48,7 +48,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Fetch pinned Aria
-        run: python tools/ci/fetch_aria.py
+        run: python scripts/ci/fetch_aria.py
       - uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.3'
@@ -135,7 +135,7 @@ jobs:
             mingw-w64-ucrt-x86_64-ninja
             mingw-w64-ucrt-x86_64-qt6-base
       - name: Fetch pinned Aria
-        run: python tools/ci/fetch_aria.py
+        run: python scripts/ci/fetch_aria.py
       - name: Build Qt desktop
         run: |
           cmake -S Workbench -B build/ci-win -G Ninja -DCMAKE_BUILD_TYPE=Release -DWORKBENCH_TARGET_QT=ON
@@ -177,7 +177,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Fetch pinned Aria
-        run: python tools/ci/fetch_aria.py
+        run: python scripts/ci/fetch_aria.py
 
       - name: Install Linux toolchain and Qt6
         if: runner.os == 'Linux'
@@ -233,7 +233,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Fetch pinned Aria
-        run: python tools/ci/fetch_aria.py
+        run: python scripts/ci/fetch_aria.py
 
       - uses: actions/setup-java@v5
         with:
@@ -244,7 +244,7 @@ jobs:
 
       - name: Verify Android locks and install the selected SDK profile
         run: |
-          python tools/ci/android_dependencies.py sdk-packages > /tmp/android-sdk-packages.txt
+          python scripts/ci/android_dependencies.py sdk-packages > /tmp/android-sdk-packages.txt
           mapfile -t packages < /tmp/android-sdk-packages.txt
           sdkmanager "${packages[@]}"
 
@@ -268,7 +268,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Fetch pinned Aria
-        run: python tools/ci/fetch_aria.py
+        run: python scripts/ci/fetch_aria.py
 
       - name: Configure simulator target
         run: |
