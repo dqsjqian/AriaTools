@@ -51,6 +51,7 @@ option(WORKBENCH_TARGET_QT       "Build the Qt6 desktop app (Win/Mac/Linux)" ON)
 option(WORKBENCH_TARGET_IOS      "Build the iOS UIKit app"                    OFF)
 option(WORKBENCH_TARGET_ANDROID  "Build the Android JNI core (static libs)"   OFF)
 option(WORKBENCH_TARGET_WEB      "Build the HTTP/REST/SSE browser shell"      OFF)
+option(WORKBENCH_ENABLE_PCH      "Use precompiled headers for Qt builds (faster)" ON)
 
 if(WORKBENCH_TARGET_IOS)
     set(WORKBENCH_TARGET_QT OFF CACHE BOOL "" FORCE)

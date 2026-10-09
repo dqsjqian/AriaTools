@@ -12,6 +12,10 @@ add_library(wb_qt_support STATIC
 )
 target_include_directories(wb_qt_support PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(wb_qt_support PUBLIC aria::qt6 Qt6::Widgets)
+if(WORKBENCH_ENABLE_PCH)
+    target_precompile_headers(wb_qt_support PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/wb_pch.h")
+endif()
 
 # -- workbench executable --
 add_executable(workbench WIN32 MACOSX_BUNDLE
@@ -28,6 +32,10 @@ target_link_libraries(workbench PRIVATE
     aria::qt6
     Qt6::Widgets
 )
+if(WORKBENCH_ENABLE_PCH)
+    target_precompile_headers(workbench PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/wb_pch.h")
+endif()
 
 set_target_properties(workbench PROPERTIES
     MACOSX_BUNDLE_BUNDLE_NAME        "Workbench"

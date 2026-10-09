@@ -43,6 +43,8 @@ def extra_args(parser: argparse.ArgumentParser):
     parser.add_argument("--offline", action="store_true", help="Offline dependency mode")
     parser.add_argument("--aria-root", type=Path, help="Explicit local Aria source")
     parser.add_argument("--generator-platform", help="VS target platform (x64/ARM64)")
+    parser.add_argument("--no-pch", action="store_true",
+                        help="Disable precompiled headers (slower but uses less disk)")
 
 
 def validate(args):
@@ -96,6 +98,7 @@ def cmake_flags(args) -> dict:
     for name in ("qt", "web", "ios", "android"):
         flags[f"WORKBENCH_TARGET_{name.upper()}"] = "ON" if name == selected else "OFF"
     flags["ARIA_DIR"] = str(aria)
+    flags["WORKBENCH_ENABLE_PCH"] = "OFF" if args.no_pch else "ON"
     return flags
 
 
