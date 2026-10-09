@@ -10,7 +10,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[2]
 ENTRY = ROOT / "scripts/build.py"
 if not ENTRY.exists():
-    ENTRY = ROOT / "tools/build.py"
+    ENTRY = ROOT / "scripts/build.py"
 
 spec = importlib.util.spec_from_file_location("build_entry", ENTRY)
 build = importlib.util.module_from_spec(spec)

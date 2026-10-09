@@ -66,7 +66,7 @@ jobs:
           if (-not (Initialize-MsvcToolchain)) { throw "MSVC/Windows SDK discovery failed" }
       - name: Configure and build with Visual Studio 2026
         run: |
-          python tools/build.py --platform qt --build-dir build/ci-vs2026 --generator "Visual Studio 18 2026" --generator-platform x64 --jobs 3
+          python scripts/build.py --platform qt --build-dir build/ci-vs2026 --generator "Visual Studio 18 2026" --generator-platform x64 --jobs 3
       - name: Probe Qt views
         env:
           QT_QPA_PLATFORM: offscreen
@@ -195,7 +195,7 @@ jobs:
 
       - name: Configure
         run: |
-          python3 tools/build.py --platform qt --build-dir build/ci-qt \
+          python3 scripts/build.py --platform qt --build-dir build/ci-qt \
             --generator Ninja --configure-only --jobs 3
 
       - name: Build
@@ -203,7 +203,7 @@ jobs:
 
       - name: Run standalone module tests
         run: |
-          python3 tools/build.py --platform qt --build-dir build/ci-qt \
+          python3 scripts/build.py --platform qt --build-dir build/ci-qt \
             --generator Ninja --test --jobs 3
 
       - name: Probe every module and Qt View
