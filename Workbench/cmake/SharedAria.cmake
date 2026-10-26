@@ -50,11 +50,20 @@ foreach(_feature QT HTTP JNI APPKIT UIKIT)
         list(APPEND _aria_components "${_component}")
     endif()
 endforeach()
-unset(aria_DIR CACHE)
-unset(aria_DIR)
-find_package(aria CONFIG REQUIRED COMPONENTS ${_aria_components}
-    PATHS "${ARIA_SDK_PREFIX}" NO_DEFAULT_PATH)
+# Set the config directory directly: in a cross build (iOS, Android) CMake
+# re-roots every search prefix under CMAKE_FIND_ROOT_PATH and never looks at
+# the SDK the environment just installed.
+set(aria_DIR "${ARIA_SDK_PREFIX}/lib/cmake/aria" CACHE PATH "Aria package config" FORCE)
+find_package(aria CONFIG REQUIRED COMPONENTS ${_aria_components} NO_DEFAULT_PATH)
 
 # Business modules use JSON even when Aria HTTP is disabled. Import it at the
 # project scope so sibling module targets see the same selected package.
-find_package(nlohmann_json CONFIG REQUIRED)
+# Same re-rooting problem as aria above: point at the config the environment
+# installed instead of searching.
+foreach(_prefix IN LISTS ARIA_SDK_PREFIXES)
+    if(EXISTS "${_prefix}/share/cmake/nlohmann_json/nlohmann_jsonConfig.cmake")
+        set(nlohmann_json_DIR "${_prefix}/share/cmake/nlohmann_json" CACHE PATH "JSON package config" FORCE)
+        break()
+    endif()
+endforeach()
+find_package(nlohmann_json CONFIG REQUIRED NO_DEFAULT_PATH)
