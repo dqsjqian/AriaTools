@@ -55,11 +55,16 @@ foreach(_feature QT HTTP JNI APPKIT UIKIT)
         list(APPEND _aria_components "${_component}")
     endif()
 endforeach()
-# Set the config directory directly: in a cross build (iOS, Android) CMake
-# re-roots every search prefix under CMAKE_FIND_ROOT_PATH and never looks at
-# the SDK the environment just installed.
-set(aria_DIR "${ARIA_SDK_PREFIX}/lib/cmake/aria" CACHE PATH "Aria package config" FORCE)
-find_package(aria CONFIG REQUIRED COMPONENTS ${_aria_components} NO_DEFAULT_PATH)
+# A cross build (iOS, Android) re-roots every search prefix under
+# CMAKE_FIND_ROOT_PATH and never looks at the SDK the environment just
+# installed, so name the config directory. When no prefix is known (a Gradle
+# build that passes CMAKE_PREFIX_PATH instead), keep the normal search.
+if(ARIA_SDK_PREFIX)
+    set(aria_DIR "${ARIA_SDK_PREFIX}/lib/cmake/aria" CACHE PATH "Aria package config" FORCE)
+    find_package(aria CONFIG REQUIRED COMPONENTS ${_aria_components} NO_DEFAULT_PATH)
+else()
+    find_package(aria CONFIG REQUIRED COMPONENTS ${_aria_components})
+endif()
 
 # Business modules use JSON even when Aria HTTP is disabled. Import it at the
 # project scope so sibling module targets see the same selected package.

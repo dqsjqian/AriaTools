@@ -6,12 +6,12 @@
       "repo": "dqsjqian/Aria",
       "resolved": {
         "request_hash": "2c6620ad60a1854f8c761cdfd7caebc063116d49a2d34f36c920a1a617d014ce",
-        "requested": "3.2.1",
-        "revision": "673f66a77166819b39b68be0255f4c56770b8b83",
+        "requested": "3.2.2",
+        "revision": "40468e48ff393aad909b13d39b31b4170ab27f1f",
         "sha256": "",
-        "tag": "v3.2.1",
+        "tag": "v3.2.2",
         "url": "https://github.com/dqsjqian/Aria.git",
-        "version": "3.2.1"
+        "version": "3.2.2"
       },
       "tag_prefix": "v"
     },
