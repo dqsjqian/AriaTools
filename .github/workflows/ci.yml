@@ -191,7 +191,11 @@ jobs:
             mingw-w64-ucrt-x86_64-python
             mingw-w64-ucrt-x86_64-python-pip
       - name: Install shared dependency tooling
-        run: python -m pip install --break-system-packages -r requirements-build.txt
+        run: |
+          python -m pip install --break-system-packages -r requirements-build.txt
+          # The MSYS2 shell's python has the tooling; CMake runs outside that
+          # shell, so name the same interpreter for it.
+          echo "FORGEDEPS_PYTHON_EXECUTABLE=$(cygpath -w "$(command -v python)")" >> "$GITHUB_ENV"
       - name: Initialize shared dependency workspace
         run: |
           python -m forgedeps init "$RUNNER_TEMP/forgedeps"

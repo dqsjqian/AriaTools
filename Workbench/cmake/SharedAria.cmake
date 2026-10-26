@@ -1,5 +1,10 @@
 # App policy: build one shared Aria SDK, including explicit development sources.
 include_guard(GLOBAL)
+if(NOT FORGEDEPS_PYTHON_EXECUTABLE AND DEFINED ENV{FORGEDEPS_PYTHON_EXECUTABLE})
+    # CI installs the pinned tooling into a specific interpreter (MSYS2's, or
+    # the container's) and names it here, so the build uses the same one.
+    set(FORGEDEPS_PYTHON_EXECUTABLE "$ENV{FORGEDEPS_PYTHON_EXECUTABLE}" CACHE FILEPATH "ForgeDeps interpreter")
+endif()
 if(NOT FORGEDEPS_PYTHON_EXECUTABLE)
     find_package(Python3 3.14 REQUIRED COMPONENTS Interpreter)
     set(FORGEDEPS_PYTHON_EXECUTABLE "${Python3_EXECUTABLE}" CACHE FILEPATH "ForgeDeps interpreter")
