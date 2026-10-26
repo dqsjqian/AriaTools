@@ -37,7 +37,8 @@ android {
             cmake {
                 cppFlags += "-std=c++23"
                 arguments += listOf(
-                    "-DWB_NATIVE_ROOT=$wbNativeRoot"
+                    "-DWB_NATIVE_ROOT=$wbNativeRoot",
+                    "-DFORGEDEPS_PYTHON_EXECUTABLE=${System.getenv("PYTHON") ?: "python3"}"
                 )
             }
         }

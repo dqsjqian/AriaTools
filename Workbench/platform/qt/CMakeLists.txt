@@ -1,8 +1,7 @@
 # ============================================================================
 #  Qt desktop: wb_qt_support (shared UI support) + workbench executable.
 # ============================================================================
-include("${ARIA_DIR}/cmake/ariaDependencies.cmake")
-aria_find_qt6(REQUIRED COMPONENTS Core Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 set(CMAKE_AUTOMOC ON)
 
 # -- wb_qt_support: UiHelpers + QtViewFactory, shared by shell and module views --

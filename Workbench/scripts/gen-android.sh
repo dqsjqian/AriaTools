@@ -43,6 +43,10 @@ case "$MODE" in
 esac
 
 
+PYTHON="${PYTHON:-python3}"
+PYTHON="$("$PYTHON" -c 'import sys; print(sys.executable)')"
+export PYTHON
+
 # ── Android toolchain detection ─────────────────────────────────────────────
 ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}"
 if [[ ! -d "$ANDROID_SDK_ROOT" ]]; then
@@ -53,7 +57,7 @@ fi
 # The native core and Gradle JNI bridge must use the same toolchain profile.
 ANDROID_PROFILE_DIR="$WB_ROOT/platform/android"
 profile_version() {
-    python3 "$REPO_ROOT/scripts/ci/android_dependencies.py" toolchain --field "$1"
+    "$PYTHON" "$REPO_ROOT/scripts/ci/android_dependencies.py" toolchain --field "$1"
 }
 ANDROID_NDK_ROOT="${ANDROID_NDK_ROOT:-$ANDROID_SDK_ROOT/ndk/$(profile_version ndk)}"
 ANDROID_NDK_ROOT="${ANDROID_NDK_ROOT%/}"
@@ -89,8 +93,8 @@ echo "  Build : $BUILD_DIR"
 # WORKBENCH_TARGET_ANDROID=ON builds wb_utils/wb_infra/wb_module_api/
 # wb_core_app/wb_module_* + the Aria JNI adapter as STATIC archives, with no
 # view shell (the Kotlin/Compose layer lives in platform/android/app).
-mkdir -p "$BUILD_DIR"
-"$ARIA_ANDROID_CMAKE" -S "$WB_ROOT" -B "$BUILD_DIR" \
+if [[ "${WB_ANDROID_LEASED:-}" != 1 ]]; then
+"$PYTHON" -m forgedeps.build_kit.session --configure -- "$ARIA_ANDROID_CMAKE" -S "$WB_ROOT" -B "$BUILD_DIR" \
     -G Ninja \
     -DCMAKE_MAKE_PROGRAM="$ARIA_ANDROID_NINJA" \
     -DCMAKE_BUILD_TYPE=Release \
@@ -98,21 +102,20 @@ mkdir -p "$BUILD_DIR"
     -DANDROID_ABI=arm64-v8a \
     -DANDROID_PLATFORM=android-24 \
     -DWORKBENCH_TARGET_ANDROID=ON \
-    -DWORKBENCH_TARGET_QT=OFF
+    -DWORKBENCH_TARGET_QT=OFF \
+    -DFORGEDEPS_PYTHON_EXECUTABLE="$PYTHON"
+exec "$PYTHON" -m forgedeps.build_kit.session --build-dir "$BUILD_DIR" -- \
+    env WB_ANDROID_LEASED=1 bash "$SCRIPT_DIR/gen-android.sh" "$MODE"
+fi
 "$ARIA_ANDROID_CMAKE" --build "$BUILD_DIR" -j "$JOBS"
-# aria_adapters_jni is EXCLUDE_FROM_ALL (no consumer in the core build) but
-# the Gradle JNI bridge links it — build it explicitly.
-"$ARIA_ANDROID_CMAKE" --build "$BUILD_DIR" -j "$JOBS" --target aria_adapters_jni
-
 # ── Collect all static archives into one lib/ dir ──────────────────────────
 # wb_* libs land in per-subdir build trees (core/app/libwb_core_app.a, ...)
-# while aria_* are installed into $BUILD_DIR/lib/. The Gradle JNI bridge links
-# them from a single flat dir, mirroring demo5's ${ARIA_PREFIX}/lib/*.a layout.
+# Aria itself is imported directly from the shared SDK by the JNI project.
 echo "▶ collecting static archives → $BUILD_DIR/lib/"
 mkdir -p "$BUILD_DIR/lib"
 while IFS= read -r -d '' archive; do
     cp -f "$archive" "$BUILD_DIR/lib/"
-done < <(find "$BUILD_DIR" -name "*.a" -not -path "*CMakeFiles*" \
+done < <(find "$BUILD_DIR" -name "libwb_*.a" -not -path "*CMakeFiles*" \
     -not -path "$BUILD_DIR/lib/*" -print0)
 
 # CMake stages the headers from the selected nlohmann_json target. Cached
@@ -129,7 +132,7 @@ echo "  i18n resources : $BUILD_DIR/i18n/"
 # ── Stage 2: Gradle assemble (optional) ─────────────────────────────────────
 if [[ "$MODE" == "--apk" ]]; then
     export ANDROID_SDK_ROOT
-    python3 "$REPO_ROOT/scripts/ci/android_dependencies.py" resolve
+    "$PYTHON" "$REPO_ROOT/scripts/ci/android_dependencies.py" resolve
     echo "▶ Gradle assembleDebug (platform/android)"
     APP_DIR="$REPO_ROOT/Workbench/platform/android"
     GRADLE="${GRADLE:-$APP_DIR/gradlew}"

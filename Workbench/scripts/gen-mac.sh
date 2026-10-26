@@ -42,14 +42,14 @@ if command -v ninja >/dev/null 2>&1; then
   GEN_ARGS+=(-G Ninja)
 fi
 
-cmake -S "$WB_ROOT" -B "$BUILD_DIR" \
+python3 -m forgedeps.build_kit.session --configure -- cmake -S "$WB_ROOT" -B "$BUILD_DIR" \
   ${GEN_ARGS[@]+"${GEN_ARGS[@]}"} \
   -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
   -DWORKBENCH_TARGET_QT=ON \
   -DCMAKE_PREFIX_PATH="$QT_PREFIX"
 
 # ── Build ───────────────────────────────────────────────────────────────────
-cmake --build "$BUILD_DIR" -j "$(sysctl -n hw.ncpu)"
+python3 -m forgedeps.build_kit.session --build-dir "$BUILD_DIR" -- cmake --build "$BUILD_DIR" -j "$(sysctl -n hw.ncpu)"
 
 APP_PATH="$BUILD_DIR/platform/qt/workbench.app"
 echo ""

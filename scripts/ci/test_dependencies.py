@@ -2,6 +2,8 @@
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -80,6 +82,33 @@ class DependencyTests(unittest.TestCase):
         self.assertEqual(record["revision"], SHA)
         self.assertEqual(record["requested"], "latest")
 
+    def test_resolve_cli_preserves_legacy_options_and_isolates_output(self):
+        self.resolve()
+        before = self.lock.read_bytes()
+        output = self.root / "effective.json"
+        result = subprocess.run([
+            sys.executable, str(SCRIPT), "resolve", "--file", str(self.lock),
+            "--output", str(output), "--cache-dir", str(self.root / "cache"),
+            "--only", "library", "--version", "library=1.10.0", "--offline",
+        ], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        selected = deps.read_resolved(output)["dependencies"]["library"]
+        self.assertEqual(selected["requested"], "1.10.0")
+        self.assertEqual(self.lock.read_bytes(), before)
+
+    def test_update_entry_forwards_explicit_file_and_update_policy(self):
+        self.resolve()
+        before = self.lock.read_bytes()
+        result = subprocess.run([
+            sys.executable, str(SCRIPT.with_name("update_dependencies.py")),
+            "--file", str(self.lock), "--only", "library", "--offline",
+        ], capture_output=True, text=True)
+        # --update must ask for a fresh resolution; offline cannot quietly reuse
+        # the existing result. An explicit --file overrides the wrapper default.
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("matching resolved", result.stderr)
+        self.assertEqual(self.lock.read_bytes(), before)
+
     def test_locked_resolution_is_offline_and_does_not_rewrite(self):
         self.resolve()
         content = self.lock.read_bytes()
@@ -140,8 +169,8 @@ class DependencyTests(unittest.TestCase):
             self.resolve(versions={"typo": "1.0"})
         self.assertNotIn("resolved", json.loads(self.manifest.read_text())["dependencies"]["library"])
 
-    def test_explicit_branch_or_prerelease_is_rejected_before_network(self):
-        for version in ["main", "2.0.0-rc1", "v2.0.0-beta", "../bad"]:
+    def test_explicit_branch_or_malformed_version_is_rejected_before_network(self):
+        for version in ["main", "2.0.0-", "2.0.0-rc..1", "../bad"]:
             with self.subTest(version=version), self.assertRaises(deps.DependencyError):
                 self.resolve(versions={"library": version})
         self.assertEqual(self.context.calls, [])

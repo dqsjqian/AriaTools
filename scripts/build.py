@@ -79,7 +79,7 @@ def extra_definitions(arguments, flags):
     identity = {"CMAKE_BUILD_TYPE", "CMAKE_TOOLCHAIN_FILE", "CMAKE_C_COMPILER", "CMAKE_CXX_COMPILER",
                 "CMAKE_SYSTEM_NAME", "CMAKE_OSX_SYSROOT", "CMAKE_OSX_ARCHITECTURES", "ANDROID_ABI",
                 "ARIA_DIR", "ARIA_ROOT", "ARIA_SDK_PREFIX", "ARIA_DEP_ARIA_VERSION",
-                "CMAKE_PREFIX_PATH", "ARIA_DEPENDENCIES_OFFLINE", "ARIA_TARGET_QT",
+                "CMAKE_PREFIX_PATH", "ARIA_DEPENDENCIES_OFFLINE", "FORGEDEPS_PYTHON_EXECUTABLE", "ARIA_TARGET_QT",
                 "ARIA_TUTORIAL_QT6", "ARIA_TUTORIAL_HTTP"}
     generated = dict(definition(flag) for flag in flags)
     for argument in arguments:
@@ -150,18 +150,12 @@ def plan(args, root=ROOT, host=None):
     build = (args.build_dir or root / "build/unified" / suffix).resolve()
     source = root / "Workbench" if kind == "tools" else root
     commands = []
-    aria = args.aria_root.resolve() if args.aria_root else root / "build/deps/aria"
-    if kind != "aria" and not args.aria_root and not args.aria_prefix:
-        fetch = [sys.executable, str(root / "scripts/ci/fetch_aria.py")]
-        if args.offline:
-            fetch.append("--offline")
-        commands.append(fetch)
-    if args.command == "deps":
-        if kind == "aria":
-            commands.append([sys.executable, str(root / "scripts/dependencies.py"), "resolve",
-                             "--file", str(root / "dependencies.json")] + (["--offline"] if args.offline else []))
-        return commands
-    flags = [f"-DCMAKE_BUILD_TYPE={args.config}", f"-DARIA_DEPENDENCIES_OFFLINE={'ON' if args.offline else 'OFF'}"]
+    aria = args.aria_root.resolve() if args.aria_root else ""
+    if args.command == "deps" and kind == "aria":
+        return [[sys.executable, str(root / "scripts/dependencies.py"), "resolve",
+                 "--file", str(root / "dependencies.json")] + (["--offline"] if args.offline else [])]
+    flags = [f"-DCMAKE_BUILD_TYPE={args.config}", f"-DARIA_DEPENDENCIES_OFFLINE={'ON' if args.offline else 'OFF'}",
+             f"-DFORGEDEPS_PYTHON_EXECUTABLE={sys.executable}"]
     if kind == "aria":
         flags += [f"-DARIA_BUILD_TESTS={'ON' if args.test else 'OFF'}",
                   "-DARIA_BUILD_BENCHMARK=OFF", "-DARIA_BUILD_DOCS=OFF",
@@ -225,7 +219,7 @@ def plan(args, root=ROOT, host=None):
     if generator_platform:
         configure += ["-A", generator_platform]
     commands.append(configure + flags + extra_definitions(args.cmake_arg, flags))
-    if args.configure_only:
+    if args.configure_only or args.command == "deps":
         return commands
     commands.append(["cmake", "--build", str(build), "--config", args.config,
                      "--parallel", str(args.jobs)] + (["--target", *args.target] if args.target else []))
@@ -241,10 +235,13 @@ def plan(args, root=ROOT, host=None):
             if generator_platform:
                 configure_module += ["-A", generator_platform]
             compiler_flags = [flag for flag in flags if definition(flag)[0] in {
-                "CMAKE_C_COMPILER", "CMAKE_CXX_COMPILER", "CMAKE_OSX_ARCHITECTURES"}]
-            module_flags = compiler_flags + [
+                "CMAKE_C_COMPILER", "CMAKE_CXX_COMPILER", "CMAKE_OSX_ARCHITECTURES", "CMAKE_PREFIX_PATH"}]
+            sdk_features = {"QT": selected == "qt", "HTTP": selected == "web", "TLS": False,
+                            "JNI": selected == "android", "UIKIT": selected == "ios", "SHARED": False}
+            module_flags = compiler_flags + [f"-DARIA_SDK_{key}={'ON' if value else 'OFF'}"
+                                             for key, value in sdk_features.items()] + [
                 f"-DCMAKE_BUILD_TYPE={args.config}", f"-DARIA_DIR={aria}",
-                f"-DARIA_DEPS_CACHE_DIR={source / 'build/_deps'}",
+                f"-DFORGEDEPS_PYTHON_EXECUTABLE={sys.executable}",
                 f"-DARIA_DEPENDENCIES_OFFLINE={'ON' if args.offline else 'OFF'}",
                 "-DWORKBENCH_TARGET_QT=OFF", "-DWORKBENCH_TARGET_IOS=OFF"]
             commands.append(configure_module + module_flags + extra_definitions(args.cmake_arg, module_flags))
@@ -334,6 +331,11 @@ def main(argv=None):
         if args.dry_run:
             print(json.dumps(commands, ensure_ascii=False, indent=2))
             return 0
+        # A fresh clone needs only Python: prepare (once, shared) the pinned
+        # ForgeDeps tooling plus CMake/Ninja when missing, then continue here.
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import forgedeps_bootstrap
+        forgedeps_bootstrap.ensure(ROOT / "requirements-build.txt")
         env = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
         if os.name == "nt":
             env["VSLANG"] = "1033"
@@ -345,9 +347,8 @@ def main(argv=None):
         # Validate every existing cache before fetching dependencies or writing.
         for command in commands:
             validate_cache(command, env)
-        for command in commands:
-            print("+ " + shlex.join(command), flush=True)
-            subprocess.run(command, cwd=ROOT, env=command_environment(command, env), check=True)
+        from forgedeps.build_kit.session import run_session
+        run_session(commands, cwd=ROOT, env=env, command_environment=command_environment)
         return 0
     except (ValueError, OSError, subprocess.CalledProcessError) as error:
         print(f"build: {error}", file=sys.stderr)

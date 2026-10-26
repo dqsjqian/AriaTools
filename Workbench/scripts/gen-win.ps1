@@ -195,7 +195,7 @@ try {
     Write-Host ""
     Write-Host "[gen-win] Configuring ($BuildConfig)..."
     $cfgArgs = @("-S", $WB_ROOT, "-B", $BUILD_DIR, "-G", $Generator) + $CMakeOpts
-    & $cmakePath @cfgArgs
+    & python -m forgedeps.build_kit.session --configure -- $cmakePath @cfgArgs
     if ($LASTEXITCODE -ne 0) { Write-Error "CMake configuration failed"; exit $LASTEXITCODE }
 
     # ── Build ───────────────────────────────────────────────────────────
@@ -206,11 +206,11 @@ try {
         # Optionally cap concurrency via $env:ARIA_BUILD_JOBS (e.g. "8") if RAM is tight.
         $buildArgs = @("--build", $BUILD_DIR)
         if ($env:ARIA_BUILD_JOBS) { $buildArgs += @("--parallel", $env:ARIA_BUILD_JOBS) }
-        & $cmakePath @buildArgs
+        & python -m forgedeps.build_kit.session --build-dir $BUILD_DIR -- $cmakePath @buildArgs
     } else {
         # MSBuild v18 (VS 2026) has the MSB4166 child-node timeout crash bug; force /m:1 single process to work around it
         $env:MSBUILDDISABLENODEREUSE = "1"
-        & $cmakePath --build $BUILD_DIR --config $BuildConfig -- /m:1
+        & python -m forgedeps.build_kit.session --build-dir $BUILD_DIR -- $cmakePath --build $BUILD_DIR --config $BuildConfig -- /m:1
     }
     if ($LASTEXITCODE -ne 0) { Write-Error "Build failed"; exit $LASTEXITCODE }
 
@@ -249,7 +249,7 @@ try {
             if ($msvcDirs2) { $runPath += (Join-Path $msvcDirs2[0].FullName "bin\Hostx64\x64") }
         }
         $env:PATH = ($runPath -join ";") + ";" + $env:PATH
-        & $ExePath
+        & python -m forgedeps.build_kit.session --build-dir $BUILD_DIR -- $ExePath
         exit $LASTEXITCODE
     }
 
@@ -268,7 +268,7 @@ try {
         }
         $env:PATH = ($probePath -join ";") + ";" + $env:PATH
         $env:QT_QPA_PLATFORM = "offscreen"
-        & $ExePath --probe
+        & python -m forgedeps.build_kit.session --build-dir $BUILD_DIR -- $ExePath --probe
         if ($LASTEXITCODE -ne 0) {
             Write-Error "[gen-win] probe failed with exit code $LASTEXITCODE"
             exit $LASTEXITCODE
@@ -305,15 +305,15 @@ try {
             if ($UseNinja) {
                 # NOTE: bare `-DNAME=$var` is passed literally by PS 5.1 (no
                 # expansion after `=` in argument mode) — quote the define.
-                & $cmakePath -S $src -B $dir -G "Ninja" "-DCMAKE_BUILD_TYPE=$BuildConfig"
+                & python -m forgedeps.build_kit.session --configure -- $cmakePath -S $src -B $dir -G "Ninja" "-DCMAKE_BUILD_TYPE=$BuildConfig"
             } else {
-                & $cmakePath -S $src -B $dir -G $Generator
+                & python -m forgedeps.build_kit.session --configure -- $cmakePath -S $src -B $dir -G $Generator "-DCMAKE_BUILD_TYPE=$BuildConfig"
             }
             if ($LASTEXITCODE -ne 0) { $failed += $m; continue }
             if ($UseNinja) {
-                & $cmakePath --build $dir -j
+                & python -m forgedeps.build_kit.session --build-dir $dir -- $cmakePath --build $dir -j
             } else {
-                & $cmakePath --build $dir --config $BuildConfig
+                & python -m forgedeps.build_kit.session --build-dir $dir -- $cmakePath --build $dir --config $BuildConfig
             }
             if ($LASTEXITCODE -ne 0) { $failed += $m; continue }
             # aria_*.dll land in <dir>/bin (Aria's RUNTIME_OUTPUT_DIRECTORY) while
@@ -322,7 +322,7 @@ try {
             $env:PATH = (Join-Path $dir "bin") + ";" + $env:PATH
             $ctestArgs = @("--test-dir", $dir, "--output-on-failure")
             if (-not $UseNinja) { $ctestArgs += @("-C", $BuildConfig) }
-            & $ctestPath @ctestArgs
+            & python -m forgedeps.build_kit.session --build-dir $dir -- $ctestPath @ctestArgs
             if ($LASTEXITCODE -ne 0) { $failed += $m }
         }
         if ($failed.Count -gt 0) {

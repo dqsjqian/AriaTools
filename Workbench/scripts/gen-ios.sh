@@ -62,7 +62,8 @@ fi
 if [[ "$MODE" == "device" ]]; then
   # Device: iphoneos SDK + automatic signing (passing Team → CMake enables signing).
   echo "[gen-ios] Generating device project (iphoneos, Team=${WB_IOS_DEV_TEAM}) ..."
-  cmake -S "$WB_ROOT" -B "$BUILD_DIR" -G Xcode \
+  python3 -m forgedeps.build_kit.session --configure -- cmake -S "$WB_ROOT" -B "$BUILD_DIR" -G Xcode \
+    -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_SYSTEM_NAME=iOS \
     -DCMAKE_OSX_SYSROOT=iphoneos \
     -DCMAKE_OSX_ARCHITECTURES="arm64" \
@@ -71,7 +72,8 @@ if [[ "$MODE" == "device" ]]; then
     -DWB_IOS_DEV_TEAM="$WB_IOS_DEV_TEAM"
 else
   # Simulator: iphonesimulator SDK, no signing required.
-  cmake -S "$WB_ROOT" -B "$BUILD_DIR" -G Xcode \
+  python3 -m forgedeps.build_kit.session --configure -- cmake -S "$WB_ROOT" -B "$BUILD_DIR" -G Xcode \
+    -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_SYSTEM_NAME=iOS \
     -DCMAKE_OSX_SYSROOT=iphonesimulator \
     -DCMAKE_OSX_ARCHITECTURES="arm64" \
@@ -85,13 +87,13 @@ echo "[gen-ios] ✅ Xcode project generated: $BUILD_DIR/workbench.xcodeproj"
 case "$MODE" in
   build)
     echo "[gen-ios] Building (iOS simulator)..."
-    cmake --build "$BUILD_DIR" --config Debug -- -sdk iphonesimulator
+    python3 -m forgedeps.build_kit.session --build-dir "$BUILD_DIR" -- cmake --build "$BUILD_DIR" --config Debug -- -sdk iphonesimulator
     echo "[gen-ios] ✅ Build complete"
     ;;
   device)
     echo "[gen-ios] Building (device, automatic signing)..."
     # -allowProvisioningUpdates: auto-generate a profile when none is local (personal Team must be signed in to Xcode).
-    xcodebuild -project "$BUILD_DIR/workbench.xcodeproj" \
+    python3 -m forgedeps.build_kit.session --build-dir "$BUILD_DIR" -- xcodebuild -project "$BUILD_DIR/workbench.xcodeproj" \
       -target workbench -configuration Debug \
       -sdk iphoneos -destination 'generic/platform=iOS' \
       -allowProvisioningUpdates \

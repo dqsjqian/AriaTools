@@ -40,3 +40,6 @@ venv/
 *.log
 *.logg
 *.err
+
+# Shared dependency workspace (CI/local opt-in)
+.forgedeps/

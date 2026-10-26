@@ -18,15 +18,28 @@ endif()
 
 set(WB_ROOT  "${WB_NATIVE_ROOT}/Workbench")
 set(WB_NATIVE_BUILD "${WB_NATIVE_ROOT}/build/platforms/android")
-if(NOT EXISTS "${WB_NATIVE_BUILD}/aria-source.txt")
-    message(FATAL_ERROR "Native Aria source manifest is missing; run gen-android.sh first")
+if(NOT EXISTS "${WB_NATIVE_BUILD}/aria-sdk.txt")
+    message(FATAL_ERROR "Native Aria SDK manifest is missing; run gen-android.sh first")
 endif()
-file(STRINGS "${WB_NATIVE_BUILD}/aria-source.txt" ARIA_ROOT LIMIT_COUNT 1)
-if(NOT EXISTS "${ARIA_ROOT}/CMakeLists.txt")
-    message(FATAL_ERROR
-        "The native core's selected Aria source is missing: ${ARIA_ROOT}.\n"
-        "Restore the source and rebuild with gen-android.sh.")
+file(STRINGS "${WB_NATIVE_BUILD}/aria-sdk.txt" ARIA_SDK_PREFIX LIMIT_COUNT 1)
+file(STRINGS "${WB_NATIVE_BUILD}/dependency-environment.txt" _receipt LIMIT_COUNT 1)
+if(NOT FORGEDEPS_PYTHON_EXECUTABLE)
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    set(FORGEDEPS_PYTHON_EXECUTABLE "${Python3_EXECUTABLE}")
 endif()
+# Gradle is launched under the native environment's reader lease. Refuse direct
+# unleased packaging, which could race replacement of the selected static SDK.
+execute_process(COMMAND "${FORGEDEPS_PYTHON_EXECUTABLE}" -c
+    "import sys; from pathlib import Path; from forgedeps.environments import read_environment; from forgedeps.build_kit.session import assert_parent_covers_environment; e=read_environment(Path(sys.argv[1])); assert_parent_covers_environment(e); print(';'.join(str(a.prefix) for a in e.artifacts))"
+    "${_receipt}" RESULT_VARIABLE _lease_status OUTPUT_VARIABLE _prefixes
+    ERROR_VARIABLE _lease_error OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(NOT _lease_status EQUAL 0)
+    message(FATAL_ERROR "Run gen-android.sh --apk under the shared SDK lease: ${_lease_error}")
+endif()
+list(PREPEND CMAKE_PREFIX_PATH ${_prefixes})
+find_package(aria CONFIG REQUIRED COMPONENTS core async runtime binding jni
+    PATHS "${ARIA_SDK_PREFIX}" NO_DEFAULT_PATH)
+find_package(nlohmann_json CONFIG REQUIRED)
 set(WB_LIB   "${WB_NATIVE_BUILD}/lib")
 
 # ── JNI side-channel bridge ─────────────────────────────────────────────
@@ -75,12 +88,7 @@ target_include_directories(aria_jni PRIVATE
     ${WB_ROOT}/modules/theme
     ${WB_ROOT}/modules/wizard
     
-    ${ARIA_ROOT}/modules/abi/include
-    ${ARIA_ROOT}/modules/adapters/jni/include
-    ${ARIA_ROOT}/modules/async/include
-    ${ARIA_ROOT}/modules/binding/include
-    ${ARIA_ROOT}/modules/core/include
-    ${ARIA_ROOT}/modules/runtime/include
+
 )
 
 # ── Link Workbench + Aria static archives ─────────────────────────────────
@@ -108,20 +116,14 @@ target_link_libraries(aria_jni
     ${WB_LIB}/libwb_infra.a
     ${WB_LIB}/libwb_module_api.a
     ${WB_LIB}/libwb_utils.a
-    ${WB_LIB}/libaria_adapters_jni.a
-    ${WB_LIB}/libaria_binding.a
-    ${WB_LIB}/libaria_runtime.a
-    ${WB_LIB}/libaria_abi.a
+    aria::adapters::jni
+    aria::binding
+    aria::runtime
+    aria::abi
+    nlohmann_json::nlohmann_json
     android
     log
 
-)
-
-# nlohmann/json 头文件来自 gen-android.sh 从 Aria 钉定抓取中导出的副本
-# （$WB_LIB/../include/nlohmann）；本工程不 add_subdirectory Aria，没有
-# 该 target，链接的是 gen-android 产出的静态库本身。
-target_include_directories(aria_jni PRIVATE
-    "${WB_LIB}/../include"
 )
 
 # ── Flags ────────────────────────────────────────────────────────────────

@@ -221,7 +221,7 @@ def validate_candidate(project, native_root, versions, request, profiles):
     if missing:
         raise ValueError("Selected Android profile requires installed SDK packages: " + ", ".join(missing))
     native_build = native_root / "build/platforms/android"
-    for required in ("include/nlohmann/json.hpp", "aria-source.txt", "lib/libwb_core_app.a"):
+    for required in ("include/nlohmann/json.hpp", "aria-sdk.txt", "sdk-prefixes.txt", "dependency-environment.txt", "lib/libwb_core_app.a"):
         if not (native_build / required).is_file():
             raise ValueError(f"Native export {required} is missing; run gen-android.sh first")
     native_cache = native_build / "CMakeCache.txt"

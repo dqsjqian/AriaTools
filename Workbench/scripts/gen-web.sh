@@ -21,11 +21,11 @@ case "$MODE" in
     ;;
 esac
 
-cmake -S "$WB_ROOT" -B "$BUILD_DIR" \
+python3 -m forgedeps.build_kit.session --configure -- cmake -S "$WB_ROOT" -B "$BUILD_DIR" \
   -DCMAKE_BUILD_TYPE=Release \
   -DWORKBENCH_TARGET_WEB=ON \
   -DWORKBENCH_TARGET_QT=OFF
-cmake --build "$BUILD_DIR" -j "$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)"
+python3 -m forgedeps.build_kit.session --build-dir "$BUILD_DIR" -- cmake --build "$BUILD_DIR" -j "$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)"
 
 # RUNTIME_OUTPUT_DIRECTORY is set to bin/ (same as the Qt shell): single-config
 # generators put the exe directly in bin/; multi-config ones add <Config>.
@@ -37,12 +37,12 @@ if [[ ! -x "$BIN" ]]; then
   BIN="$BUILD_DIR/bin/Debug/workbench_web"
 fi
 if [[ "$MODE" == "probe" ]]; then
-  "$BIN" --probe
+  python3 -m forgedeps.build_kit.session --build-dir "$BUILD_DIR" -- "$BIN" --probe
   exit 0
 fi
 
 if [[ "$MODE" == "run" ]]; then
-  exec "$BIN"
+  exec python3 -m forgedeps.build_kit.session --build-dir "$BUILD_DIR" -- "$BIN"
 fi
 
 echo "[gen-web] Build complete: $BIN"

@@ -2,6 +2,7 @@
 import importlib.util
 import json
 from pathlib import Path
+import os
 import sys
 import tempfile
 import unittest
@@ -19,6 +20,11 @@ spec.loader.exec_module(build)
 
 class BuildEntryTests(unittest.TestCase):
     def setUp(self):
+        # These cases exercise planning and the session around mocked commands;
+        # the tooling bootstrap has its own tests and must not run here.
+        bootstrap = mock.patch.dict(os.environ, {"FORGEDEPS_BOOTSTRAP": "0"})
+        bootstrap.start()
+        self.addCleanup(bootstrap.stop)
         self.temp = tempfile.TemporaryDirectory(prefix="build-entry-")
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name) / "project with spaces"
@@ -42,13 +48,26 @@ class BuildEntryTests(unittest.TestCase):
         self.assertIn("--no-tests=error", commands[-1])
         self.assertIn(str(self.root), commands[0])
 
-    def test_consumers_reuse_existing_locked_fetch(self):
+    def test_consumers_prepare_shared_sdk_without_source_bootstrap(self):
         self.layout("agent")
         commands = self.plan("--offline")
-        self.assertEqual(commands[0][0], sys.executable)
-        self.assertIn("--offline", commands[0])
-        self.assertIn("fetch_aria.py", commands[0][1])
-        self.assertIn("-DARIA_DEPENDENCIES_OFFLINE=ON", commands[1])
+        self.assertEqual(commands[0][0], "cmake")
+        self.assertIn("-DARIA_DIR=", commands[0])
+        self.assertIn("-DARIA_DEPENDENCIES_OFFLINE=ON", commands[0])
+        self.assertFalse(any("fetch_aria.py" in str(row) for row in commands))
+
+    def test_build_uses_current_python_for_all_sdk_consumers(self):
+        self.layout("tools")
+        executable = str(self.root / "venv with spaces" / "python")
+        with mock.patch.object(build.sys, "executable", executable):
+            commands = self.plan("--platform", "web", "--test", "--offline")
+            self.assertEqual(commands[0][0], "cmake")
+            configurations = [row for row in commands if row[0] == "cmake" and "-S" in row]
+            self.assertEqual(len(configurations), 7)
+            for row in configurations:
+                self.assertIn("-DFORGEDEPS_PYTHON_EXECUTABLE=" + executable, row)
+            with self.assertRaisesRegex(ValueError, "FORGEDEPS_PYTHON_EXECUTABLE"):
+                self.plan("--cmake-arg=-DFORGEDEPS_PYTHON_EXECUTABLE=/other/python")
 
     def test_local_source_is_explicit_and_not_fetched(self):
         self.layout("tutorial")
@@ -63,7 +82,7 @@ class BuildEntryTests(unittest.TestCase):
 
     def test_tools_selects_one_shell(self):
         self.layout("tools")
-        configure = self.plan("--platform", "web")[1]
+        configure = self.plan("--platform", "web")[0]
         self.assertIn("-DWORKBENCH_TARGET_WEB=ON", configure)
         self.assertIn("-DWORKBENCH_TARGET_QT=OFF", configure)
         self.assertIn(str(self.root / "Workbench"), configure)
@@ -215,7 +234,7 @@ class BuildEntryTests(unittest.TestCase):
         self.assertIn(f"-DARIA_DEP_ARIA_VERSION={version}", command)
         self.assertIn(f"-DCMAKE_PREFIX_PATH={sdk.resolve()};{qt.resolve()}", command)
         self.assertTrue(command[command.index("-B") + 1].endswith("-sdk"))
-        self.assertEqual(self.plan("deps", "--aria-prefix", str(sdk)), [])
+        self.assertEqual(len(self.plan("deps", "--aria-prefix", str(sdk))), 1)
         with self.assertRaisesRegex(ValueError, "conflicts"):
             self.plan("--aria-prefix", str(sdk), "--cmake-arg=-DARIA_DEP_ARIA_VERSION=3.0.0")
         lock["dependencies"]["aria"]["version"] = "999.0.0"

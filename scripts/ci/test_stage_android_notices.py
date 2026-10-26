@@ -24,12 +24,15 @@ class StageAndroidNoticesTests(unittest.TestCase):
         self.headers.mkdir(parents=True)
         selected = self.root / "selected-json/include/nlohmann"
         selected.mkdir(parents=True)
-        (selected.parent.parent / "LICENSE.MIT").write_bytes(b"actual selected JSON license")
+        (selected.parent.parent / "share/licenses/json").mkdir(parents=True)
+        (selected.parent.parent / "share/licenses/json/LICENSE.MIT").write_bytes(b"actual selected JSON license")
         (native / "include/nlohmann-source.txt").write_text(str(selected), encoding="utf-8")
         aria = self.root / "selected-aria"
         aria.mkdir()
-        (aria / "LICENSE").write_bytes(b"actual selected Aria license")
-        (native / "aria-source.txt").write_text(str(aria), encoding="utf-8")
+        (aria / "share/licenses/aria").mkdir(parents=True)
+        (aria / "share/licenses/aria/LICENSE").write_bytes(b"actual selected Aria license")
+        (native / "aria-sdk.txt").write_text(str(aria), encoding="utf-8")
+        (native / "sdk-prefixes.txt").write_text(str(aria) + "\n" + str(selected.parent.parent) + "\n", encoding="utf-8")
         (self.headers / "json.hpp").write_text("// SPDX-FileCopyrightText: 2008 - 2009 Björn Hoehrmann\n// SPDX-License-Identifier: MIT\n#define NLOHMANN_JSON_VERSION_MAJOR 3\n#define NLOHMANN_JSON_VERSION_MINOR 12\n#define NLOHMANN_JSON_VERSION_PATCH 0\n", encoding="utf-8")
         (self.root / "licenses").mkdir()
         (self.root / "licenses/Apache-2.0.txt").write_bytes(b"original Apache text")

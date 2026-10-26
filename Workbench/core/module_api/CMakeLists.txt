@@ -6,14 +6,7 @@
 # Navigation and mount contracts expose JSON even without Aria's HTTP adapter.
 # Declare the dependency here so native and standalone builds do not depend on
 # an unrelated adapter having already created this target.
-if(NOT TARGET nlohmann_json::nlohmann_json)
-    include("${ARIA_DIR}/cmake/ariaFetchPinned.cmake")
-    aria_fetch_pinned_archive(NAME json)
-    add_library(wb_json INTERFACE)
-    target_include_directories(wb_json SYSTEM INTERFACE
-        "${ARIA_PINNED_JSON_SOURCE_DIR}/include")
-    add_library(nlohmann_json::nlohmann_json ALIAS wb_json)
-endif()
+find_package(nlohmann_json CONFIG REQUIRED)
 
 if(WORKBENCH_TARGET_ANDROID)
     # The JNI bridge is a separate CMake project. Export the headers selected

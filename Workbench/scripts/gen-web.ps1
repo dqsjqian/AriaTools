@@ -105,17 +105,17 @@ $CfgArgs += @(
     "-DWORKBENCH_TARGET_WEB=ON",
     "-DWORKBENCH_TARGET_QT=OFF"
 )
-& cmake @CfgArgs
+& python -m forgedeps.build_kit.session --configure -- cmake @CfgArgs
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 if ($Generator -eq "Ninja") {
     # Ninja is a single-config generator: parallel by default, no --config needed.
     $buildArgs = @("--build", $BuildDir)
     if ($env:ARIA_BUILD_JOBS) { $buildArgs += @("--parallel", $env:ARIA_BUILD_JOBS) }
-    & cmake @buildArgs
+    & python -m forgedeps.build_kit.session --build-dir $BuildDir -- cmake @buildArgs
 } else {
     # Multi-config generator: build only the configured config.
-    & cmake --build $BuildDir --config $BuildConfig
+    & python -m forgedeps.build_kit.session --build-dir $BuildDir -- cmake --build $BuildDir --config $BuildConfig
 }
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
@@ -135,12 +135,12 @@ if (-not (Test-Path $Bin)) {
 }
 
 if ($Mode -eq "probe") {
-    & $Bin --probe
+    & python -m forgedeps.build_kit.session --build-dir $BuildDir -- $Bin --probe
     exit $LASTEXITCODE
 }
 
 if ($Mode -eq "run") {
-    & $Bin
+    & python -m forgedeps.build_kit.session --build-dir $BuildDir -- $Bin
     exit $LASTEXITCODE
 }
 

@@ -1,8 +1,8 @@
 # Updating dependencies
 
-Run these commands from the **AriaTools repository root**. Use Python 3.10+ with its standard library; substitute `python3` when required on macOS/Linux. Online resolution can use an authenticated `gh` CLI, or the public GitHub API. Install the compiler, CMake and platform SDKs listed in the README separately.
+Run these commands from the **AriaTools repository root**. Use Python 3.14+; install `python -m pip install -r requirements-build.txt` with the build interpreter (preferably in a virtual environment). The repository scripts delegate resolution, verification and Git bootstrap to shared ForgeDeps; substitute `python3` when required on macOS/Linux. Online resolution can use an authenticated `gh` CLI, or the public GitHub API. Install the compiler, CMake and platform SDKs listed in the README separately.
 
-The single `dependencies.json` declares sources and optional persistent `version` requirements. Each entry’s `resolved` object records the selected version, complete Git commit, and download SHA256. Commit this file when it changes. Normal builds reuse matching locks; a missing selection resolves the latest stable release once. Updating is explicit and excludes prereleases and development branches.
+The single `dependencies.json` declares sources and optional persistent `version` requirements. Each entry’s `resolved` object records the selected version, complete Git commit, and download SHA256. Commit this file when it changes. Normal builds require matching locks; an explicit resolve fills missing selections. Automatic latest selection excludes prereleases and development branches. Explicit versions may select prereleases or downstream patches that resolve to real version tags.
 
 ## Commands
 
@@ -21,68 +21,20 @@ To keep two dependencies fixed while updating the third, add `"version": "3.12.0
 
 Precedence: this invocation's `--version` overrides the manifest; explicit manifest versions override defaults. Without an explicit request, ordinary resolution reuses the lock and deliberate updating discovers the latest stable version. A command-line selection remains locked when the manifest does not explicitly request a different version. If it does, the next resolution without that override restores the manifest request. Command-line overrides do not change persistent manifest requirements; record them there if they should constrain later updates. To unpin a library, remove its manifest `version` and deliberately update it.
 
-## Fetch, build, verify and commit
+## Shared SDK build workflow
 
-The updater atomically saves selection metadata; it does **not** compile the entire application or establish API compatibility. After it succeeds:
-
-```bash
-python scripts/ci/fetch_aria.py
-cmake -S Workbench -B build/flavors/dependency-check -DCMAKE_BUILD_TYPE=Release
-cmake --build build/flavors/dependency-check --config Release --parallel 3
-bash Workbench/scripts/gen-web.sh probe  # Web shell integration; see README for each platform probe
-```
-
-Follow the [README](../README.en.md) for platform SDK selection and additional probes. Use the same configuration for build and CTest. Review `git diff -- dependencies.json` and commit the updated dependency file only after the build/tests succeed. Do not commit ignored downloads, source caches or build-directory effective locks. CI and releases consume checked-in selections.
-
-## Existing locks, offline operation and overrides
+Install the build tools and register one workspace shared by your projects:
 
 ```bash
-python scripts/ci/dependencies.py resolve --file dependencies.json
-python scripts/ci/dependencies.py resolve --file dependencies.json --offline
+python -m pip install -r requirements-build.txt
+python -m forgedeps init /path/to/ForgeDepsWorkspace
+python scripts/build.py --test
 ```
 
-`resolve` fills missing/mismatched entries and preserves valid selections. Its offline mode requires a matching lock; successful offline resolution does not ensure source archives are cached. `update --offline` cannot discover new releases. A missing `resolved` entry causes fresh resolution for that dependency. Prefer the updater for controlled upgrades; deleting the whole `dependencies.json` also removes the source declarations needed for resolution.
+Builds use the recorded `dependencies.json` selection without selecting new releases. `FORGEDEPS_HOME` overrides the registered workspace. Sources live in `sources/`; Aria and third-party SDKs live in `build/<name>/<target>/`. Applications link those prefixes directly. Each target keeps one current artifact; changes to versions, compilers, ABI, source contents or recipes rebuild it transactionally and preserve the previous artifact on failure.
 
-`fetch_aria.py` accepts `--version`, `--update`, `--offline`, `--file`, and `--source`. `--version` overrides `ARIA_DEP_ARIA_VERSION`; `--source` overrides `ARIA_SOURCE`. A local Git source must still contain the selected full commit. Dirty dependencies are never overwritten; successful checkout replacements preserve the old tree under `build/deps/aria-backup-*`.
+`--aria-root /path/to/Aria` (CMake `ARIA_DIR`, or Tutorial `ARIA_ROOT`) selects editable sources which are still content-hashed and built into the shared SDK. Qt, NDK and Apple SDKs are installed separately; actual toolchain and Qt contents participate in artifact identity. Use `scripts/ci/update_dependencies.py` to change versions, then review and commit the lock.
 
-Aria source builds support CMake library overrides such as `-DARIA_DEP_JSON_VERSION=3.12.0`; these use a temporary build-directory result and preserve the source `dependencies.json`. Clear a cached override to return to the project selection. Explicit source directories or preexisting dependency targets take precedence and remain the caller's responsibility. Qt is an installed SDK: `-DARIA_DEP_QT_VERSION=6.10.0` selects an exact installed version; otherwise CMake searches its visible locations while respecting `Qt6_DIR`, `CMAKE_PREFIX_PATH`, and toolchains. This updater does not install Qt.
+The Python entry holds reader leases through configure, build, tests and deployment. For manual commands use `python -m forgedeps.build_kit.session --configure -- cmake -S ... -B ...`, then `python -m forgedeps.build_kit.session --build-dir <build> -- <command>`. Offline builds require prepared sources/downloads and the toolchain; incompatible or modified artifacts fail verification.
 
-## Errors and rollback
-
-Resolution failures leave the existing lock unchanged. Correct invalid names/versions, network failures or API limits and retry; do not disable integrity checks. A successful resolution followed by a failed build means compatibility still needs work. Restore `dependencies.json` from a known-good Git revision after preserving local changes, then repeat fetch/build/tests. Restoring metadata alone does not restore binaries. Never edit checksums to accept changed bytes.
-
-Additional arguments: `--file PATH`, `--cache-dir PATH`, and `--offline`. Use the same file with fetch/update tools and `-DARIA_DEPENDENCIES_FILE=...` in Aria CMake source integrations. CMake keeps temporary overrides in the build directory and preserves the source dependency file. Run `--help` for the complete interface.
-
-## Android compatibility profiles
-
-The C++ updater above does not update Maven dependencies or require an Android
-SDK. Android has a separate, validated update entry point:
-
-```bash
-python scripts/ci/android_dependencies.py resolve
-python scripts/ci/android_dependencies.py update
-python scripts/ci/android_dependencies.py update --version activity=1.13.0
-python scripts/ci/android_dependencies.py check
-```
-
-`resolve` reuses the validated lock; `update` selects stable Compose BOM,
-Activity, and Lifecycle releases and validates the whole toolchain combination.
-The single `Workbench/platform/android/android-dependencies.json` contains
-profile definitions, explicit requests, and the `resolved` validation record.
-Successful explicit requests persist in that file. `check` needs no
-network or SDK. AGP, Gradle, Kotlin, SDK, and NDK come from a reviewed profile,
-not independent floating versions. The current profile uses AGP 9.4, Gradle 9.6,
-Kotlin 2.4.20, JDK 17, compile SDK 37, and NDK 29.
-
-Install the required SDK packages separately and first build matching native
-archives with `bash Workbench/scripts/gen-android.sh`. Set `ANDROID_SDK_ROOT`
-and `JAVA_HOME` to select installations. Candidate updates build Debug and
-Release APKs in a temporary project with a fresh Gradle user cache, then replay them offline with strict
-verification before replacing profile locks, native Gradle locks, Maven checksum
-metadata, and the Gradle distribution checksum. Concurrent updates are rejected;
-a failed or interrupted transaction preserves the previous locks. Review and
-commit that dependency document and Gradle's native lock/checksum files together.
-The native files describe the full transitive graph in Gradle's required formats,
-not a second custom copy of version requests. See
-[Android dependencies](android-dependencies.md) for exact paths, override
-precedence, and official compatibility references.
+`fetch_aria.py` is optional shared-source preparation. Local mirror development checkouts require `--source <repo> --destination <path>`. Application builds prepare their SDK automatically.

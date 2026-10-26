@@ -72,7 +72,7 @@ AriaTools/
 │       ├── ios/                  #   iOS 壳（shell + UIViewFactory + IosUi）
 │       ├── android/              #   Android 工程（Compose + typed JniAdapter lab）
 │       └── web/                  #   HTTP/REST/SSE 壳 + 浏览器薄客户端
-└── build/deps/aria               # Aria 框架（pinned fetch：scripts/ci/fetch_aria.py）
+└── $FORGEDEPS_HOME/build/aria/<target>               # Aria 框架（pinned fetch：scripts/ci/fetch_aria.py）
 ```
 
 **数据流（JNI side-channel 示意，各平台同构）**：
@@ -215,39 +215,22 @@ macOS 的 `--arch x86_64` / `--arch arm64` 同时选择应用和模块测试的�
 
 ## 🚀 快速开始
 
-```bash
-# 克隆后拉取钉定版本的 Aria（无 submodule）
-git clone https://github.com/dqsjqian/AriaTools.git
-cd AriaTools
-python scripts/ci/fetch_aria.py
-```
-
-C++ 构建需要 CMake 3.21 或更新版本（与 Mira 1.0.0 的最低要求一致）。
-
-根目录唯一的 `dependencies.json` 同时保存版本请求与每项的 `resolved` 结果。没有显式版本、也没有匹配锁时，首次解析最新稳定版并记录版本、提交和 SHA256；已有锁会直接复用，普通构建不会追随新发布。显式版本优先，例如 `python scripts/ci/fetch_aria.py --version 3.1.1`（优先于 `ARIA_DEP_ARIA_VERSION`）；主动升级 Aria 使用 `python scripts/ci/fetch_aria.py --update`。
-
-C++ 库可用 `-DARIA_DEP_JSON_VERSION=3.12.0`、`-DARIA_DEP_MIRA_VERSION=1.0.0`、`-DARIA_DEP_OPENSSL_VERSION=4.0.3` 等覆盖；CMake 将临时覆盖写入构建目录的解析缓存，不修改源码中的 `dependencies.json`。要更新并保存共享锁，运行 `python scripts/ci/update_dependencies.py`，审查变更后提交这一份依赖文件。显式源码覆盖和父工程已提供的依赖目标继续优先。
-
-Qt 使用已安装的 SDK，不自动下载安装。未指定版本时优先选择可发现的最新版本；`-DARIA_DEP_QT_VERSION=6.8.3` 要求精确版本，`Qt6_DIR` / `CMAKE_PREFIX_PATH` 可指定 SDK 所在位置。
-
-每次更新依赖后重新运行获取脚本：它会核验实际 Git HEAD，拒绝覆盖本地修改，在下载失败时保留原目录，并将成功升级前的旧目录保存在 `build/deps/aria-backup-*`。
-
-Aria 保存在 Git 忽略的 `build/deps/aria`；JSON 等外部依赖按版本与 SHA256 验证后进入构建缓存。项目不使用 `third_party` 源码副本或 Git submodule。
-
-锁定的本地 Aria 提交可通过 `python scripts/ci/fetch_aria.py --source /path/to/Aria` 获取；也可设置环境变量 `ARIA_SOURCE`，`--source` 优先。指定源必须包含锁中选定的完整提交。
-
-主工程和独立模块测试均支持 `-DARIA_DIR=/path/to/Aria`，例如：
+安装构建工具后，注册一个可供所有项目共享的工作区：
 
 ```bash
-cmake -S Workbench/modules/cart/tests -B build/mac/modules/cart -DARIA_DIR=/path/to/Aria
-cmake --build build/mac/modules/cart -j3
-ctest --test-dir build/mac/modules/cart --output-on-failure
-python scripts/ci/test_fetch_aria.py  # 获取脚本的本地安全回归测试
+python -m pip install -r requirements-build.txt
+python -m forgedeps init /path/to/ForgeDepsWorkspace
+python scripts/build.py --test
 ```
 
-使用 `ARIA_DIR` 会直接使用该源码目录，不执行固定版本校验；默认依赖路径仍为 `build/deps/aria`。CMake 配置不会自动运行获取脚本。
+默认从 `dependencies.json` 的已解析锁准备源码和 SDK；构建不自动选择新版本。`FORGEDEPS_HOME` 可覆盖已注册工作区。源码位于工作区 `sources/`，Aria 和第三方产物位于 `build/<name>/<target>/`；应用直接链接此处，每个目标只保留当前产物。版本、编译器、ABI、源码或配方变化会触发显式构建替换，失败保留旧产物。
 
-Android 的 Compose / Activity / Lifecycle 采用独立兼容 profile，并用 Gradle 原生锁和 SHA256 校验冻结整个传递依赖图。运行 `python scripts/ci/android_dependencies.py update` 主动升级；具体 SDK 前置条件、显式版本覆盖和锁文件见 [Android 依赖说明](docs/android-dependencies.md)。
+`--aria-root /path/to/Aria`（CMake 的 `ARIA_DIR`，Tutorial 为 `ARIA_ROOT`）提供可编辑源码；其内容仍被哈希并编译进共享 SDK，不再嵌入应用子目录。Qt、NDK 和 Apple SDK 由用户安装，实际工具链与 Qt 内容进入产物身份。更新版本使用 `scripts/ci/update_dependencies.py`，审查并提交锁文件。
+
+Python 入口持有配置、编译、测试和部署所需的消费锁。手工命令使用 `python -m forgedeps.build_kit.session --configure -- cmake -S ... -B ...`，后续构建/测试使用 `python -m forgedeps.build_kit.session --build-dir <build> -- <command>`。离线构建要求已准备对应源码、归档和工具链；不兼容或被改动的产物会失败。
+
+`fetch_aria.py` 只用于单独准备共享源码；本地镜像开发 checkout 使用 `--source <repo> --destination <path>`。默认应用构建不需要先运行此命令。
+
 
 ### Qt 桌面（macOS / Linux）
 

@@ -24,15 +24,19 @@ def sha256(data):
 
 def stage(root, ndk, output, artifacts, json_license=None, runtime_components=()):
     native = root / "build/platforms/android"
-    aria = Path((native / "aria-source.txt").read_text(encoding="utf-8").strip())
+    aria = Path((native / "aria-sdk.txt").read_text(encoding="utf-8").strip())
+    prefixes = [Path(line) for line in (native / "sdk-prefixes.txt").read_text(encoding="utf-8").splitlines() if line]
     headers = native / "include/nlohmann"
-    selected_headers = Path((native / "include/nlohmann-source.txt").read_text(encoding="utf-8").strip())
-    json_license = Path(json_license) if json_license else selected_headers.parent.parent / "LICENSE.MIT"
+    json_licenses = [prefix / "share/licenses/json/LICENSE.MIT" for prefix in prefixes
+                     if (prefix / "share/licenses/json/LICENSE.MIT").is_file()]
+    if not json_license and len(json_licenses) != 1:
+        raise ValueError("Expected one JSON license from the selected shared SDK environment")
+    json_license = Path(json_license) if json_license else json_licenses[0]
     host = "windows-x86_64" if os.name == "nt" else "darwin-x86_64" if sys.platform == "darwin" else "linux-x86_64"
     llvm = ndk / "toolchains/llvm/prebuilt" / host
     inputs = {
         "AriaTools-LICENSE.txt": root / "LICENSE",
-        "Aria-LICENSE.txt": aria / "LICENSE",
+        "Aria-LICENSE.txt": aria / "share/licenses/aria/LICENSE",
         "nlohmann-json-LICENSE.txt": json_license,
         "Apache-2.0.txt": root / "licenses/Apache-2.0.txt",
         "NDK-LLVM-NOTICE.txt": llvm / "NOTICE",

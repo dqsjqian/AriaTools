@@ -43,23 +43,15 @@ set(WB_RUNTIME_ASSETS_DIR "${CMAKE_BINARY_DIR}/assets" CACHE INTERNAL "")
 option(WORKBENCH_TARGET_QT "" OFF)
 option(WORKBENCH_TARGET_IOS "" OFF)
 
-# Aria (pinned fetch, minimal: no tests/examples).
-set(ARIA_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(ARIA_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(ARIA_BUILD_BENCHMARK OFF CACHE BOOL "" FORCE)
-if(WORKBENCH_TARGET_QT)
-    set(ARIA_BUILD_QT6 ON CACHE BOOL "" FORCE)
-endif()
-set(ARIA_DIR "${_REPO_ROOT}/build/deps/aria" CACHE PATH
-    "Pinned Aria source tree, created by scripts/ci/fetch_aria.py")
-if(NOT EXISTS "${ARIA_DIR}/CMakeLists.txt")
-    message(FATAL_ERROR
-        "Aria not found at ${ARIA_DIR}.\n"
-        "Run once before configuring (from the repository root):\n"
-        "  python scripts/ci/fetch_aria.py\n"
-        "Or configure with -DARIA_DIR=/path/to/Aria.")
-endif()
-add_subdirectory("${ARIA_DIR}" "${CMAKE_BINARY_DIR}/aria" EXCLUDE_FROM_ALL)
+set(ARIA_DIR "" CACHE PATH "Optional editable Aria source for the shared SDK recipe")
+set(ARIA_SDK_SOURCE "${ARIA_DIR}")
+option(ARIA_SDK_QT "Shared SDK Qt adapter" ${WORKBENCH_TARGET_QT})
+option(ARIA_SDK_HTTP "Shared SDK HTTP adapter" OFF)
+option(ARIA_SDK_TLS "Shared SDK HTTP TLS" OFF)
+option(ARIA_SDK_JNI "Shared SDK JNI adapter" OFF)
+option(ARIA_SDK_UIKIT "Shared SDK UIKit adapter" ${WORKBENCH_TARGET_IOS})
+option(ARIA_SDK_SHARED "Build shared Aria libraries" OFF)
+include(SharedAria)
 
 # Base libraries.
 add_subdirectory("${_WB_ROOT}/core/utils" "${CMAKE_BINARY_DIR}/wb_utils")

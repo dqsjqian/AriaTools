@@ -2,7 +2,7 @@
 #  Workbench — cross-platform workbench (Aria C++ MVVM flagship example)
 #
 #  Architecture:
-#    build/deps/aria    pinned Aria fetch (scripts/ci/fetch_aria.py)
+#    shared Aria SDK    ForgeDeps workspace build/aria/<target>
 #    core/utils         wb_utils      pure functions + platform macros
 #    core/infra         wb_infra      stable services (i18n/storage/secret/crypto/settings/sync/log)
 #                                     + DI container + EventBus
@@ -64,46 +64,21 @@ if(WORKBENCH_TARGET_WEB)
     set(WORKBENCH_TARGET_QT OFF CACHE BOOL "" FORCE)
 endif()
 
-# -- Pull in the Aria framework --
-set(ARIA_BUILD_TESTS     OFF CACHE BOOL "" FORCE)
-set(ARIA_BUILD_BENCHMARK OFF CACHE BOOL "" FORCE)
-if(WORKBENCH_TARGET_QT)
-    set(ARIA_BUILD_QT6 ON CACHE BOOL "" FORCE)
-endif()
-if(WORKBENCH_TARGET_IOS)
-    set(ARIA_BUILD_UIKIT ON CACHE BOOL "" FORCE)
-    set(ARIA_BUILD_SHARED OFF CACHE BOOL "" FORCE)
-endif()
+# The source override is compiled once by the shared SDK recipe too.
+set(ARIA_DIR "" CACHE PATH "Optional editable Aria source for the shared SDK recipe")
+set(ARIA_SDK_SOURCE "${ARIA_DIR}")
+option(ARIA_SDK_QT "Shared SDK Qt adapter" ${WORKBENCH_TARGET_QT})
+option(ARIA_SDK_HTTP "Shared SDK HTTP adapter" ${WORKBENCH_TARGET_WEB})
+option(ARIA_SDK_TLS "Shared SDK HTTP TLS" OFF)
+option(ARIA_SDK_JNI "Shared SDK JNI adapter" ${WORKBENCH_TARGET_ANDROID})
+option(ARIA_SDK_UIKIT "Shared SDK UIKit adapter" ${WORKBENCH_TARGET_IOS})
+option(ARIA_SDK_SHARED "Build shared Aria libraries" OFF)
+include(SharedAria)
 if(WORKBENCH_TARGET_ANDROID)
-    # Android consumers link STATIC archives; the JNI adapter bridges the
-    # core to Kotlin/Compose (View layer lives in platform/android/app).
-    set(ARIA_BUILD_JNI   ON  CACHE BOOL "" FORCE)
-    set(ARIA_BUILD_SHARED OFF CACHE BOOL "" FORCE)
-    set(ARIA_BUILD_QT6   OFF CACHE BOOL "" FORCE)
+    file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/sdk-prefixes.txt" CONTENT "$<JOIN:${ARIA_SDK_PREFIXES},\n>\n")
+    file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/aria-sdk.txt" CONTENT "${ARIA_SDK_PREFIX}\n")
+    file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/dependency-environment.txt" CONTENT "${FORGEDEPS_ENVIRONMENT}\n")
 endif()
-if(WORKBENCH_TARGET_WEB)
-    set(ARIA_BUILD_HTTP ON CACHE BOOL "" FORCE)
-    set(ARIA_HTTP_ENABLE_TLS OFF CACHE BOOL "" FORCE)
-endif()
-
-# -- Pull in the Aria framework (pinned fetch; no git submodule) --
-set(ARIA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../build/deps/aria" CACHE PATH
-    "Pinned Aria source tree, created by scripts/ci/fetch_aria.py")
-if(NOT EXISTS "${ARIA_DIR}/CMakeLists.txt")
-    message(FATAL_ERROR
-        "Aria not found at ${ARIA_DIR}.\n"
-        "Run once before configuring (from the repository root):\n"
-        "  python scripts/ci/fetch_aria.py\n"
-        "(no git submodules -- Aria is fetched at a pinned commit SHA)")
-endif()
-if(WORKBENCH_TARGET_ANDROID)
-    # The separate Gradle JNI build must use the same Aria headers as these archives.
-    file(REAL_PATH "${ARIA_DIR}" _aria_selected_source BASE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
-    file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/aria-source.txt" CONTENT "${_aria_selected_source}\n")
-endif()
-add_subdirectory("${ARIA_DIR}"
-                 "${CMAKE_BINARY_DIR}/aria"
-                 EXCLUDE_FROM_ALL)
 
 # -- Base libraries (utils/infra/module_api) --
 add_subdirectory(core/utils)
@@ -207,3 +182,19 @@ if(TARGET workbench)
         endif()
     endforeach()
 endif()
+
+# Package the notices belonging to the SDKs actually linked by each shell.
+foreach(_shell workbench workbench_web)
+    if(TARGET ${_shell})
+        set(_license_manifest "${CMAKE_CURRENT_BINARY_DIR}/${_shell}-licenses-$<CONFIG>.cmake")
+        file(GENERATE OUTPUT "${_license_manifest}" CONTENT
+"set(license_output [==[$<TARGET_FILE_DIR:${_shell}>/licenses]==])
+set(tools_source [==[${CMAKE_CURRENT_SOURCE_DIR}/..]==])
+set(shared_prefixes [==[${ARIA_SDK_PREFIXES}]==])
+include([==[${CMAKE_CURRENT_SOURCE_DIR}/cmake/StageWorkbenchLicenses.cmake]==])
+")
+        add_custom_target(${_shell}_licenses
+            COMMAND "${CMAKE_COMMAND}" -P "${_license_manifest}" VERBATIM)
+        add_dependencies(${_shell} ${_shell}_licenses)
+    endif()
+endforeach()

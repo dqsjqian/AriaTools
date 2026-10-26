@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, work/forgedeps-integration]
   pull_request:
   workflow_dispatch:
 
@@ -13,6 +13,15 @@ concurrency:
   group: ariatools-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FORGEDEPS_HOME: ${{ github.workspace }}/.forgedeps
+  # Candidate source is explicit; published dependency locks remain unchanged.
+  # The reviewed Aria source is the released tag the dependency lock names.
+  ARIA_SDK_SOURCE: ${{ github.workspace }}/build/aria-candidate
+  GCC_VERSION: "16"
+  LLVM_VERSION: "23"
+  PYTHON_VERSION: "3.14"
+
 jobs:
   dependency-contracts:
     name: Dependency contracts (${{ matrix.os }})
@@ -20,17 +29,49 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-26.04, windows-2025-vs2026]
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        # Container jobs bring their own interpreter.
+        if: env.VIRTUAL_ENV == ''
+        with:
+          python-version: '3.14'
+      - name: Checkout reviewed Aria SDK candidate
+        uses: actions/checkout@v7
+        with:
+          repository: dqsjqian/Aria
+          ref: v3.2.1
+          path: build/aria-candidate
+          persist-credentials: false
+      - name: Install shared dependency tooling
+        run: python -m pip install --break-system-packages -r requirements-build.txt
+      - name: Initialize shared dependency workspace
+        run: python -m forgedeps init .forgedeps
       - name: Verify selection, rollback and cache contracts
         run: python -m unittest discover -s scripts/ci -p 'test_*.py'
 
   dependency-fetcher:
     name: Dependency fetcher safety regressions
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        # Container jobs bring their own interpreter.
+        if: env.VIRTUAL_ENV == ''
+        with:
+          python-version: '3.14'
+      - name: Checkout reviewed Aria SDK candidate
+        uses: actions/checkout@v7
+        with:
+          repository: dqsjqian/Aria
+          ref: v3.2.1
+          path: build/aria-candidate
+          persist-credentials: false
+      - name: Install shared dependency tooling
+        run: python -m pip install --break-system-packages -r requirements-build.txt
+      - name: Initialize shared dependency workspace
+        run: python -m forgedeps init .forgedeps
       - name: Test local dependency transactions
         run: python scripts/ci/test_fetch_aria.py
       - name: Test selected JSON header staging
@@ -45,13 +86,25 @@ jobs:
         shell: pwsh
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        # Container jobs bring their own interpreter.
+        if: env.VIRTUAL_ENV == ''
         with:
+          python-version: '3.14'
+      - name: Checkout reviewed Aria SDK candidate
+        uses: actions/checkout@v7
+        with:
+          repository: dqsjqian/Aria
+          ref: v3.2.1
+          path: build/aria-candidate
           persist-credentials: false
-      - name: Fetch pinned Aria
-        run: python scripts/ci/fetch_aria.py
+      - name: Install shared dependency tooling
+        run: python -m pip install --break-system-packages -r requirements-build.txt
+      - name: Initialize shared dependency workspace
+        run: python -m forgedeps init .forgedeps
       - uses: jurplel/install-qt-action@v4
         with:
-          version: '6.8.3'
+          version: '6.10.3'
           arch: win64_msvc2022_64
           cache: true
       - name: Validate Windows build scripts
@@ -78,51 +131,47 @@ jobs:
           if (-not (Test-Path "$platforms/qoffscreen.dll")) { throw "Deployed offscreen plugin is missing" }
           $env:QT_QPA_PLATFORM_PLUGIN_PATH = $platforms
           $env:QT_QPA_PLATFORM = "offscreen"
-          $p = Start-Process -FilePath "./build/ci-vs2026/bin/Release/workbench.exe" -ArgumentList "--probe" -PassThru -NoNewWindow
-          if (-not $p.WaitForExit(120000)) {
-            Write-Host "::error::qt probe timed out after 120s, killing"
-            $p.Kill($true)
-            exit 124
-          }
-          if ($null -eq $p.ExitCode) { throw "Qt probe did not report an exit code" }
-          exit $p.ExitCode
+          python -m forgedeps.build_kit.session --build-dir build/ci-vs2026 -- python scripts/ci/run_probe.py ./build/ci-vs2026/bin/Release/workbench.exe
       - name: Run standalone module tests
         run: |
           foreach ($module in @('calendar', 'cart', 'dashboard', 'frameworklab', 'notes', 'tools')) {
             $build = "build/ci-vs2026-test-$module"
-            cmake -S "Workbench/modules/$module/tests" -B $build -G "Visual Studio 18 2026" -A x64
+            python -m forgedeps.build_kit.session --configure -- cmake -S "Workbench/modules/$module/tests" -B $build -G "Visual Studio 18 2026" -A x64
             if ($LASTEXITCODE) { exit $LASTEXITCODE }
-            cmake --build $build --config Release --parallel 3
+            python -m forgedeps.build_kit.session --build-dir $build -- cmake --build $build --config Release --parallel 3
             if ($LASTEXITCODE) { exit $LASTEXITCODE }
             $env:PATH = "$(Resolve-Path "$build/bin/Release");$env:PATH"
-            ctest --test-dir $build -C Release --output-on-failure --no-tests=error
+            python -m forgedeps.build_kit.session --build-dir $build -- ctest --test-dir $build -C Release --output-on-failure --no-tests=error
             if ($LASTEXITCODE) { exit $LASTEXITCODE }
           }
       - name: Build and probe Web shell
         run: |
-          cmake -S Workbench -B build/ci-vs2026-web -G "Visual Studio 18 2026" -A x64 -DWORKBENCH_TARGET_WEB=ON -DWORKBENCH_TARGET_QT=OFF
+          python -m forgedeps.build_kit.session --configure -- cmake -S Workbench -B build/ci-vs2026-web -G "Visual Studio 18 2026" -A x64 -DWORKBENCH_TARGET_WEB=ON -DWORKBENCH_TARGET_QT=OFF
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          cmake --build build/ci-vs2026-web --config Release --parallel 3
+          python -m forgedeps.build_kit.session --build-dir build/ci-vs2026-web -- cmake --build build/ci-vs2026-web --config Release --parallel 3
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          $p = Start-Process -FilePath "./build/ci-vs2026-web/bin/Release/workbench_web.exe" -ArgumentList "--probe" -PassThru -NoNewWindow
-          if (-not $p.WaitForExit(120000)) {
-            Write-Host "::error::web probe timed out after 120s, killing"
-            $p.Kill($true)
-            exit 124
-          }
-          if ($null -eq $p.ExitCode) { throw "Web probe did not report an exit code" }
-          exit $p.ExitCode
+          python -m forgedeps.build_kit.session --build-dir build/ci-vs2026-web -- python scripts/ci/run_probe.py ./build/ci-vs2026-web/bin/Release/workbench_web.exe
 
   windows:
     name: Qt and Web probes (Windows UCRT64)
-    runs-on: windows-2022
+    runs-on: windows-2025-vs2026
     timeout-minutes: 40
     defaults:
       run:
         shell: msys2 {0}
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        # Container jobs bring their own interpreter.
+        if: env.VIRTUAL_ENV == ''
         with:
+          python-version: '3.14'
+      - name: Checkout reviewed Aria SDK candidate
+        uses: actions/checkout@v7
+        with:
+          repository: dqsjqian/Aria
+          ref: v3.2.1
+          path: build/aria-candidate
           persist-credentials: false
       - uses: msys2/setup-msys2@v2
         with:
@@ -134,12 +183,16 @@ jobs:
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja
             mingw-w64-ucrt-x86_64-qt6-base
-      - name: Fetch pinned Aria
-        run: python scripts/ci/fetch_aria.py
+            mingw-w64-ucrt-x86_64-python
+            mingw-w64-ucrt-x86_64-python-pip
+      - name: Install shared dependency tooling
+        run: python -m pip install --break-system-packages -r requirements-build.txt
+      - name: Initialize shared dependency workspace
+        run: python -m forgedeps init .forgedeps
       - name: Build Qt desktop
         run: |
-          cmake -S Workbench -B build/ci-win -G Ninja -DCMAKE_BUILD_TYPE=Release -DWORKBENCH_TARGET_QT=ON
-          cmake --build build/ci-win --parallel 3
+          python -m forgedeps.build_kit.session --configure -- cmake -S Workbench -B build/ci-win -G Ninja -DCMAKE_BUILD_TYPE=Release -DWORKBENCH_TARGET_QT=ON
+          python -m forgedeps.build_kit.session --build-dir build/ci-win -- cmake --build build/ci-win --parallel 3
       # The Qt probe must finish within the existing 120-second limit.
       # A timeout or probe failure fails the job, just like the other platforms.
       - name: Probe Qt views
@@ -149,19 +202,19 @@ jobs:
           test -f ./build/ci-win/bin/platforms/qoffscreen.dll
           unset QT_PLUGIN_PATH
           export QT_QPA_PLATFORM_PLUGIN_PATH="$(cygpath -w "$PWD/build/ci-win/bin/platforms")"
-          timeout -s KILL 120 ./build/ci-win/bin/workbench.exe --probe
+          python -m forgedeps.build_kit.session --build-dir build/ci-win -- timeout -s KILL 120 ./build/ci-win/bin/workbench.exe --probe
       - name: Run standalone module tests
         run: |
           for module in calendar cart dashboard frameworklab notes tools; do
-            cmake -S "Workbench/modules/$module/tests" -B "build/ci-win-test-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release
-            cmake --build "build/ci-win-test-$module" --parallel 3
-            PATH="$PWD/build/ci-win-test-$module/bin:$PATH" ctest --test-dir "build/ci-win-test-$module" --output-on-failure --no-tests=error
+            python -m forgedeps.build_kit.session --configure -- cmake -S "Workbench/modules/$module/tests" -B "build/ci-win-test-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release
+            python -m forgedeps.build_kit.session --build-dir "build/ci-win-test-$module" -- cmake --build "build/ci-win-test-$module" --parallel 3
+            PATH="$PWD/build/ci-win-test-$module/bin:$PATH" python -m forgedeps.build_kit.session --build-dir "build/ci-win-test-$module" -- ctest --test-dir "build/ci-win-test-$module" --output-on-failure --no-tests=error
           done
       - name: Build and probe Web shell
         run: |
-          cmake -S Workbench -B build/ci-win-web -G Ninja -DCMAKE_BUILD_TYPE=Release -DWORKBENCH_TARGET_WEB=ON -DWORKBENCH_TARGET_QT=OFF
-          cmake --build build/ci-win-web --parallel 3
-          timeout -s KILL 120 ./build/ci-win-web/bin/workbench_web.exe --probe
+          python -m forgedeps.build_kit.session --configure -- cmake -S Workbench -B build/ci-win-web -G Ninja -DCMAKE_BUILD_TYPE=Release -DWORKBENCH_TARGET_WEB=ON -DWORKBENCH_TARGET_QT=OFF
+          python -m forgedeps.build_kit.session --build-dir build/ci-win-web -- cmake --build build/ci-win-web --parallel 3
+          python -m forgedeps.build_kit.session --build-dir build/ci-win-web -- timeout -s KILL 120 ./build/ci-win-web/bin/workbench_web.exe --probe
 
   qt:
     name: Qt and Web probes (${{ matrix.os }})
@@ -170,22 +223,36 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-26]
+        include:
+          - { os: ubuntu-26.04, container: gcc:16 }
+          - { os: xcode-27 }
+    container:
+      image: ${{ matrix.container || '' }}
     defaults:
       run:
         shell: bash
     steps:
       - uses: actions/checkout@v7
-      - name: Fetch pinned Aria
-        run: python scripts/ci/fetch_aria.py
+      - name: Set up GCC 16, Python and Qt6
+        if: matrix.container
+        run: .github/scripts/setup-gcc-container.sh qt6-base-dev
 
-      - name: Install Linux toolchain and Qt6
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build g++-14 qt6-base-dev
-          echo "CC=gcc-14" >> "$GITHUB_ENV"
-          echo "CXX=g++-14" >> "$GITHUB_ENV"
+      - uses: actions/setup-python@v7
+        # Container jobs bring their own interpreter.
+        if: env.VIRTUAL_ENV == ''
+        with:
+          python-version: '3.14'
+      - name: Checkout reviewed Aria SDK candidate
+        uses: actions/checkout@v7
+        with:
+          repository: dqsjqian/Aria
+          ref: v3.2.1
+          path: build/aria-candidate
+          persist-credentials: false
+      - name: Install shared dependency tooling
+        run: python -m pip install --break-system-packages -r requirements-build.txt
+      - name: Initialize shared dependency workspace
+        run: python -m forgedeps init .forgedeps
 
       - name: Install macOS toolchain and Qt6
         if: runner.os == 'macOS'
@@ -199,7 +266,7 @@ jobs:
             --generator Ninja --configure-only --jobs 3
 
       - name: Build
-        run: cmake --build build/ci-qt -j
+        run: python -m forgedeps.build_kit.session --build-dir build/ci-qt -- cmake --build build/ci-qt -j
 
       - name: Run standalone module tests
         run: |
@@ -214,28 +281,42 @@ jobs:
           if [[ "$RUNNER_OS" == "macOS" ]]; then
             executable="$executable.app/Contents/MacOS/workbench"
           fi
-          "$executable" --probe
+          python -m forgedeps.build_kit.session --build-dir build/ci-qt -- "$executable" --probe
 
       - name: Configure and build Web shell
         run: |
-          cmake -S Workbench -B build/ci-web -G Ninja \
+          python -m forgedeps.build_kit.session --configure -- cmake -S Workbench -B build/ci-web -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DWORKBENCH_TARGET_WEB=ON \
             -DWORKBENCH_TARGET_QT=OFF
-          cmake --build build/ci-web -j
+          python -m forgedeps.build_kit.session --build-dir build/ci-web -- cmake --build build/ci-web -j
 
       - name: Probe HTTP wire protocol and shared TipCalc VM
-        run: ./build/ci-web/bin/workbench_web --probe
+        run: python -m forgedeps.build_kit.session --build-dir build/ci-web -- ./build/ci-web/bin/workbench_web --probe
 
   android:
     name: Android Compose + View-backed JNI build
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
-      - name: Fetch pinned Aria
-        run: python scripts/ci/fetch_aria.py
+      - uses: actions/setup-python@v7
+        # Container jobs bring their own interpreter.
+        if: env.VIRTUAL_ENV == ''
+        with:
+          python-version: '3.14'
+      - name: Checkout reviewed Aria SDK candidate
+        uses: actions/checkout@v7
+        with:
+          repository: dqsjqian/Aria
+          ref: v3.2.1
+          path: build/aria-candidate
+          persist-credentials: false
+      - name: Install shared dependency tooling
+        run: python -m pip install --break-system-packages -r requirements-build.txt
+      - name: Initialize shared dependency workspace
+        run: python -m forgedeps init .forgedeps
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
@@ -264,15 +345,30 @@ jobs:
 
   ios:
     name: iOS UIKit compile gate
-    runs-on: macos-26
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@v7
-      - name: Fetch pinned Aria
-        run: python scripts/ci/fetch_aria.py
+      - uses: actions/setup-python@v7
+        # Container jobs bring their own interpreter.
+        if: env.VIRTUAL_ENV == ''
+        with:
+          python-version: '3.14'
+      - name: Checkout reviewed Aria SDK candidate
+        uses: actions/checkout@v7
+        with:
+          repository: dqsjqian/Aria
+          ref: v3.2.1
+          path: build/aria-candidate
+          persist-credentials: false
+      - name: Install shared dependency tooling
+        run: python -m pip install --break-system-packages -r requirements-build.txt
+      - name: Initialize shared dependency workspace
+        run: python -m forgedeps init .forgedeps
 
       - name: Configure simulator target
         run: |
-          cmake -S Workbench -B build/ci-ios -G Xcode \
+          python -m forgedeps.build_kit.session --configure -- cmake -S Workbench -B build/ci-ios -G Xcode \
+            -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_SYSTEM_NAME=iOS \
             -DCMAKE_OSX_SYSROOT=iphonesimulator \
             -DCMAKE_OSX_ARCHITECTURES=$(uname -m) \
@@ -281,4 +377,4 @@ jobs:
             -DWORKBENCH_TARGET_QT=OFF
 
       - name: Build iOS shell and every module View
-        run: cmake --build build/ci-ios --config Debug --target workbench
+        run: python -m forgedeps.build_kit.session --build-dir build/ci-ios -- cmake --build build/ci-ios --config Debug --target workbench
