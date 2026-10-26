@@ -14,7 +14,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FORGEDEPS_HOME: ${{ github.workspace }}/.forgedeps
   # Candidate source is explicit; published dependency locks remain unchanged.
   # The reviewed Aria source is the released tag the dependency lock names.
   ARIA_SDK_SOURCE: ${{ github.workspace }}/build/aria-candidate
@@ -47,7 +46,9 @@ jobs:
       - name: Install shared dependency tooling
         run: python -m pip install --break-system-packages -r requirements-build.txt
       - name: Initialize shared dependency workspace
-        run: python -m forgedeps init .forgedeps
+        run: |
+          python -m forgedeps init "$RUNNER_TEMP/forgedeps"
+          echo "FORGEDEPS_HOME=$RUNNER_TEMP/forgedeps" >> "$GITHUB_ENV"
       - name: Verify selection, rollback and cache contracts
         run: python -m unittest discover -s scripts/ci -p 'test_*.py'
 
@@ -71,7 +72,9 @@ jobs:
       - name: Install shared dependency tooling
         run: python -m pip install --break-system-packages -r requirements-build.txt
       - name: Initialize shared dependency workspace
-        run: python -m forgedeps init .forgedeps
+        run: |
+          python -m forgedeps init "$RUNNER_TEMP/forgedeps"
+          echo "FORGEDEPS_HOME=$RUNNER_TEMP/forgedeps" >> "$GITHUB_ENV"
       - name: Test local dependency transactions
         run: python scripts/ci/test_fetch_aria.py
       - name: Test selected JSON header staging
@@ -101,7 +104,9 @@ jobs:
       - name: Install shared dependency tooling
         run: python -m pip install --break-system-packages -r requirements-build.txt
       - name: Initialize shared dependency workspace
-        run: python -m forgedeps init .forgedeps
+        run: |
+          python -m forgedeps init "$RUNNER_TEMP/forgedeps"
+          echo "FORGEDEPS_HOME=$RUNNER_TEMP/forgedeps" >> "$GITHUB_ENV"
       - uses: jurplel/install-qt-action@v4
         with:
           version: '6.10.3'
@@ -188,7 +193,9 @@ jobs:
       - name: Install shared dependency tooling
         run: python -m pip install --break-system-packages -r requirements-build.txt
       - name: Initialize shared dependency workspace
-        run: python -m forgedeps init .forgedeps
+        run: |
+          python -m forgedeps init "$RUNNER_TEMP/forgedeps"
+          echo "FORGEDEPS_HOME=$RUNNER_TEMP/forgedeps" >> "$GITHUB_ENV"
       - name: Build Qt desktop
         run: |
           python -m forgedeps.build_kit.session --configure -- cmake -S Workbench -B build/ci-win -G Ninja -DCMAKE_BUILD_TYPE=Release -DWORKBENCH_TARGET_QT=ON
@@ -252,7 +259,9 @@ jobs:
       - name: Install shared dependency tooling
         run: python -m pip install --break-system-packages -r requirements-build.txt
       - name: Initialize shared dependency workspace
-        run: python -m forgedeps init .forgedeps
+        run: |
+          python -m forgedeps init "$RUNNER_TEMP/forgedeps"
+          echo "FORGEDEPS_HOME=$RUNNER_TEMP/forgedeps" >> "$GITHUB_ENV"
 
       - name: Install macOS toolchain and Qt6
         if: runner.os == 'macOS'
@@ -314,7 +323,9 @@ jobs:
       - name: Install shared dependency tooling
         run: python -m pip install --break-system-packages -r requirements-build.txt
       - name: Initialize shared dependency workspace
-        run: python -m forgedeps init .forgedeps
+        run: |
+          python -m forgedeps init "$RUNNER_TEMP/forgedeps"
+          echo "FORGEDEPS_HOME=$RUNNER_TEMP/forgedeps" >> "$GITHUB_ENV"
 
       - uses: actions/setup-java@v6
         with:
@@ -363,7 +374,9 @@ jobs:
       - name: Install shared dependency tooling
         run: python -m pip install --break-system-packages -r requirements-build.txt
       - name: Initialize shared dependency workspace
-        run: python -m forgedeps init .forgedeps
+        run: |
+          python -m forgedeps init "$RUNNER_TEMP/forgedeps"
+          echo "FORGEDEPS_HOME=$RUNNER_TEMP/forgedeps" >> "$GITHUB_ENV"
 
       - name: Configure simulator target
         run: |
