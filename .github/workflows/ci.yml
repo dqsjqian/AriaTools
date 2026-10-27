@@ -248,7 +248,7 @@ jobs:
         run: |
           python -m forgedeps.build_kit.session --configure -- cmake -S Workbench -B build/ci-win-web -G Ninja -DCMAKE_BUILD_TYPE=Release -DWORKBENCH_TARGET_WEB=ON -DWORKBENCH_TARGET_QT=OFF
           python -m forgedeps.build_kit.session --build-dir build/ci-win-web -- cmake --build build/ci-win-web --parallel 3
-          python -m forgedeps.build_kit.session --build-dir build/ci-win-web -- timeout -s KILL 120 ./build/ci-win-web/bin/workbench_web.exe --probe
+          python -m forgedeps.build_kit.session --build-dir build/ci-win-web -- /usr/bin/timeout -s KILL 120 ./build/ci-win-web/bin/workbench_web.exe --probe
 
   qt:
     name: Qt and Web probes (${{ matrix.os }})
