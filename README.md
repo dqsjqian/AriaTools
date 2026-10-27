@@ -260,7 +260,7 @@ WB_IOS_DEV_TEAM=YOUR_TEAM_ID bash Workbench/scripts/gen-ios.sh device # 真机�
 
 ### Android（使用锁定的工具链 profile）
 
-先按 [Android 依赖说明](docs/android-dependencies.md) 安装所选 profile 的 SDK/NDK/CMake 与 JDK；当前 profile 使用 NDK 29、compile SDK 37 和 JDK 17。脚本从 `android-dependencies.json` 读取具体工具链版本，原生核心与 APK 必须使用一致的选择。
+先按 [Android 依赖说明](docs/android-dependencies.md) 安装所选 profile 的 SDK/NDK/CMake 与 JDK；当前 profile 使用 NDK r30、compile SDK 37 和 JDK 17。脚本从 `android-dependencies.json` 读取具体工具链版本，原生核心与 APK 必须使用一致的选择。
 
 ```bash
 bash Workbench/scripts/gen-android.sh        # 仅核心静态库

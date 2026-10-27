@@ -221,7 +221,7 @@ WB_IOS_DEV_TEAM=YOUR_TEAM_ID bash Workbench/scripts/gen-ios.sh device # build an
 
 Install the SDK/NDK/CMake and JDK selected by the
 [Android dependency profile](docs/android-dependencies.md). The current profile
-uses NDK 29, compile SDK 37 and JDK 17. The script reads exact toolchain versions
+uses NDK r30, compile SDK 37 and JDK 17. The script reads exact toolchain versions
 from `android-dependencies.json`; the native core and APK must use the same selection.
 
 ```bash

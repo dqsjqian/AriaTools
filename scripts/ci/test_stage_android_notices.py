@@ -43,7 +43,7 @@ class StageAndroidNoticesTests(unittest.TestCase):
         (llvm / "sysroot").mkdir(parents=True)
         (llvm / "NOTICE").write_bytes(b"selected LLVM notice")
         (llvm / "sysroot/NOTICE").write_bytes(b"selected sysroot notice")
-        (self.ndk / "source.properties").write_text("Pkg.Revision = 29.0.14206865\n")
+        (self.ndk / "source.properties").write_text("Pkg.Revision = 30.0.16248370\n")
         self.output = self.root / "generated"
 
     def test_selected_texts_all_headers_and_safe_nested_archive_entries(self):

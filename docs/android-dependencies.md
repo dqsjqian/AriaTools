@@ -12,7 +12,7 @@ reviewed toolchain families, the selected family, optional exact version request
 and a `resolved` record with actual versions and validation hashes. Request and
 profile fingerprints invalidate stale results without copying their full inputs
 into a second custom lock file. The default family uses AGP 9.4, its required Gradle 9.6, Kotlin 2.4.20,
-JDK 17, compile SDK 37, and NDK 29. It selects the latest stable patch in that AGP
+JDK 17, compile SDK 37, and NDK r30. It selects the latest stable patch in that AGP
 family and the latest stable Compose BOM, Activity, and Lifecycle releases.
 Adding a new toolchain family requires reviewing its compatibility and validating
 an APK build. A newer major toolchain is never silently substituted.

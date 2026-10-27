@@ -9,7 +9,7 @@
       "gradle": "9.6.0",
       "compile_sdk": "37",
       "build_tools": "36.0.0",
-      "ndk": "29.0.14206865",
+      "ndk": "30.0.16248370",
       "cmake": "3.22.1",
       "java": "17",
       "references": [
@@ -22,13 +22,13 @@
   },
   "resolved": {
     "request_hash": "2c8c1dde253d64ce8a00235c3a6579bccecd507eabffe73c35a6e05655cae310",
-    "profile_hash": "03d5052ef70cda40230e3079f2d2ad563a41de64bbe8888b532089eb2423dde1",
+    "profile_hash": "e8db163d2094bc69b2e9205ebbbaadfd5810c40fd92f39e158f437a87eb1732d",
     "versions": {
       "kotlin": "2.4.20",
       "gradle": "9.6.0",
       "compile_sdk": "37",
       "build_tools": "36.0.0",
-      "ndk": "29.0.14206865",
+      "ndk": "30.0.16248370",
       "cmake": "3.22.1",
       "java": "17",
       "agp": "9.4.1",
@@ -36,7 +36,7 @@
       "activity": "1.13.0",
       "lifecycle": "2.11.0"
     },
-    "validated_profile_sha256": "09fed855356150c4a7183fde969a9cd6b77a7770e5432764a0c461ce20a2cc59",
+    "validated_profile_sha256": "3d8fac39725d4f6ada458c7f177610b7eec03a4d3929356b16105d6a65368eb7",
     "validated_files": {
       "gradle/wrapper/gradle-wrapper.properties": "92fd695b18b5612df2cd2e11459a707881b5d299fc9bcd64c7739b7688fb7689",
       "gradle/verification-metadata.xml": "b238d2209a41f06acfac3ebe7092cbcda23bd19ee1f5e2cf66aa6d969396e232",

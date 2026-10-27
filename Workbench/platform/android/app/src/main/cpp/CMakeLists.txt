@@ -42,7 +42,9 @@ list(PREPEND CMAKE_PREFIX_PATH ${_prefixes})
 # just staged.
 set(aria_DIR "${ARIA_SDK_PREFIX}/lib/cmake/aria" CACHE PATH "Aria package config" FORCE)
 find_package(aria CONFIG REQUIRED COMPONENTS core async runtime binding jni NO_DEFAULT_PATH)
-find_package(nlohmann_json CONFIG REQUIRED)
+# The JSON package is header-only and comes from the host-visible shared
+# ForgeDeps workspace. Do not remap that prefix through the Android sysroot.
+find_package(nlohmann_json CONFIG REQUIRED NO_CMAKE_FIND_ROOT_PATH)
 set(WB_LIB   "${WB_NATIVE_BUILD}/lib")
 
 # ── JNI side-channel bridge ─────────────────────────────────────────────

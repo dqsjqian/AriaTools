@@ -55,5 +55,5 @@ JNI 回调（JniBridge.onPropertyChanged）→ Kotlin StateFlow → Compose 重�
 - `ViewBindingLabActivity` 另行验证 View-backed `JniAdapter` 绑定路径。
 
 ## 依赖
-- Android NDK 29.0.14206865、SDK CMake 3.22.1 + Ninja
+- Android NDK r30 (30.0.16248370)、SDK CMake 3.22.1 + Ninja
 - Gradle 8.7（wrapper 自带）、AGP 8.5.2、Kotlin 1.9.22、Compose BOM 2024.06.00
