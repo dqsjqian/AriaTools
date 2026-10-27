@@ -37,8 +37,11 @@ if(NOT _lease_status EQUAL 0)
     message(FATAL_ERROR "Run gen-android.sh --apk under the shared SDK lease: ${_lease_error}")
 endif()
 list(PREPEND CMAKE_PREFIX_PATH ${_prefixes})
-find_package(aria CONFIG REQUIRED COMPONENTS core async runtime binding jni
-    PATHS "${ARIA_SDK_PREFIX}" NO_DEFAULT_PATH)
+# Name the config directory: a cross build re-roots every search prefix under
+# CMAKE_FIND_ROOT_PATH, so PATHS never reaches the SDK that gen-android.sh
+# just staged.
+set(aria_DIR "${ARIA_SDK_PREFIX}/lib/cmake/aria" CACHE PATH "Aria package config" FORCE)
+find_package(aria CONFIG REQUIRED COMPONENTS core async runtime binding jni NO_DEFAULT_PATH)
 find_package(nlohmann_json CONFIG REQUIRED)
 set(WB_LIB   "${WB_NATIVE_BUILD}/lib")
 

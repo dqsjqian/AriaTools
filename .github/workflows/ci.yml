@@ -14,6 +14,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  # The CI scripts print UTF-8 diagnostics; a Windows console defaults
+  # to cp1252 and raises UnicodeEncodeError on them.
+  PYTHONUTF8: "1"
+  PYTHONIOENCODING: utf-8
   # Candidate source is explicit; published dependency locks remain unchanged.
   # The reviewed Aria source is the released tag the dependency lock names.
   ARIA_SDK_SOURCE: ${{ github.workspace }}/build/aria-candidate
@@ -187,9 +191,19 @@ jobs:
             git
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja
-            mingw-w64-ucrt-x86_64-qt6-base
             mingw-w64-ucrt-x86_64-python
             mingw-w64-ucrt-x86_64-python-pip
+      # Qt for MinGW comes from the upstream build rather than the MSYS2
+      # package: the packaged Qt creates its EntryPointMinGW32 imported target
+      # unconditionally, so any consumer that finds Qt6 with Widgets aborts with
+      # "add_library cannot create imported target".
+      - name: Install Qt 6.10.3 for MinGW
+        shell: pwsh
+        run: |
+          python -m pip install --quiet "aqtinstall==3.3.*"
+          python -m aqt install-qt windows desktop 6.10.3 win64_mingw --archives qtbase --outputdir "$env:RUNNER_TEMP\qt"
+          $root = "$env:RUNNER_TEMP\qt\6.10.3\mingw_64"
+          "QT_ROOT_WIN=$root" >> $env:GITHUB_ENV
       - name: Install shared dependency tooling
         run: |
           python -m pip install --break-system-packages -r requirements-build.txt
@@ -202,10 +216,14 @@ jobs:
           echo "FORGEDEPS_HOME=$RUNNER_TEMP/forgedeps" >> "$GITHUB_ENV"
       - name: Build Qt desktop
         run: |
-          python -m forgedeps.build_kit.session --configure -- cmake -S Workbench -B build/ci-win -G Ninja -DCMAKE_BUILD_TYPE=Release -DWORKBENCH_TARGET_QT=ON
+          python -m forgedeps.build_kit.session --configure -- cmake -S Workbench -B build/ci-win -G Ninja -DCMAKE_BUILD_TYPE=Release -DWORKBENCH_TARGET_QT=ON -DQt6_DIR="$QT_ROOT_WIN/lib/cmake/Qt6"
           python -m forgedeps.build_kit.session --build-dir build/ci-win -- cmake --build build/ci-win --parallel 3
       # The Qt probe must finish within the existing 120-second limit.
       # A timeout or probe failure fails the job, just like the other platforms.
+      - name: Stage the Qt platform plugins next to the binaries
+        run: |
+          mkdir -p build/ci-win/bin/platforms
+          cp -f "$(cygpath -u "$QT_ROOT_WIN")/plugins/platforms/qoffscreen.dll" build/ci-win/bin/platforms/
       - name: Probe Qt views
         env:
           QT_QPA_PLATFORM: offscreen
