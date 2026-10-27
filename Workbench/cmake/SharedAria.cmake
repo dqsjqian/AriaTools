@@ -59,6 +59,12 @@ endforeach()
 # CMAKE_FIND_ROOT_PATH and never looks at the SDK the environment just
 # installed, so name the config directory. When no prefix is known (a Gradle
 # build that passes CMAKE_PREFIX_PATH instead), keep the normal search.
+# Find Qt once, before Aria: Qt's EntryPointPrivate config creates its imported
+# target unconditionally, so a second find_package(Qt6) in the same configure
+# aborts. Aria's package config reuses the components that already exist.
+if(ARIA_SDK_QT AND NOT TARGET Qt6::Widgets)
+    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+endif()
 if(ARIA_SDK_PREFIX)
     set(aria_DIR "${ARIA_SDK_PREFIX}/lib/cmake/aria" CACHE PATH "Aria package config" FORCE)
     find_package(aria CONFIG REQUIRED COMPONENTS ${_aria_components} NO_DEFAULT_PATH)
