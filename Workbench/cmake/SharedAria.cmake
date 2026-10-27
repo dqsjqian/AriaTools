@@ -35,12 +35,10 @@ if(NOT ARIA_SDK_PREFIX)
         QT "${ARIA_SDK_QT}" HTTP "${ARIA_SDK_HTTP}" TLS "${ARIA_SDK_TLS}"
         JNI "${ARIA_SDK_JNI}" APPKIT "${ARIA_SDK_APPKIT}" UIKIT "${ARIA_SDK_UIKIT}"
         SHARED "${ARIA_SDK_SHARED}" EXTRA_PACKAGES json PREFIXES ARIA_SDK_PREFIXES)
-    foreach(_prefix IN LISTS ARIA_SDK_PREFIXES)
-        if(EXISTS "${_prefix}/lib/cmake/aria/ariaConfig.cmake")
-            set(ARIA_SDK_PREFIX "${_prefix}")
-            break()
-        endif()
-    endforeach()
+    # The recipe package layout (where the CMake config lands inside a prefix)
+    # is owned by the recipe layer, not duplicated here.
+    forgerecipes_locate_package(PREFIXES ${ARIA_SDK_PREFIXES} PACKAGE aria
+        OUT _aria_config_dir PREFIX_OUT ARIA_SDK_PREFIX)
     if(NOT ARIA_SDK_PREFIX)
         message(FATAL_ERROR "The shared environment did not install an Aria SDK")
     endif()
@@ -73,13 +71,8 @@ else()
 endif()
 
 # Business modules use JSON even when Aria HTTP is disabled. Import it at the
-# project scope so sibling module targets see the same selected package.
-# Same re-rooting problem as aria above: point at the config the environment
-# installed instead of searching.
-foreach(_prefix IN LISTS ARIA_SDK_PREFIXES)
-    if(EXISTS "${_prefix}/share/cmake/nlohmann_json/nlohmann_jsonConfig.cmake")
-        set(nlohmann_json_DIR "${_prefix}/share/cmake/nlohmann_json" CACHE PATH "JSON package config" FORCE)
-        break()
-    endif()
-endforeach()
+# project scope so sibling module targets see the same selected package. The
+# recipe layer owns the layout; a plain config lookup resolves it.
+forgerecipes_locate_package(PREFIXES ${ARIA_SDK_PREFIXES} PACKAGE nlohmann_json
+    OUT _json_config_dir)
 find_package(nlohmann_json CONFIG REQUIRED NO_DEFAULT_PATH)
