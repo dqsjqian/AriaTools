@@ -154,7 +154,8 @@ jobs:
             if ($LASTEXITCODE) { exit $LASTEXITCODE }
             & "$env:FORGEDEPS_PYTHON_EXECUTABLE" -m forgedeps.build_kit.session --build-dir $build -- cmake --build $build --config Release --parallel 3
             if ($LASTEXITCODE) { exit $LASTEXITCODE }
-            $env:PATH = "$(Resolve-Path "$build/bin/Release");$env:PATH"
+            if (Test-Path "$build/bin/Release") { $env:PATH = "$(Resolve-Path "$build/bin/Release");$env:PATH" }
+            elseif (Test-Path "$build/bin") { $env:PATH = "$(Resolve-Path "$build/bin");$env:PATH" }
             & "$env:FORGEDEPS_PYTHON_EXECUTABLE" -m forgedeps.build_kit.session --build-dir $build -- ctest --test-dir $build -C Release --output-on-failure --no-tests=error
             if ($LASTEXITCODE) { exit $LASTEXITCODE }
           }
@@ -235,7 +236,7 @@ jobs:
           test -f ./build/ci-win/bin/platforms/qoffscreen.dll
           unset QT_PLUGIN_PATH
           export QT_QPA_PLATFORM_PLUGIN_PATH="$(cygpath -w "$PWD/build/ci-win/bin/platforms")"
-          python -m forgedeps.build_kit.session --build-dir build/ci-win -- timeout -s KILL 120 ./build/ci-win/bin/workbench.exe --probe
+          python -m forgedeps.build_kit.session --build-dir build/ci-win -- /usr/bin/timeout -s KILL 120 ./build/ci-win/bin/workbench.exe --probe
       - name: Run standalone module tests
         run: |
           for module in calendar cart dashboard frameworklab notes tools; do
