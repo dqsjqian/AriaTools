@@ -194,12 +194,12 @@ jobs:
           update: true
           install: >-
             mingw-w64-ucrt-x86_64-gcc
-            git
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja
             mingw-w64-ucrt-x86_64-python
             mingw-w64-ucrt-x86_64-python-pip
             mingw-w64-ucrt-x86_64-qt6-base
+            mingw-w64-ucrt-x86_64-git
       # Qt comes from the MSYS2 UCRT64 package: the aqt "win64_mingw" archive
       # is an MSVCRT-ABI build whose libQt6EntryPoint.a references
       # __imp___argc, which the UCRT import library does not provide. The
