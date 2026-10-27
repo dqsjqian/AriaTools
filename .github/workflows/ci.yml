@@ -131,7 +131,9 @@ jobs:
           if (-not (Initialize-MsvcToolchain)) { throw "MSVC/Windows SDK discovery failed" }
       - name: Configure and build with Visual Studio 2026
         run: |
-          python scripts/build.py --platform qt --build-dir build/ci-vs2026 --generator "Visual Studio 18 2026" --generator-platform x64 --jobs 3
+          # install-qt-action prepends its own interpreter to PATH; the shared
+          # tooling lives in the pinned one recorded at install time.
+          & "$env:FORGEDEPS_PYTHON_EXECUTABLE" scripts/build.py --platform qt --build-dir build/ci-vs2026 --generator "Visual Studio 18 2026" --generator-platform x64 --jobs 3
       - name: Probe Qt views
         env:
           QT_QPA_PLATFORM: offscreen
@@ -148,21 +150,21 @@ jobs:
         run: |
           foreach ($module in @('calendar', 'cart', 'dashboard', 'frameworklab', 'notes', 'tools')) {
             $build = "build/ci-vs2026-test-$module"
-            python -m forgedeps.build_kit.session --configure -- cmake -S "Workbench/modules/$module/tests" -B $build -G "Visual Studio 18 2026" -A x64
+            & "$env:FORGEDEPS_PYTHON_EXECUTABLE" -m forgedeps.build_kit.session --configure -- cmake -S "Workbench/modules/$module/tests" -B $build -G "Visual Studio 18 2026" -A x64
             if ($LASTEXITCODE) { exit $LASTEXITCODE }
-            python -m forgedeps.build_kit.session --build-dir $build -- cmake --build $build --config Release --parallel 3
+            & "$env:FORGEDEPS_PYTHON_EXECUTABLE" -m forgedeps.build_kit.session --build-dir $build -- cmake --build $build --config Release --parallel 3
             if ($LASTEXITCODE) { exit $LASTEXITCODE }
             $env:PATH = "$(Resolve-Path "$build/bin/Release");$env:PATH"
-            python -m forgedeps.build_kit.session --build-dir $build -- ctest --test-dir $build -C Release --output-on-failure --no-tests=error
+            & "$env:FORGEDEPS_PYTHON_EXECUTABLE" -m forgedeps.build_kit.session --build-dir $build -- ctest --test-dir $build -C Release --output-on-failure --no-tests=error
             if ($LASTEXITCODE) { exit $LASTEXITCODE }
           }
       - name: Build and probe Web shell
         run: |
-          python -m forgedeps.build_kit.session --configure -- cmake -S Workbench -B build/ci-vs2026-web -G "Visual Studio 18 2026" -A x64 -DWORKBENCH_TARGET_WEB=ON -DWORKBENCH_TARGET_QT=OFF
+          & "$env:FORGEDEPS_PYTHON_EXECUTABLE" -m forgedeps.build_kit.session --configure -- cmake -S Workbench -B build/ci-vs2026-web -G "Visual Studio 18 2026" -A x64 -DWORKBENCH_TARGET_WEB=ON -DWORKBENCH_TARGET_QT=OFF
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          python -m forgedeps.build_kit.session --build-dir build/ci-vs2026-web -- cmake --build build/ci-vs2026-web --config Release --parallel 3
+          & "$env:FORGEDEPS_PYTHON_EXECUTABLE" -m forgedeps.build_kit.session --build-dir build/ci-vs2026-web -- cmake --build build/ci-vs2026-web --config Release --parallel 3
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          python -m forgedeps.build_kit.session --build-dir build/ci-vs2026-web -- python scripts/ci/run_probe.py ./build/ci-vs2026-web/bin/Release/workbench_web.exe
+          & "$env:FORGEDEPS_PYTHON_EXECUTABLE" -m forgedeps.build_kit.session --build-dir build/ci-vs2026-web -- "$env:FORGEDEPS_PYTHON_EXECUTABLE" scripts/ci/run_probe.py ./build/ci-vs2026-web/bin/Release/workbench_web.exe
 
   windows:
     name: Qt and Web probes (Windows UCRT64)
@@ -196,17 +198,16 @@ jobs:
             mingw-w64-ucrt-x86_64-ninja
             mingw-w64-ucrt-x86_64-python
             mingw-w64-ucrt-x86_64-python-pip
-      # Qt for MinGW comes from the upstream build rather than the MSYS2
-      # package: the packaged Qt creates its EntryPointMinGW32 imported target
-      # unconditionally, so any consumer that finds Qt6 with Widgets aborts with
-      # "add_library cannot create imported target".
-      - name: Install Qt 6.10.3 for MinGW
-        shell: pwsh
+            mingw-w64-ucrt-x86_64-qt6-base
+      # Qt comes from the MSYS2 UCRT64 package: the aqt "win64_mingw" archive
+      # is an MSVCRT-ABI build whose libQt6EntryPoint.a references
+      # __imp___argc, which the UCRT import library does not provide. The
+      # MSYS2 Qt is built by the same UCRT64 toolchain, so its entry point
+      # links. The old EntryPointMinGW32 double-add_library abort is already
+      # covered by Aria reusing already imported Qt6 components.
+      - name: Point the build at the MSYS2 Qt
         run: |
-          python -m pip install --quiet "aqtinstall==3.3.*"
-          python -m aqt install-qt windows desktop 6.10.3 win64_mingw --archives qtbase --outputdir "$env:RUNNER_TEMP\qt"
-          $root = "$env:RUNNER_TEMP\qt\6.10.3\mingw_64"
-          "QT_ROOT_WIN=$root" >> $env:GITHUB_ENV
+          echo "QT_ROOT_WIN=$(cygpath -w /ucrt64)" >> "$GITHUB_ENV"
       - name: Install shared dependency tooling
         run: |
           python -m pip install --break-system-packages -r requirements-build.txt
@@ -226,7 +227,7 @@ jobs:
       - name: Stage the Qt platform plugins next to the binaries
         run: |
           mkdir -p build/ci-win/bin/platforms
-          cp -f "$(cygpath -u "$QT_ROOT_WIN")/plugins/platforms/qoffscreen.dll" build/ci-win/bin/platforms/
+          cp -f /ucrt64/share/qt6/plugins/platforms/qoffscreen.dll build/ci-win/bin/platforms/
       - name: Probe Qt views
         env:
           QT_QPA_PLATFORM: offscreen
