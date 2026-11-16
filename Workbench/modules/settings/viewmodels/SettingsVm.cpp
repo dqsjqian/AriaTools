@@ -4,10 +4,10 @@
 
 namespace wb::settings {
 
-SettingsVm::SettingsVm()
-    : language(wb::i18n::language()),
+SettingsVm::SettingsVm(wb::i18n::Context context)
+    : BaseVm(std::move(context)), language(i18n().language()),
       switchLanguage([this](const std::string& lang) {
-          wb::i18n::set_language(lang);
+          i18n().set_language(lang);
           language.set(lang);
       })
 {
@@ -18,13 +18,13 @@ SettingsVm::SettingsVm()
     text(enLabel,       "lang_en");
 }
 
-void SettingsVm::on_activate() { language.set(wb::i18n::language()); }
+void SettingsVm::on_activate() { language.set(i18n().language()); }
 
 
 std::vector<SettingsVm::LangEntry> SettingsVm::available_languages() const {
     return {
-        {"zh-CN", wb::i18n::str_in("common", "lang_zh_CN")},
-        {"en",    wb::i18n::str_in("common", "lang_en")},
+        {"zh-CN", wb::i18n::str_in(i18n(), "common", "lang_zh_CN")},
+        {"en",    wb::i18n::str_in(i18n(), "common", "lang_en")},
     };
 }
 

@@ -11,7 +11,8 @@
 namespace wb::dashboard {
 
 DashboardVm::DashboardVm(wb::module_api::ModuleContext& ctx)
-    : navigator_(&ctx.navigator()),
+    : BaseVm(ctx.i18n_context()),
+      navigator_(&ctx.navigator()),
       mounts_(&ctx.mounts()),
       modalCart([this] {
           // Same navigation, presented as a modal dialog: the View renders
@@ -36,7 +37,6 @@ DashboardVm::DashboardVm(wb::module_api::ModuleContext& ctx)
           // knowledge of the provider needed (decoupled both ways).
           const bool enable = mountedModule.get().empty();
           mounts_->SetEnabled(wb::module_api::DashboardSlots::kContent, enable);
-          sync_mount_state();
       })
 {
     text(welcome, "welcome");
@@ -46,12 +46,13 @@ DashboardVm::DashboardVm(wb::module_api::ModuleContext& ctx)
     text(navBackLabel, "back");
     text(mountToggleLabel, "mount_toggle");
     // Seed the badge with zero items.
-    cartBadge.set(wb::i18n::str_in("dashboard", "cart_empty"));
-    lastOrder.set(wb::i18n::str_in("dashboard", "no_orders"));
+    cartBadge.set(wb::i18n::str_in(i18n(), "dashboard", "cart_empty"));
+    lastOrder.set(wb::i18n::str_in(i18n(), "dashboard", "no_orders"));
 
     // Seed the extension state from what the cart module registered at
     // load time (dashboard.content is provided by cart's register_mounts).
     sync_mount_state();
+    mount_sub_ = mounts_->on_changed([this] { sync_mount_state(); });
 
     // Cross-module: subscribe to cart events so the home badge updates live
     // whenever the user adds items in the cart module (no direct coupling).
@@ -59,11 +60,11 @@ DashboardVm::DashboardVm(wb::module_api::ModuleContext& ctx)
     // tab switches — we want the badge to stay current even when the user
     // is on another tab.
     auto& bus = aria::runtime::EventBus::global();
-    lang_sub_ = wb::i18n::on_language_changed([this](const std::string&) {
+    lang_sub_ = i18n().on_language_changed([this](const std::string&) {
         if (cartItemCount.get() == 0) {
-            cartBadge.set(wb::i18n::str_in("dashboard", "cart_empty"));
+            cartBadge.set(wb::i18n::str_in(i18n(), "dashboard", "cart_empty"));
         } else {
-            cartBadge.set(wb::i18n::str_in("dashboard", "cart_items")
+            cartBadge.set(wb::i18n::str_in(i18n(), "dashboard", "cart_items")
                          + " " + std::to_string(cartItemCount.get()));
         }
     });
@@ -74,9 +75,9 @@ DashboardVm::DashboardVm(wb::module_api::ModuleContext& ctx)
             // counting bug: deleting a cart item didn't decrement the badge).
             cartItemCount.set(ev.itemCount);
             if (ev.itemCount == 0) {
-                cartBadge.set(wb::i18n::str_in("dashboard", "cart_empty"));
+                cartBadge.set(wb::i18n::str_in(i18n(), "dashboard", "cart_empty"));
             } else {
-                cartBadge.set(wb::i18n::str_in("dashboard", "cart_items")
+                cartBadge.set(wb::i18n::str_in(i18n(), "dashboard", "cart_items")
                              + " " + std::to_string(ev.itemCount));
             }
         });
@@ -85,14 +86,14 @@ DashboardVm::DashboardVm(wb::module_api::ModuleContext& ctx)
     // is driven by CartStateChanged above.
     order_sub_ = bus.subscribe<wb::shared::events::OrderPlaced>(
         [this](const wb::shared::events::OrderPlaced& ev) {
-            lastOrder.set(wb::i18n::str_in("dashboard", "order_placed")
+            lastOrder.set(wb::i18n::str_in(i18n(), "dashboard", "order_placed")
                          + ": " + ev.orderId
                          + " (" + std::to_string(ev.itemCount) + " items, "
                          + std::to_string(ev.total) + ")");
         });
     qty_sub_ = bus.subscribe<wb::shared::events::ItemQtyChanged>(
         [this](const wb::shared::events::ItemQtyChanged& ev) {
-            lastOrder.set(wb::i18n::str_in("dashboard", "qty_changed")
+            lastOrder.set(wb::i18n::str_in(i18n(), "dashboard", "qty_changed")
                          + ": " + ev.productName);
         });
 
@@ -129,11 +130,11 @@ void DashboardVm::sync_mount_state() {
             wb::module_api::CartArgs{.product = "Mounted Apple",
                                      .price   = 7.5});
         mountedVm.set(m ? std::move(m->vm) : nullptr);
-        mountStatus.set(wb::i18n::str_in("dashboard", "mount_mounted")
+        mountStatus.set(wb::i18n::str_in(i18n(), "dashboard", "mount_mounted")
                         + " " + *mod);
     } else {
         mountedVm.set(nullptr);
-        mountStatus.set(wb::i18n::str_in("dashboard", "mount_empty"));
+        mountStatus.set(wb::i18n::str_in(i18n(), "dashboard", "mount_empty"));
     }
 }
 

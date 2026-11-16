@@ -6,8 +6,8 @@
 
 namespace wb::calendar {
 
-CalendarVm::CalendarVm(std::shared_ptr<CalendarModel> model)
-    : days(model->days),
+CalendarVm::CalendarVm(wb::i18n::Context context, std::shared_ptr<CalendarModel> model)
+    : BaseVm(std::move(context)), days(model->days),
       subscriptions(model->subscriptions),
       monthTitle(""),
       subscribeUrl(""),
@@ -47,10 +47,10 @@ CalendarVm::CalendarVm(std::shared_ptr<CalendarModel> model)
     // Current-month event count text: refreshes on language switch (localize) and on count change.
     localize([this] {
         status.set(std::to_string(model_->monthEventCount.get()) + " " +
-                   wb::i18n::str("events_suffix"));
+                   wb::i18n::str(i18n(), "events_suffix"));
     });
     track(model_->monthEventCount.on_changed([this](int n) {
-        status.set(std::to_string(n) + " " + wb::i18n::str("events_suffix"));
+        status.set(std::to_string(n) + " " + wb::i18n::str(i18n(), "events_suffix"));
     }));
 
     track(model_->year.on_changed([this](int) { refresh_month_title_(); }));

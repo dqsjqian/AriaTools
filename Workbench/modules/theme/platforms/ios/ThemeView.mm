@@ -28,19 +28,19 @@ ThemeView::ThemeView(ThemeVm& host, aria::binding::BindingEngine& be)
     be.bind_text_oneway(vm.currentDisplayName, wb::ios::ui::view_for(current));
 
     // Theme picker buttons — localized labels + command wiring.
-    [pickLight setTitle:[NSString stringWithUTF8String:wb::i18n::str_in("theme","theme_light").c_str()]
+    [pickLight setTitle:[NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "theme","theme_light").c_str()]
               forState:UIControlStateNormal];
-    [pickDark  setTitle:[NSString stringWithUTF8String:wb::i18n::str_in("theme","theme_dark").c_str()]
+    [pickDark  setTitle:[NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "theme","theme_dark").c_str()]
               forState:UIControlStateNormal];
-    [pickSolar setTitle:[NSString stringWithUTF8String:wb::i18n::str_in("theme","theme_solarized").c_str()]
+    [pickSolar setTitle:[NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "theme","theme_solarized").c_str()]
               forState:UIControlStateNormal];
     be.bind_command(vm.pickLight,     wb::ios::ui::view_for(pickLight));
     be.bind_command(vm.pickDark,      wb::ios::ui::view_for(pickDark));
     be.bind_command(vm.pickSolarized, wb::ios::ui::view_for(pickSolar));
 
     // Card text (i18n) — static per language; re-resolved on VC rebuild.
-    cardTitle.text = [NSString stringWithUTF8String:wb::i18n::str_in("theme","card_title").c_str()];
-    cardBody.text  = [NSString stringWithUTF8String:wb::i18n::str_in("theme","card_body").c_str()];
+    cardTitle.text = [NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "theme","card_title").c_str()];
+    cardBody.text  = [NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "theme","card_body").c_str()];
 }
 
 }  // namespace wb::theme::iosview

@@ -7,7 +7,8 @@ AppCore::AppCore(std::string i18nBaseDir, std::string initialLang)
     : hub_(std::move(i18nBaseDir), std::move(initialLang)),
       ctx_(hub_),
       navigator_(std::make_shared<wb::module_api::NavigatorHost>(ctx_)),
-      mounts_(std::make_shared<wb::module_api::MountRegistry>(ctx_))
+      mounts_(std::make_shared<wb::module_api::MountRegistry>(ctx_)),
+      pages_(ctx_)
 {
     // Cross-module navigation: business VMs resolve other modules' VMs
     // through ModuleContext. The factory creates fresh instances so pushed
@@ -17,12 +18,7 @@ AppCore::AppCore(std::string i18nBaseDir, std::string initialLang)
     // Primary-VM resolver for extension points: providers mount the module's
     // main-tab instance so mounted UI shares state with the tab (Android
     // side-channel command routing then needs no mount-aware dispatch).
-    ctx_.set_primary_vm([this](const std::string& id) {
-        for (const auto& e : entries_) {
-            if (e.id == id) return e.vm;
-        }
-        return std::shared_ptr<aria::binding::ViewModel>{};
-    });
+    ctx_.set_primary_vm([this](const std::string& id) { return pages_.get(id); });
     ctx_.set_navigator(navigator_);
     ctx_.set_mounts(mounts_);
 
@@ -33,41 +29,49 @@ AppCore::AppCore(std::string i18nBaseDir, std::string initialLang)
 
 std::shared_ptr<aria::binding::ViewModel>
 AppCore::create_module_vm(const std::string& moduleId) {
-    for (const auto& m : registry_.all()) {
-        if (m->id() == moduleId) {
-            return m->create_view_model(ctx_);
-        }
-    }
-    return nullptr;
+    return pages_.create(moduleId);
 }
 
 void AppCore::load_modules() {
-    if (loaded_) return;
-    loaded_ = true;
-    wb::app::populate_modules(registry_);
-
-    // Let each module register its cross-module navigation targets
-    // (interface → page factory) before any VM is created.
-    for (const auto& m : registry_.ordered()) {
-        m->register_navigation(*navigator_);
-    }
-
-    // Then let each module provide cross-module extension points
-    // (slot → UI factory) — hosts resolve slots when they render.
-    for (const auto& m : registry_.ordered()) {
-        m->register_mounts(*mounts_);
-    }
-
-    for (const auto& m : registry_.ordered()) {
-        entries_.push_back(ModuleEntry{
-            m->id(),
-            m->nav_key(),
-            m->create_view_model(ctx_),
-        });
-    }
+    lifecycle_.start({
+        [this] {
+            try { wb::app::populate_modules(registry_); }
+            catch (...) { registry_.clear(); throw; }
+            return aria::Subscription([this] { registry_.clear(); });
+        },
+        [this] {
+            try {
+                for (const auto& module : registry_.ordered()) {
+                    page_registrations_ += pages_.add(module->id(),
+                        [module](wb::module_api::ModuleContext& context) {
+                            return module->create_view_model(context);
+                        });
+                }
+            } catch (...) { page_registrations_.clear(); throw; }
+            return aria::Subscription([this] {
+                page_registrations_.clear();
+                pages_.clear_cache();
+            });
+        },
+        [this] {
+            try {
+                for (const auto& module : registry_.ordered()) module->register_navigation(*navigator_);
+                for (const auto& module : registry_.ordered()) module->register_mounts(*mounts_);
+            } catch (...) { navigator_->clear(); mounts_->clear(); throw; }
+            return aria::Subscription([this] { navigator_->clear(); mounts_->clear(); });
+        },
+        [this] {
+            try {
+                for (const auto& module : registry_.ordered()) {
+                    entries_.push_back({module->id(), module->nav_key(), pages_.get(module->id())});
+                }
+            } catch (...) { entries_.clear(); pages_.clear_cache(); throw; }
+            return aria::Subscription([this] { entries_.clear(); });
+        },
+    });
 }
 
-AppCore::~AppCore() = default;
+AppCore::~AppCore() { lifecycle_.stop(); }
 
 std::string AppCore::nav_title(const std::string& navKey) {
     return hub_.i18n().tr("common", navKey);

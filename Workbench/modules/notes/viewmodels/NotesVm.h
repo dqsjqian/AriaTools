@@ -14,7 +14,7 @@ namespace wb::notes {
 
 class NotesVm final : public wb::core::BaseVm {
 public:
-    explicit NotesVm(std::shared_ptr<NotesModel> model);
+    explicit NotesVm(wb::i18n::Context context, std::shared_ptr<NotesModel> model);
 
     // List and edit state (forwarded from the Model, for the View to bind).
     aria::ObservableList<Note>& notes;

@@ -13,25 +13,25 @@ namespace {
 /// current UI language at *evaluate* time, so language switches are
 /// reflected immediately without re-wiring the Validator.
 template<std::predicate<const std::string&> P>
-aria::Validator<std::string>::Rule localized_rule(P pred, const char* key) {
-    return [pred = std::move(pred), key](const std::string& v)
+aria::Validator<std::string>::Rule localized_rule(wb::i18n::Context context, P pred, const char* key) {
+    return [context = std::move(context), pred = std::move(pred), key](const std::string& v)
                -> std::optional<std::string> {
         if (pred(v)) return std::nullopt;
-        return wb::i18n::str_in("signup", key);
+        return context->tr("signup", key);
     };
 }
 
 }  // namespace
 
-SignupVm::SignupVm()
-    : submit([this] {
+SignupVm::SignupVm(wb::i18n::Context context)
+    : BaseVm(std::move(context)), submit([this] {
           // Compose the post-submit summary from the current form values
           // and localized suffix; rebuilt on every submit so language
           // changes are reflected immediately.
           submittedSummary.set(
               "✓ " + username.value.get() +
               " (" + email.value.get() + ") " +
-              wb::i18n::str_in("signup", "registered_suffix"));
+              wb::i18n::str_in(i18n(), "signup", "registered_suffix"));
       })
 {
     text(title, "title");
@@ -41,18 +41,18 @@ SignupVm::SignupVm()
     //    localized_rule, so language switches refresh them with no
     //    rebuild) ──────────────────────────────────────────────────
     username
-        .rule(localized_rule(
+        .rule(localized_rule(i18n_context(),
             [](const std::string& s) { return s.size() >= 3; },
             "err_username_short"))
-        .rule(localized_rule(
+        .rule(localized_rule(i18n_context(),
             [](const std::string& s) { return s.size() <= 16; },
             "err_username_long"));
 
     email
-        .rule(localized_rule(
+        .rule(localized_rule(i18n_context(),
             [](const std::string& s) { return !s.empty(); },
             "err_email_required"))
-        .rule(localized_rule(
+        .rule(localized_rule(i18n_context(),
             [](const std::string& s) {
                 return s.find('@') != std::string::npos
                     && s.find('.') != std::string::npos;
@@ -60,10 +60,10 @@ SignupVm::SignupVm()
             "err_email_invalid"));
 
     password
-        .rule(localized_rule(
+        .rule(localized_rule(i18n_context(),
             [](const std::string& s) { return s.size() >= 6; },
             "err_password_short"))
-        .rule(localized_rule(
+        .rule(localized_rule(i18n_context(),
             [](const std::string& s) {
                 for (char c : s) {
                     if (std::isdigit(static_cast<unsigned char>(c))) return true;
@@ -96,7 +96,7 @@ void SignupVm::wire_form_() {
         [this] {
             return password.value.get() == confirm.value.get();
         },
-        wb::i18n::str_in("signup", "err_password_mismatch"));
+        wb::i18n::str_in(i18n(), "signup", "err_password_mismatch"));
 }
 
 }  // namespace wb::signup

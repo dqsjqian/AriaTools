@@ -20,9 +20,12 @@ const char* theme_i18n_key(const std::string& id) {
 
 }  // namespace
 
-Step1Vm::Step1Vm(std::shared_ptr<WizardDraft> d) : draft(std::move(d)) {}
-Step2Vm::Step2Vm(std::shared_ptr<WizardDraft> d) : draft(std::move(d)) {}
-Step3Vm::Step3Vm(std::shared_ptr<WizardDraft> d) : draft(std::move(d)) {}
+Step1Vm::Step1Vm(wb::i18n::Context context, std::shared_ptr<WizardDraft> d)
+    : BaseVm(std::move(context)), draft(std::move(d)) {}
+Step2Vm::Step2Vm(wb::i18n::Context context, std::shared_ptr<WizardDraft> d)
+    : BaseVm(std::move(context)), draft(std::move(d)) {}
+Step3Vm::Step3Vm(wb::i18n::Context context, std::shared_ptr<WizardDraft> d)
+    : BaseVm(std::move(context)), draft(std::move(d)) {}
 
 void Step3Vm::finish() {
     // Compose the finished summary from current draft values, resolving
@@ -31,17 +34,18 @@ void Step3Vm::finish() {
     finishedSummary.set(
         "✓ " + draft->username.get() + " (" +
         draft->email.get() + ", " +
-        wb::i18n::str_in("wizard", theme_i18n_key(draft->theme.get())) + ") " +
-        wb::i18n::str_in("wizard", "registered_suffix"));
+        wb::i18n::str_in(i18n(), "wizard", theme_i18n_key(draft->theme.get())) + ") " +
+        wb::i18n::str_in(i18n(), "wizard", "registered_suffix"));
 }
 
-WizardVm::WizardVm()
+WizardVm::WizardVm(wb::i18n::Context context)
     : draft(std::make_shared<WizardDraft>()),
-      nav(std::make_shared<aria::binding::Navigator>())
+      nav(std::make_shared<aria::binding::Navigator>()),
+      context_(std::move(context))
 {
-    step1 = std::make_shared<Step1Vm>(draft);
-    step2 = std::make_shared<Step2Vm>(draft);
-    step3 = std::make_shared<Step3Vm>(draft);
+    step1 = std::make_shared<Step1Vm>(context_, draft);
+    step2 = std::make_shared<Step2Vm>(context_, draft);
+    step3 = std::make_shared<Step3Vm>(context_, draft);
     nav->push(step1);
 }
 

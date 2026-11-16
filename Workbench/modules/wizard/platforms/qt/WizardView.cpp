@@ -21,14 +21,14 @@ using namespace wb::ui;
 
 namespace {
 
-QString wiz_str(const char* key) {
-    return QString::fromStdString(wb::i18n::str_in("wizard", key));
+QString wiz_str(aria::i18n::LocaleContext& locale, const char* key) {
+    return QString::fromStdString(wb::i18n::str_in(locale, "wizard", key));
 }
-QString build_step3_summary(const WizardDraft& draft) {
-    return wiz_str("summary")
+QString build_step3_summary(aria::i18n::LocaleContext& locale, const WizardDraft& draft) {
+    return wiz_str(locale, "summary")
         .arg(QString::fromStdString(draft.username.get()))
         .arg(QString::fromStdString(draft.email.get()))
-        .arg(QString::fromStdString(wb::i18n::str_in(
+        .arg(QString::fromStdString(wb::i18n::str_in(locale,
             "wizard",
             draft.theme.get() == "Dark"      ? "theme_dark"
             : draft.theme.get() == "Solarized" ? "theme_solarized"
@@ -39,12 +39,12 @@ QString build_step3_summary(const WizardDraft& draft) {
 QWidget* build_step1(Step1Vm& vm, aria::binding::BindingEngine& be) {
     auto* w_ = new QWidget;
     auto* lay = new QVBoxLayout(w_);
-    lay->addWidget(new QLabel("<h3>" + wiz_str("step1") + "</h3>"));
+    lay->addWidget(new QLabel("<h3>" + wiz_str(vm.i18n(), "step1") + "</h3>"));
     auto* form = new QFormLayout;
     auto* user = new QLineEdit;
     auto* mail = new QLineEdit;
-    form->addRow(wiz_str("username"), user);
-    form->addRow(wiz_str("email"),    mail);
+    form->addRow(wiz_str(vm.i18n(), "username"), user);
+    form->addRow(wiz_str(vm.i18n(), "email"),    mail);
     lay->addLayout(form);
     lay->addStretch();
     be.bind_text(vm.draft->username, view_for(user));
@@ -56,12 +56,12 @@ QWidget* build_step1(Step1Vm& vm, aria::binding::BindingEngine& be) {
 QWidget* build_step2(Step2Vm& vm, aria::binding::BindingEngine& be) {
     auto* w_ = new QWidget;
     auto* lay = new QVBoxLayout(w_);
-    lay->addWidget(new QLabel("<h3>" + wiz_str("step2") + "</h3>"));
+    lay->addWidget(new QLabel("<h3>" + wiz_str(vm.i18n(), "step2") + "</h3>"));
     auto* form = new QFormLayout;
     auto* themeBox = new QComboBox;
-    themeBox->addItem(wiz_str("theme_light"),     QStringLiteral("Light"));
-    themeBox->addItem(wiz_str("theme_dark"),      QStringLiteral("Dark"));
-    themeBox->addItem(wiz_str("theme_solarized"), QStringLiteral("Solarized"));
+    themeBox->addItem(wiz_str(vm.i18n(), "theme_light"),     QStringLiteral("Light"));
+    themeBox->addItem(wiz_str(vm.i18n(), "theme_dark"),      QStringLiteral("Dark"));
+    themeBox->addItem(wiz_str(vm.i18n(), "theme_solarized"), QStringLiteral("Solarized"));
     themeBox->setCurrentIndex(0);
     for (int i = 0; i < themeBox->count(); ++i) {
         if (themeBox->itemData(i).toString().toStdString() == vm.draft->theme.get()) {
@@ -69,7 +69,7 @@ QWidget* build_step2(Step2Vm& vm, aria::binding::BindingEngine& be) {
             break;
         }
     }
-    form->addRow(wiz_str("theme"), themeBox);
+    form->addRow(wiz_str(vm.i18n(), "theme"), themeBox);
     lay->addLayout(form);
     lay->addStretch();
     QObject::connect(themeBox, &QComboBox::currentIndexChanged,
@@ -85,16 +85,16 @@ QWidget* build_step3(Step3Vm& vm, aria::binding::BindingEngine& be) {
     auto* w_ = new QWidget;
     auto& s_subs = subs_attached_to(w_);
     auto* lay = new QVBoxLayout(w_);
-    lay->addWidget(new QLabel("<h3>" + wiz_str("step3") + "</h3>"));
+    lay->addWidget(new QLabel("<h3>" + wiz_str(vm.i18n(), "step3") + "</h3>"));
     auto* summary = new QLabel;
     summary->setStyleSheet("QLabel { font-family:monospace; background:#f5f5f5;"
                            " padding:10px; border-radius:6px; }");
-    summary->setText(build_step3_summary(*vm.draft));
+    summary->setText(build_step3_summary(vm.i18n(), *vm.draft));
     lay->addWidget(summary);
-    auto* finishBtn = new QPushButton(wiz_str("finish"));
+    auto* finishBtn = new QPushButton(wiz_str(vm.i18n(), "finish"));
     lay->addWidget(finishBtn);
     auto* result = new QLabel;
-    result->setText(wiz_str("unfinished"));
+    result->setText(wiz_str(vm.i18n(), "unfinished"));
     lay->addWidget(result);
     lay->addStretch();
     QObject::connect(finishBtn, &QPushButton::clicked, [&vm] { vm.finish(); });
@@ -103,16 +103,16 @@ QWidget* build_step3(Step3Vm& vm, aria::binding::BindingEngine& be) {
     };
     s_subs.push_back(vm.finishedSummary.on_changed(sync));
     s_subs.push_back(vm.draft->username.on_changed(
-        [summary, draft = vm.draft](const std::string&) {
-            summary->setText(build_step3_summary(*draft));
+        [summary, draft = vm.draft, locale = vm.i18n_context()](const std::string&) {
+            summary->setText(build_step3_summary(*locale, *draft));
         }));
     s_subs.push_back(vm.draft->email.on_changed(
-        [summary, draft = vm.draft](const std::string&) {
-            summary->setText(build_step3_summary(*draft));
+        [summary, draft = vm.draft, locale = vm.i18n_context()](const std::string&) {
+            summary->setText(build_step3_summary(*locale, *draft));
         }));
     s_subs.push_back(vm.draft->theme.on_changed(
-        [summary, draft = vm.draft](const std::string&) {
-            summary->setText(build_step3_summary(*draft));
+        [summary, draft = vm.draft, locale = vm.i18n_context()](const std::string&) {
+            summary->setText(build_step3_summary(*locale, *draft));
         }));
     (void)be;
     return w_;
@@ -134,9 +134,9 @@ WizardView::WizardView(WizardVmHostVm& host, aria::binding::BindingEngine& be)
 
     // Navigation bar.
     auto* bar = new QHBoxLayout;
-    auto* b1 = new QPushButton(wiz_str("nav1"));
-    auto* b2 = new QPushButton(wiz_str("nav2"));
-    auto* b3 = new QPushButton(wiz_str("nav3"));
+    auto* b1 = new QPushButton(wiz_str(vm.i18n(), "nav1"));
+    auto* b2 = new QPushButton(wiz_str(vm.i18n(), "nav2"));
+    auto* b3 = new QPushButton(wiz_str(vm.i18n(), "nav3"));
     bar->addWidget(b1); bar->addWidget(b2); bar->addWidget(b3);
     lay->addLayout(bar);
 

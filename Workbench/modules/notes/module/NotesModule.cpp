@@ -15,7 +15,7 @@ void NotesModule::ensure_initialized_(wb::module_api::ModuleContext& ctx) {
 std::shared_ptr<aria::binding::ViewModel>
 NotesModule::create_view_model(wb::module_api::ModuleContext& ctx) {
     ensure_initialized_(ctx);
-    return std::make_shared<NotesVm>(model_);
+    return std::make_shared<NotesVm>(ctx.i18n_context(), model_);
 }
 
 std::shared_ptr<wb::module_api::IModule> make_notes_module() {

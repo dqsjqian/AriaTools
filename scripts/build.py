@@ -80,7 +80,7 @@ def extra_definitions(arguments, flags):
                 "CMAKE_SYSTEM_NAME", "CMAKE_OSX_SYSROOT", "CMAKE_OSX_ARCHITECTURES", "ANDROID_ABI",
                 "ARIA_DIR", "ARIA_ROOT", "ARIA_SDK_PREFIX", "ARIA_DEP_ARIA_VERSION",
                 "CMAKE_PREFIX_PATH", "ARIA_DEPENDENCIES_OFFLINE", "FORGEDEPS_PYTHON_EXECUTABLE", "ARIA_TARGET_QT",
-                "ARIA_TUTORIAL_QT6", "ARIA_TUTORIAL_HTTP"}
+                "ARIA_TUTORIAL_QT6", "ARIA_TUTORIAL_HTTP", "WORKBENCH_BUILD_TESTS"}
     generated = dict(definition(flag) for flag in flags)
     for argument in arguments:
         key, value = definition(argument)
@@ -168,6 +168,8 @@ def plan(args, root=ROOT, host=None):
         flags += [f"-DWORKBENCH_TARGET_{name.upper()}={'ON' if name == selected else 'OFF'}"
                   for name in ("qt", "web", "ios", "android")]
         flags += [f"-DARIA_DIR={aria}"]
+        if args.test:
+            flags += ["-DWORKBENCH_BUILD_TESTS=ON"]
     elif kind == "agent":
         flags += [f"-DARIA_DIR={aria}", "-DARIA_TARGET_QT=ON"]
     else:
@@ -224,8 +226,10 @@ def plan(args, root=ROOT, host=None):
     commands.append(["cmake", "--build", str(build), "--config", args.config,
                      "--parallel", str(args.jobs)] + (["--target", *args.target] if args.target else []))
     if args.test and kind == "tools":
-        # The application tree has no CTest suite: its six independent module
-        # projects must each configure, build and run. Do not silently omit one.
+        # Exercise the assembled application, including localization and the
+        # Qt probe, then keep the six independent module-build contracts.
+        commands.append(["ctest", "--test-dir", str(build), "-C", args.config,
+                         "--output-on-failure", "--no-tests=error", "--timeout", "120"])
         for module in ("calendar", "cart", "dashboard", "frameworklab", "notes", "tools"):
             module_build = build / "module-tests" / module
             configure_module = ["cmake", "-S", str(source / "modules" / module / "tests"),

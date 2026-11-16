@@ -32,9 +32,9 @@ CartView::CartView(CartVm& vm, aria::binding::BindingEngine& be)
     priceSpin->setRange(0.01, 9999.0);
     priceSpin->setDecimals(2);
     priceSpin->setPrefix("¥ ");
-    auto* addBtn = new QPushButton(QString::fromStdString(wb::i18n::str_in("cart", "add")));
-    form->addRow(QString::fromStdString(wb::i18n::str_in("cart", "name_label")), nameEdit);
-    form->addRow(QString::fromStdString(wb::i18n::str_in("cart", "price_label")), priceSpin);
+    auto* addBtn = new QPushButton(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "cart", "add")));
+    form->addRow(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "cart", "name_label")), nameEdit);
+    form->addRow(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "cart", "price_label")), priceSpin);
     form->addRow("",     addBtn);
     lay->addLayout(form);
     be.bind_text  (vm.draftName,  view_for(nameEdit));
@@ -60,9 +60,9 @@ CartView::CartView(CartVm& vm, aria::binding::BindingEngine& be)
     lay->addWidget(listView, 1);
     // Action buttons
     auto* ops = new QHBoxLayout;
-    auto* plusBtn  = new QPushButton(QString::fromStdString(wb::i18n::str_in("cart", "inc")));
-    auto* minusBtn = new QPushButton(QString::fromStdString(wb::i18n::str_in("cart", "dec")));
-    auto* delBtn   = new QPushButton(QString::fromStdString(wb::i18n::str_in("cart", "remove")));
+    auto* plusBtn  = new QPushButton(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "cart", "inc")));
+    auto* minusBtn = new QPushButton(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "cart", "dec")));
+    auto* delBtn   = new QPushButton(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "cart", "remove")));
     ops->addWidget(plusBtn);
     ops->addWidget(minusBtn);
     ops->addWidget(delBtn);
@@ -98,10 +98,10 @@ CartView::CartView(CartVm& vm, aria::binding::BindingEngine& be)
     lay->addWidget(taxLbl);
     lay->addWidget(totalLbl);
     auto fmt = [](double v) { return QString::number(v, 'f', 2); };
-    auto sC = [countLbl](int n)             { countLbl   ->setText(QString(QString::fromStdString(wb::i18n::str_in("cart", "count"))).arg(n)); };
-    auto sS = [subtotalLbl, fmt](double v)  { subtotalLbl->setText(QString::fromStdString(wb::i18n::str_in("cart", "subtotal")) + fmt(v)); };
-    auto sT = [taxLbl, fmt](double v)       { taxLbl     ->setText(QString::fromStdString(wb::i18n::str_in("cart", "tax")) + fmt(v)); };
-    auto sG = [totalLbl, fmt](double v)     { totalLbl   ->setText(QString::fromStdString(wb::i18n::str_in("cart", "total")) + fmt(v)); };
+    auto sC = [countLbl, &vm](int n)             { countLbl   ->setText(QString(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "cart", "count"))).arg(n)); };
+    auto sS = [subtotalLbl, fmt, &vm](double v)  { subtotalLbl->setText(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "cart", "subtotal")) + fmt(v)); };
+    auto sT = [taxLbl, fmt, &vm](double v)       { taxLbl     ->setText(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "cart", "tax")) + fmt(v)); };
+    auto sG = [totalLbl, fmt, &vm](double v)     { totalLbl   ->setText(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "cart", "total")) + fmt(v)); };
     sC(vm.itemCount.get());
     sS(vm.subtotal .get());
     sT(vm.tax      .get());

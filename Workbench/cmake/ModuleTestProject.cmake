@@ -50,6 +50,8 @@ option(ARIA_SDK_HTTP "Shared SDK HTTP adapter" OFF)
 option(ARIA_SDK_TLS "Shared SDK HTTP TLS" OFF)
 option(ARIA_SDK_JNI "Shared SDK JNI adapter" OFF)
 option(ARIA_SDK_UIKIT "Shared SDK UIKit adapter" ${WORKBENCH_TARGET_IOS})
+set(ARIA_SDK_I18N ON)
+set(ARIA_SDK_APP ON)
 option(ARIA_SDK_SHARED "Build shared Aria libraries" OFF)
 include(SharedAria)
 

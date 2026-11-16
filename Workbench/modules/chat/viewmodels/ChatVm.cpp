@@ -5,8 +5,8 @@
 namespace wb::chat {
 
 // ── Publisher ────────────────────────────────────────────────────────────
-ChatPublisherVm::ChatPublisherVm(aria::runtime::EventBus& bus)
-    : bus_(bus),
+ChatPublisherVm::ChatPublisherVm(wb::i18n::Context context, aria::runtime::EventBus& bus)
+    : BaseVm(std::move(context)), bus_(bus),
       send(
           [this] {
               auto u = user.get();
@@ -21,7 +21,7 @@ ChatPublisherVm::ChatPublisherVm(aria::runtime::EventBus& bus)
 {}
 
 // ── Subscriber ───────────────────────────────────────────────────────────
-ChatSubscriberVm::ChatSubscriberVm(aria::runtime::EventBus& bus) : bus_(bus) {
+ChatSubscriberVm::ChatSubscriberVm(wb::i18n::Context context, aria::runtime::EventBus& bus) : BaseVm(std::move(context)), bus_(bus) {
     bag() += bus_.subscribe<ChatMessage>([this](const ChatMessage& m) {
         if (!is_active().get()) return;
         messages.push_back(std::make_shared<ChatMessage>(m));
@@ -58,9 +58,9 @@ ChatSubscriberVm::ChatSubscriberVm(aria::runtime::EventBus& bus) : bus_(bus) {
 }
 
 // ── Composite VM: activate cascades to children ──────────────────────────────
-ChatVm::ChatVm(aria::runtime::EventBus& bus)
-    : publisher(std::make_shared<ChatPublisherVm>(bus)),
-      subscriber(std::make_shared<ChatSubscriberVm>(bus))
+ChatVm::ChatVm(wb::i18n::Context context, aria::runtime::EventBus& bus)
+    : BaseVm(std::move(context)), publisher(std::make_shared<ChatPublisherVm>(i18n_context(), bus)),
+      subscriber(std::make_shared<ChatSubscriberVm>(i18n_context(), bus))
 {
     text(title, "title");
     text(desc, "desc");

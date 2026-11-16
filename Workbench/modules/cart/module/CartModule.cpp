@@ -8,7 +8,7 @@ namespace wb::cart {
 
 std::shared_ptr<aria::binding::ViewModel>
 CartModule::create_view_model(wb::module_api::ModuleContext& ctx) {
-        return std::make_shared<CartVm>(ctx.bus());
+    return std::make_shared<CartVm>(ctx.i18n_context(), ctx.bus());
 }
 
 void CartModule::register_navigation(wb::module_api::NavigatorHost& nav) {
@@ -17,7 +17,7 @@ void CartModule::register_navigation(wb::module_api::NavigatorHost& nav) {
     nav.Register<wb::module_api::ICartPage>(
         id(),
         [](wb::module_api::ModuleContext& ctx) {
-            return std::make_shared<CartVm>(ctx.bus());
+            return std::make_shared<CartVm>(ctx.i18n_context(), ctx.bus());
         });
 }
 
@@ -35,7 +35,7 @@ void CartModule::register_mounts(wb::module_api::MountRegistry& mounts) {
                        if (primary) return primary;
                        // Fallback (e.g. test setups without AppCore):
                        // build an independent instance.
-                       return std::make_shared<CartVm>(ctx.bus());
+                       return std::make_shared<CartVm>(ctx.i18n_context(), ctx.bus());
                    });
 }
 

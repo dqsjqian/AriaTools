@@ -1,8 +1,10 @@
 #pragma once
 //
-// IModule — Business module plugin contract (compile-time).
+// IModule — Workbench page contribution contract (statically assembled).
+// Aria application modules are generic and do not require this page interface.
 // Each module implements this and exports a make_<mod>_module() factory.
-// The app layer lists them explicitly in ModulesManifest.
+// The generated application manifest supplies the contributions; AppCore owns
+// their registration handles and framework lifecycle transaction.
 //
 #include "aria/binding/view_model.hpp"
 #include "module_api/ModuleContext.h"

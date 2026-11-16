@@ -24,16 +24,16 @@ UnitConvertView::UnitConvertView(UnitConvertVm& host, aria::binding::BindingEngi
     be.bind_text_oneway(host.desc, view_for(info));
 
     auto* cat = new QComboBox;
-    cat->addItem(QString::fromStdString(wb::i18n::str_in("unitconvert", "cat_temperature")));
-    cat->addItem(QString::fromStdString(wb::i18n::str_in("unitconvert", "cat_length")));
-    cat->addItem(QString::fromStdString(wb::i18n::str_in("unitconvert", "cat_weight")));
+    cat->addItem(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "unitconvert", "cat_temperature")));
+    cat->addItem(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "unitconvert", "cat_length")));
+    cat->addItem(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "unitconvert", "cat_weight")));
     lay->addWidget(cat);
     auto* valSpin = new QDoubleSpinBox;
     valSpin->setRange(-1000.0, 1000000.0);
     valSpin->setDecimals(3);
     auto* fromLbl = new QLabel;
     auto* fromRow = new QHBoxLayout;
-    fromRow->addWidget(new QLabel(QString::fromStdString(wb::i18n::str_in("unitconvert", "input"))));
+    fromRow->addWidget(new QLabel(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "unitconvert", "input"))));
     fromRow->addWidget(valSpin);
     fromRow->addWidget(fromLbl);
     lay->addLayout(fromRow);
@@ -44,7 +44,7 @@ UnitConvertView::UnitConvertView(UnitConvertVm& host, aria::binding::BindingEngi
     QObject::connect(cat, QOverload<int>::of(&QComboBox::currentIndexChanged),
                      [&vm](int idx) { vm.category.set(static_cast<Category>(idx)); });
     auto syncResult = [out, &vm] {
-        out->setText(QString(QString::fromStdString(wb::i18n::str_in("unitconvert", "equals")))
+        out->setText(QString(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "unitconvert", "equals")))
             .arg(vm.converted.get(), 0, 'f', 3)
             .arg(QString::fromStdString(vm.toLabel.get())));
     };

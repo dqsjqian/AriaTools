@@ -30,7 +30,8 @@ AriaTools/
 `ModulePages.kt` 显式注册，Web 壳提供 HTTP / REST / SSE 访问。
 
 Qt / UIKit 模块由 CMake 扫描 `modules/*/CMakeLists.txt` 生成的
-`GeneratedModuleList.h` 注册；增加模块时同时提供相应平台 View 入口。
+`<build>/generated/app/GeneratedModuleList.h` 注册；增加模块时同时提供相应平台 View 入口。
+每个构建目录持有自己的生成文件，不修改源码目录。
 
 ## 数据与服务实现
 
@@ -100,3 +101,40 @@ AppCore
 当前模块列表、平台依赖和完整构建命令统一维护在[仓库 README](../../README.md)。
 平台脚本位于 `Workbench/scripts/`，所有构建产物进入根目录的 `build/`；
 先运行 `python3 scripts/ci/fetch_aria.py` 获取固定版本的 Aria，再选择平台入口。
+
+## Aria 提供的通用能力
+
+本工程通过 ForgeRecipes 0.1.9 配置 Aria 3.3.0 的可选组件。正式版本与源码
+revision 固定在依赖锁中；显式本地 Aria 源码覆盖仍可用于开发验证。
+
+`aria::i18n` 拥有 XML 解析与缓存、语言与资源修订信号、fallback 查询、
+`bind_text` / `bind_localized`。ServiceHub 显式持有 `LocaleContext`，通过
+ModuleContext 注入每个 VM；不再有进程级 backend 指针。Workbench 只保留
+`common` 域、`zh-CN` 默认语言、资源目录与 `source_location` 域推导策略。
+查询顺序保持“模块当前语言 → 模块默认语言 → common 当前语言 → common 默认语言”；
+后台操作先回到 UI executor，再翻译完成消息。`BaseVm` 是应用便利包装，
+框架 text binding 本身不要求继承 VM。旧 `localize` 回调只随语言/资源变化重跑。
+
+`aria::app` 拥有 `ModuleRegistry` 的标识与排序、`ViewModelProvider`
+的主 VM 缓存与新实例工厂、单提供者 `MountRegistry`、`TypedRouteRegistry`、
+可撤销 `ExtensionRegistry` 和 `ModuleLifecycle`。AppCore 用分阶段事务装配，
+失败时撤销页面、路由、槽位与模块，可修复资源后重试；退出逆序释放注册。
+Tools 的 `IModule` 是工作台页面贡献契约，框架模块不必有页面。JSON 能力接口、
+`Push/Modal/Window` 元数据、导航标题与平台控件仍属于应用；导航栈直接复用 Aria Navigator。
+平台 ViewFactory 复用通用注册表，但 QWidget / UIViewController builder 留在平台支持层。
+根控件/控制器持有 View 包装，销毁时释放其订阅，避免槽位撤销通知访问已销毁页面。
+
+注册句柄由装配层持有；丢弃句柄或显式撤销会移除后续解析能力。已经交付的 VM
+按共享所有权继续存活，不表示二进制卸载。重复模块/路由注册被拒绝；替换路由需
+先 `Unregister<I>()`。typed 路由或挂载返回的 VM 必须实现指定接口，否则解析失败。
+槽位 enable/remove 变更会通知宿主，Dashboard 无需手工同步其他调用者的变更。
+
+## 迁移回归
+
+配置 `-DWORKBENCH_BUILD_TESTS=ON` 可在同一生产构建中运行六个业务模块测试，
+以及 i18n 与 application 集成测试。集成测试遍历真实 XML，覆盖回退顺序、
+独立 locale、订阅析构、资源重载、启动回滚与重试、主 VM 共享、槽位变更和异步文案。
+`workbench --probe` 创建临时数据目录后实例化所有 Qt 页面；测试与 probe 不写个人
+`~/WorkbenchData`。独立 i18n 工程位于 `Workbench/tests/i18n`，仅依赖安装后的 Aria SDK。
+桌面 `scripts/build.py --test` 自动打开主应用测试并执行 CTest，再保留六个
+独立模块工程的配置、构建和测试；移动端不使用主机 CTest。

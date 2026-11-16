@@ -7,8 +7,8 @@
 
 namespace wb::notes {
 
-NotesVm::NotesVm(std::shared_ptr<NotesModel> model)
-    : notes(model->notes),
+NotesVm::NotesVm(wb::i18n::Context context, std::shared_ptr<NotesModel> model)
+    : BaseVm(std::move(context)), notes(model->notes),
       selectedId(model->selectedId),
       editTitle(""),
       editBody(""),
@@ -103,15 +103,15 @@ void NotesVm::load_selection_into_editor_() {
 void NotesVm::refresh_status_() {
     const auto n = notes.size();
     if (n == 0) {
-        status.set(wb::i18n::str("empty"));
+        status.set(wb::i18n::str(i18n(), "empty"));
     } else {
-        status.set(wb::i18n::str("count_prefix") + std::to_string(n) + wb::i18n::str("count_suffix"));
+        status.set(wb::i18n::str(i18n(), "count_prefix") + std::to_string(n) + wb::i18n::str(i18n(), "count_suffix"));
     }
 }
 
 
 std::string NotesVm::display_title(const Note& n) const {
-    return n.title.empty() ? wb::i18n::str_in("common", "untitled")
+    return n.title.empty() ? wb::i18n::str_in(i18n(), "common", "untitled")
                            : n.title;
 }
 

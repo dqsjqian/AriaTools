@@ -24,7 +24,7 @@ SearchView::SearchView(SearchVm& host, aria::binding::BindingEngine& be)
     be.bind_text_oneway(host.desc, view_for(info));
 
     auto* input = new QLineEdit;
-    input->setPlaceholderText(QString::fromStdString(wb::i18n::str_in("search", "placeholder")));
+    input->setPlaceholderText(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "search", "placeholder")));
     lay->addWidget(input);
     be.bind_text(vm.query, view_for(input));
     auto* rawLbl = new QLabel;
@@ -51,16 +51,16 @@ SearchView::SearchView(SearchVm& host, aria::binding::BindingEngine& be)
     s_subs.push_back(vm.query    .on_changed(syncRaw));
     s_subs.push_back(vm.debounced->on_changed(syncDeb));
     s_subs.push_back(vm.distinct ->on_changed(syncDis));
-    auto* history = new QLabel(QString::fromStdString(wb::i18n::str_in("search", "searches")));
+    auto* history = new QLabel(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "search", "searches")));
     history->setStyleSheet("QLabel { color:#263238; margin-top:6px; }");
     lay->addWidget(history);
     auto* listView = new QListView;
     auto* model = new aria::adapters::qt6::ObservableListModel<SearchHit>(
         vm.hits,
         {{Qt::DisplayRole, "display"}},
-        [](const SearchHit& h, int role) -> QVariant {
+        [&vm](const SearchHit& h, int role) -> QVariant {
             if (role == Qt::DisplayRole) {
-                return QString(QString::fromStdString(wb::i18n::str_in("search", "item")))
+                return QString(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "search", "item")))
                     .arg(h.seq)
                     .arg(QString::fromStdString(h.q));
             }

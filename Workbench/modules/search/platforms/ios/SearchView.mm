@@ -22,7 +22,7 @@ SearchView::SearchView(SearchVm& host, aria::binding::BindingEngine& be)
     be.bind_text_oneway(host.title, wb::ios::ui::view_for(title));
     be.bind_text_oneway(host.desc,  wb::ios::ui::view_for(desc));
 
-    query.placeholder = [NSString stringWithUTF8String:wb::i18n::str_in("search","placeholder").c_str()];
+    query.placeholder = [NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "search","placeholder").c_str()];
     be.bind_text(vm.query, wb::ios::ui::view_for(query));
 
     // Debounced + distinct values (read-only labels).

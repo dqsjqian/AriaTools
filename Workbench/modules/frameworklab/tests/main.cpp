@@ -12,7 +12,7 @@ void check(bool condition, const char* name) {
 }  // namespace
 
 int main() {
-    wb::frameworklab::FrameworkLabVm vm;
+    wb::frameworklab::FrameworkLabVm vm(wb::i18n::make_context("./i18n"));
 
     check(vm.tasks->size() == 3, "seeded source list");
     check(vm.active.size() == 2, "active FilteredList derives source");

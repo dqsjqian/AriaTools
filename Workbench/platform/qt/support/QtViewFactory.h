@@ -5,6 +5,7 @@
 // the platform shell looks them up by moduleId. Module Views static_cast the base VM to the concrete type here as needed.
 //
 #include "aria/binding/view_model.hpp"
+#include "aria/app/extension_registry.hpp"
 #include "aria/binding/binding_engine.hpp"
 
 #include <QWidget>
@@ -19,12 +20,23 @@ namespace wb::qt {
 using ViewBuilder =
     std::function<QWidget*(aria::binding::ViewModel&, aria::binding::BindingEngine&)>;
 
+// View wrappers can own subscriptions and callbacks independently of QWidget.
+// Release them at QObject::destroyed, before the root's child controls disappear.
+template<class View>
+QWidget* own_view(std::shared_ptr<View> view) {
+    auto* root = view->widget();
+    QObject::connect(root, &QObject::destroyed,
+        [view = std::move(view)]() mutable { view.reset(); });
+    return root;
+}
+
 class QtViewFactory {
 public:
     static QtViewFactory& instance();
 
     void register_builder(const std::string& moduleId, ViewBuilder b) {
-        builders_[moduleId] = std::move(b);
+        registrations_.erase(moduleId);
+        registrations_.emplace(moduleId, builders_.add(moduleId, std::move(b)));
     }
 
     [[nodiscard]] bool has_builder(const std::string& moduleId) const {
@@ -34,13 +46,14 @@ public:
     [[nodiscard]] QWidget* build(const std::string& moduleId,
                                  aria::binding::ViewModel& vm,
                                  aria::binding::BindingEngine& be) const {
-        auto it = builders_.find(moduleId);
-        if (it == builders_.end()) return new QWidget;
-        return it->second(vm, be);
+        auto builder = builders_.find(moduleId);
+        if (!builder) return new QWidget;
+        return (*builder)(vm, be);
     }
 
 private:
-    std::unordered_map<std::string, ViewBuilder> builders_;
+    aria::app::ExtensionRegistry<std::string, ViewBuilder> builders_;
+    std::unordered_map<std::string, aria::Subscription> registrations_;
 };
 
 }  // namespace wb::qt

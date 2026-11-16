@@ -17,7 +17,7 @@ add_library(wb_qt_support STATIC
     support/QtViewFactory.cpp
 )
 target_include_directories(wb_qt_support PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(wb_qt_support PUBLIC aria::qt6 Qt6::Widgets)
+target_link_libraries(wb_qt_support PUBLIC aria::qt6 aria::app Qt6::Widgets)
 if(WORKBENCH_ENABLE_PCH)
     target_precompile_headers(wb_qt_support PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/wb_pch.h")
@@ -66,6 +66,17 @@ if(APPLE)
                 "${WB_RUNTIME_ASSETS_DIR}" "${_bundle_res}/assets"
         VERBATIM)
     add_dependencies(wb_stage_bundle workbench)
+elseif(UNIX)
+    # Linux has no app bundle: the shell resolves resources beside the binary.
+    # Restage on every build so resource-only edits cannot leave stale text.
+    add_custom_target(wb_stage_resources ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${WB_RUNTIME_I18N_DIR}" "$<TARGET_FILE_DIR:workbench>/i18n"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${WB_RUNTIME_ASSETS_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${WB_RUNTIME_ASSETS_DIR}" "$<TARGET_FILE_DIR:workbench>/assets"
+        VERBATIM)
+    add_dependencies(wb_stage_resources workbench)
 endif()
 
 # -- Windows: deploy runtime deps next to workbench.exe so it runs by double-click --

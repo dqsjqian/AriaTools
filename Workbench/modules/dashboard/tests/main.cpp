@@ -54,7 +54,7 @@ int main() {
 
     // A temp i18n dir is enough: BaseVm::text falls back to [module/key]
     // when files are missing, which the VM tolerates.
-    auto tmp = std::filesystem::temp_directory_path() / "wb-dashboard-tests";
+    auto tmp = std::filesystem::current_path() / "dashboard-fixtures";
     std::filesystem::remove_all(tmp);
     std::filesystem::create_directories(tmp);
 
@@ -186,6 +186,7 @@ int main() {
         }
         std::string lastProduct_;
     };
+    check(navigator->Unregister<ICartPage>(), "explicitly remove previous route before replacing it");
     navigator->Register<ICartPage>(
         "jsoncart",
         [](ModuleContext&) -> std::shared_ptr<aria::binding::ViewModel> {

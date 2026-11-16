@@ -4,8 +4,8 @@
 
 namespace wb::tipcalc {
 
-TipCalcVm::TipCalcVm()
-    : bill(238.0),
+TipCalcVm::TipCalcVm(wb::i18n::Context context)
+    : BaseVm(std::move(context)), bill(238.0),
       tipPercent(15),
       people(2),
       tipAmount([this] { return bill.get() * tipPercent.get() / 100.0; }),

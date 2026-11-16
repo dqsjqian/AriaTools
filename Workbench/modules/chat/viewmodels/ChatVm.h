@@ -32,7 +32,7 @@ public:
     aria::Property<std::string> draft{""};
     aria::Command<>             send;
 
-    explicit ChatPublisherVm(aria::runtime::EventBus& bus);
+    explicit ChatPublisherVm(wb::i18n::Context context, aria::runtime::EventBus& bus);
 
 };
 
@@ -41,7 +41,7 @@ class ChatSubscriberVm : public wb::core::BaseVm {
 public:
     aria::ObservableList<ChatMessage> messages;
 
-    explicit ChatSubscriberVm(aria::runtime::EventBus& bus);
+    explicit ChatSubscriberVm(wb::i18n::Context context, aria::runtime::EventBus& bus);
 
 };
 
@@ -53,7 +53,7 @@ public:
     std::shared_ptr<ChatPublisherVm>  publisher;
     std::shared_ptr<ChatSubscriberVm> subscriber;
 
-    explicit ChatVm(aria::runtime::EventBus& bus);
+    explicit ChatVm(wb::i18n::Context context, aria::runtime::EventBus& bus);
 };
 
 }  // namespace wb::chat

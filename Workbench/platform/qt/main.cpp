@@ -18,6 +18,7 @@
 #include <QMainWindow>
 #include <QStackedWidget>
 #include <QWidget>
+#include <QTemporaryDir>
 
 #include <cstdio>
 #include <memory>
@@ -41,6 +42,18 @@ int run_probe(wb::qt::QtAppShell& shell) {
         return 2;
     }
 
+    // Exact lookups prevent missing resources or fallback text from making
+    // a platform probe pass while its UI only displays [domain/key] markers.
+    const auto chinese_name = core.i18n().lookup_exact("zh-CN", "common", "app_name");
+    const auto english_name = core.i18n().lookup_exact("en", "common", "app_name");
+    if (!chinese_name || !chinese_name->has_value() || chinese_name->value().empty() ||
+        !english_name || !english_name->has_value() || english_name->value().empty() ||
+        **chinese_name == **english_name ||
+        core.i18n().tr("common", "app_name") != **chinese_name) {
+        WB_LOGE("probe", "shipped Chinese/English resources were not loaded");
+        return 7;
+    }
+
     std::vector<std::unique_ptr<QWidget>> pages;
     pages.reserve(modules.size());
     for (int i = 0; i < static_cast<int>(modules.size()); ++i) {
@@ -59,6 +72,19 @@ int run_probe(wb::qt::QtAppShell& shell) {
             return 5;
         }
         pages.push_back(std::move(page));
+    }
+
+    core.i18n().set_language("en");
+    QApplication::processEvents();
+    if (core.i18n().tr("common", "app_name") != **english_name) {
+        WB_LOGE("probe", "language switch did not select the shipped English text");
+        return 8;
+    }
+    core.i18n().set_language("zh-CN");
+    QApplication::processEvents();
+    if (core.i18n().tr("common", "app_name") != **chinese_name) {
+        WB_LOGE("probe", "language switch did not restore the shipped Chinese text");
+        return 9;
     }
 
     WB_LOGI("probe", "all " << modules.size()
@@ -83,7 +109,12 @@ int main(int argc, char** argv) {
     wb::log::init_default_sink();
     WB_LOGI("app", "Workbench starting on " << wb::platform_name());
 
-    wb::qt::QtAppShell shell{&app};
+    std::unique_ptr<QTemporaryDir> probe_data;
+    if (probe_mode) {
+        probe_data = std::make_unique<QTemporaryDir>();
+        if (!probe_data->isValid()) return 6;
+    }
+    wb::qt::QtAppShell shell{&app, probe_data ? probe_data->path().toStdString() : std::string{}};
     auto& core = shell.core();
 
     if (probe_mode) {
@@ -125,7 +156,7 @@ int main(int argc, char** argv) {
     // Nav text refreshes instantly on language change. Keep the subscription
     // local so it disconnects before the window, nav, and shell are destroyed.
     aria::Subscription langSub =
-        core.i18n().language().on_changed(
+        core.i18n().on_language_changed(
             [&core, nav, &win](const std::string&) {
                 const auto& ms = core.modules();
                 for (int i = 0; i < static_cast<int>(ms.size()); ++i)

@@ -14,7 +14,7 @@ namespace wb::calendar {
 
 class CalendarVm final : public wb::core::BaseVm {
 public:
-    explicit CalendarVm(std::shared_ptr<CalendarModel> model);
+    explicit CalendarVm(wb::i18n::Context context, std::shared_ptr<CalendarModel> model);
 
     // Month data (forwarded from Model, for View binding).
     aria::ObservableList<DayCell>&      days;

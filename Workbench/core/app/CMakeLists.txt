@@ -5,6 +5,7 @@ add_library(wb_core_app STATIC
 )
 
 target_include_directories(wb_core_app PUBLIC
+    ${WB_GENERATED_INCLUDE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/..       # "app/..", "infra/..", "module_api/.."
 )
 

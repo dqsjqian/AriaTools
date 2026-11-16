@@ -21,14 +21,14 @@ void subscribe_cart(aria::runtime::EventBus& bus, CartVm& vm,
     bind_dbl(subs, "cart", "subtotal",  vm.subtotal);
     bind_dbl(subs, "cart", "tax",        vm.tax);
     bind_dbl(subs, "cart", "total",      vm.total);
-    // Labels (i18n) — pulled from common i18n at VM construction.
+    // Localized templates use separate wire keys from the numeric totals.
     bind_str(subs, "cart", "name_label",  vm.nameLabel);
     bind_str(subs, "cart", "price_label", vm.priceLabel);
     bind_str(subs, "cart", "add",          vm.addLabel);
-    bind_str(subs, "cart", "count",        vm.countLabel);
-    bind_str(subs, "cart", "subtotal",     vm.subtotalLabel);
-    bind_str(subs, "cart", "tax",           vm.taxLabel);
-    bind_str(subs, "cart", "total",         vm.totalLabel);
+    bind_str(subs, "cart", "countLabel",    vm.countLabel);
+    bind_str(subs, "cart", "subtotalLabel", vm.subtotalLabel);
+    bind_str(subs, "cart", "taxLabel",      vm.taxLabel);
+    bind_str(subs, "cart", "totalLabel",    vm.totalLabel);
     // Item list: push as newline-joined string.
     auto sync_items = [&vm]() {
         std::string joined;

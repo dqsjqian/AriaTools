@@ -5,7 +5,7 @@ namespace wb::search {
 
 std::shared_ptr<aria::binding::ViewModel>
 SearchModule::create_view_model(wb::module_api::ModuleContext& ctx) {
-        return std::make_shared<SearchVm>(ctx.timer());
+    return std::make_shared<SearchVm>(ctx.i18n_context(), ctx.timer());
 }
 
 std::shared_ptr<wb::module_api::IModule> make_search_module() {

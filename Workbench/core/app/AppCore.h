@@ -5,6 +5,7 @@
 // Contains no UI adapters or BindingEngine (each platform shell holds those).
 //
 #include "infra/ServiceHub.h"
+#include "aria/app/app.hpp"
 #include "module_api/ModuleRegistry.h"
 #include "module_api/ModuleContext.h"
 #include "module_api/MountRegistry.h"
@@ -77,7 +78,9 @@ private:
     std::shared_ptr<wb::module_api::NavigatorHost> navigator_;
     std::shared_ptr<wb::module_api::MountRegistry> mounts_;
     std::vector<ModuleEntry>                  entries_;
-    bool                                      loaded_ = false;
+    aria::app::ViewModelProvider<wb::module_api::ModuleContext> pages_;
+    aria::SubscriptionBag page_registrations_;
+    aria::app::ModuleLifecycle lifecycle_;
 };
 
 }  // namespace wb::core

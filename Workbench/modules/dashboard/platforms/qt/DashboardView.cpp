@@ -186,4 +186,11 @@ DashboardView::DashboardView(DashboardVm& vm, aria::binding::BindingEngine& be)
     be.bind_text_oneway(vm.summary, wb::ui::view_for(info));
 }
 
+DashboardView::~DashboardView() {
+    navSettling_ = true;
+    subs_.clear();
+    if (modal_) delete modal_.data();
+    if (window_) delete window_.data();
+}
+
 }  // namespace wb::dashboard::qtview

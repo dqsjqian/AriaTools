@@ -1,41 +1,15 @@
 #pragma once
-//
-// BaseVm — Base class for all business ViewModels. Centralizes the low-level
-// capabilities that are universally applicable to every business VM.
-// Currently handles a single cross-cutting concern: auto-refreshing UI text
-// on language change.
-//
-// Design principle: only extremely common, business-agnostic capabilities
-// belong here (e.g. language change). Pure presentation-layer capabilities
-// such as theme color changes do NOT belong in the VM — that is the View
-// layer's job (each platform's native skinning), handled by a separate
-// View-side mechanism/base class to avoid leaking presentation details into
-// cross-platform logic.
-//
-// i18n usage (write freely in VMs; all auto-refresh on language change):
-//
-//   // Static text: one line; module is inferred automatically and updates on language switch.
-//   text(title, "title");
-//   text(addLabel, "add");
-//
-//   // Dynamic text: register a recompute closure; re-runs on language change;
-//   // other trigger points may also call it manually.
-//   localize([this]{
-//       status.set(wb::i18n::str("count_prefix") + std::to_string(n) +
-//                  wb::i18n::str("count_suffix"));
-//   });
-//
-// Both execute once immediately to set the initial value, then the base class
-// re-runs them automatically on language change. No track() needed, no module
-// id needed, no central relocalize method needed.
-//
+
+// Workbench VM convenience facade. The binding implementation belongs to
+// aria::i18n; source-location module inference remains application policy.
 #include "aria/binding/view_model.hpp"
-#include "aria/property.hpp"
-#include "aria/subscription.hpp"
+#include "aria/i18n/i18n.hpp"
+#include "aria/reactive/reactive.hpp"
 #include "infra/i18n/I18n.h"
 
 #include <functional>
 #include <source_location>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -44,42 +18,33 @@ namespace wb::core {
 
 class BaseVm : public aria::binding::ViewModel {
 public:
-    BaseVm() {
-        // Language change -> re-run all localization closures.
-        // This subscription lives for the entire VM lifetime and is released on
-        // VM destruction.
-        lang_sub_ = wb::i18n::on_language_changed(
-            [this](const std::string&) { relocalize_all_(); });
+    explicit BaseVm(wb::i18n::Context context) : context_(std::move(context)) {
+        if (!context_) throw std::invalid_argument("BaseVm requires an i18n context");
     }
+
+    [[nodiscard]] aria::i18n::LocaleContext& i18n() const { return *context_; }
+    [[nodiscard]] const wb::i18n::Context& i18n_context() const { return context_; }
 
 protected:
-    /// Register a localization closure: runs once immediately to set the
-    /// initial value, and re-runs automatically on language change.
-    /// Used for dynamic text (with variable interpolation) or any logic
-    /// that must refresh on language change.
+    // Existing Workbench localizers run once and when the locale/catalog
+    // changes. They can contain side effects (for example rebuilding form
+    // rules), so preserve that contract without tracking their other reads.
     void localize(std::function<void()> fn) {
-        fn();
-        localizers_.push_back(std::move(fn));
+        text_bindings_.push_back(aria::i18n::bind_localized(
+            context_, [fn = std::move(fn)] { aria::reactive::untracked(fn); }));
     }
 
-    /// Convenience: bind a text Property to a key. Module is auto-inferred
-    /// from the call site's source file.
-    /// Equivalent to localize([&]{ prop.set(wb::i18n::str_in(module, key)); }).
     void text(aria::Property<std::string>& prop, std::string key,
               std::source_location loc = std::source_location::current()) {
-        std::string module{wb::i18n::detail::module_of(loc.file_name())};
-        localize([&prop, module = std::move(module), key = std::move(key)]() {
-            prop.set(wb::i18n::str_in(module, key));
-        });
+        const auto domain = wb::i18n::detail::module_of(loc.file_name());
+        text_bindings_.push_back(aria::i18n::bind_text(
+            context_, std::string(domain.empty() ? wb::i18n::kGlobalModule : domain),
+            prop, std::move(key)));
     }
 
 private:
-    void relocalize_all_() {
-        for (auto& fn : localizers_) fn();
-    }
-
-    std::vector<std::function<void()>> localizers_;
-    aria::Subscription lang_sub_;  ///< Language subscription, lives with the VM (not in bag)
+    wb::i18n::Context context_;
+    std::vector<aria::Subscription> text_bindings_;
 };
 
 }  // namespace wb::core

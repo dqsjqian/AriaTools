@@ -1,85 +1,56 @@
 #pragma once
-//
-// I18n — Global i18n facade (infra layer). Zero ceremony:
-//   * No need to inherit an i18n base class, inject II18nService, or write module id at each call site;
-//   * Module is auto-inferred from the call site's source file path (.../modules/<module>/...);
-//   * Lookup order: current module -> global common; if not found, returns a placeholder. **Never crosses to other modules.**
-//
-// Business usage (final form):
-//   auto s = wb::i18n::str("title");            // current module, returns std::string
-//   title.set(wb::i18n::str("title"));          // feed directly to a Property
-//   auto en = wb::i18n::str("save", Lang::En);   // specify a language
-//
-// Auto-refresh on language change: have the VM inherit wb::core::BaseVm and use
-//   text(prop,"key") or localize([&]{ ... }) to write text near its use site;
-//   it re-runs automatically on language change.
-//
-// The backend is injected once by ServiceHub at startup (symmetric with wb::log).
-//
+
+// Workbench policy only: source-location domains, language shortcuts and the
+// common namespace. All calls name an explicitly owned locale context.
 #include "infra/i18n/II18nService.h"
 
-#include "aria/subscription.hpp"
-
-#include <functional>
+#include <memory>
 #include <source_location>
 #include <string>
 #include <string_view>
 
 namespace wb::i18n {
 
-/// Language enum. System = follow global setting; others are concrete languages.
+using Context = std::shared_ptr<aria::i18n::LocaleContext>;
 enum class Lang { System, ZhCN, En };
-
 [[nodiscard]] std::string_view lang_code(Lang lang);
-
-/// Inject the backend from ServiceHub (the II18nService in the DI container).
-void set_backend(wb::services::II18nService* backend);
-
-/// The global "module" for common text (cross-module shared, e.g. generic button labels).
 constexpr std::string_view kGlobalModule = "common";
 
-namespace detail {
+[[nodiscard]] Context make_context(std::string resource_root,
+                                   std::string initial_language = "zh-CN");
 
-/// Infer module name from a source file path: extracts <module> from ".../modules/<module>/...".
-/// Accepts both '/' and '\\'. Returns empty string if inference fails (then only global common is queried).
+namespace detail {
+// This repository convention is deliberately not part of Aria's API.
 constexpr std::string_view module_of(std::string_view path) {
     constexpr std::string_view marker = "modules";
-    const auto pos = path.find(marker);
-    if (pos == std::string_view::npos) return {};
-    auto start = pos + marker.size();
-    if (start >= path.size() || (path[start] != '/' && path[start] != '\\')) return {};
-    ++start;
-    auto end = start;
-    while (end < path.size() && path[end] != '/' && path[end] != '\\') ++end;
-    if (end == start) return {};
-    return path.substr(start, end - start);
+    std::size_t pos = 0;
+    while ((pos = path.find(marker, pos)) != std::string_view::npos) {
+        const auto start = pos + marker.size();
+        const bool left = pos == 0 || path[pos - 1] == '/' || path[pos - 1] == '\\';
+        if (left && start < path.size() && (path[start] == '/' || path[start] == '\\')) {
+            const auto name_start = start + 1;
+            auto end = name_start;
+            while (end < path.size() && path[end] != '/' && path[end] != '\\') ++end;
+            return path.substr(name_start, end - name_start);
+        }
+        pos = start;
+    }
+    return {};
 }
-
-/// Core lookup: module -> global(common) -> placeholder. Never queries other modules.
-[[nodiscard]] std::string resolve(std::string_view module, std::string_view key,
-                                  Lang lang);
-
 }  // namespace detail
 
-// ── Main business entry: fetch text by key, module auto-inferred (call site source_location) ──
-// Default argument is evaluated at the call site, so it captures the caller's file path to infer the module.
 [[nodiscard]] inline std::string str(
-    std::string_view key,
+    aria::i18n::LocaleContext& context, std::string_view key,
     Lang lang = Lang::System,
     std::source_location loc = std::source_location::current()) {
-    return detail::resolve(detail::module_of(loc.file_name()), key, lang);
+    const auto domain = detail::module_of(loc.file_name());
+    return context.tr(domain.empty() ? kGlobalModule : domain, key, lang_code(lang));
 }
 
-/// Explicitly specify the module (rare cross-module/tooling scenarios; usually unnecessary).
 [[nodiscard]] inline std::string str_in(
-    std::string_view module, std::string_view key, Lang lang = Lang::System) {
-    return detail::resolve(module, key, lang);
+    aria::i18n::LocaleContext& context, std::string_view domain,
+    std::string_view key, Lang lang = Lang::System) {
+    return context.tr(domain.empty() ? kGlobalModule : domain, key, lang_code(lang));
 }
-
-// ── Current language / switch / subscribe ──────────────────────────────────
-[[nodiscard]] std::string language();
-void set_language(const std::string& lang);
-[[nodiscard]] aria::Subscription on_language_changed(
-    std::function<void(const std::string&)> fn);
 
 }  // namespace wb::i18n

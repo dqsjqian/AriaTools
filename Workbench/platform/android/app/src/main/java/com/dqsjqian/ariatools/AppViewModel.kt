@@ -36,7 +36,7 @@ class AppViewModel : ViewModel() {
     }
 
     override fun onCleared() {
-        JniBridge.detachViewModel()
+        JniBridge.detachViewModel(this)
         super.onCleared()
     }
 

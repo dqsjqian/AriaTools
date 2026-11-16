@@ -20,7 +20,7 @@ namespace wb::signup {
 
 class SignupVm final : public wb::core::BaseVm {
 public:
-    SignupVm();
+    SignupVm(wb::i18n::Context context);
     ~SignupVm();
 
     aria::Property<std::string> title;

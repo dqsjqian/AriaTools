@@ -45,7 +45,10 @@ object JniBridge {
         nativeCreateShell(i18nDir)
     }
 
-    fun detachViewModel() {
+    fun detachViewModel(owner: AppViewModel) {
+        // A replacement Activity can attach before the previous one clears
+        // its ViewModel. Only the current owner may release the native shell.
+        if (viewModel !== owner) return
         nativeDestroyShell()
         viewModel = null
     }

@@ -5,7 +5,7 @@ namespace wb::theme {
 
 std::shared_ptr<aria::binding::ViewModel>
 ThemeModule::create_view_model(wb::module_api::ModuleContext& ctx) {
-        (void)ctx; return std::make_shared<ThemeVm>();
+    return std::make_shared<ThemeVm>(ctx.i18n_context());
 }
 
 std::shared_ptr<wb::module_api::IModule> make_theme_module() {

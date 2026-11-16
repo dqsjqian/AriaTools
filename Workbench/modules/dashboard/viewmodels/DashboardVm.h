@@ -99,6 +99,7 @@ private:
     aria::Subscription order_sub_;
     aria::Subscription qty_sub_;
     aria::Subscription nav_sync_sub_;
+    aria::Subscription mount_sub_;
 };
 
 }  // namespace wb::dashboard

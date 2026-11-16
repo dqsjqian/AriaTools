@@ -24,11 +24,11 @@ Step1View::Step1View(Step1Vm& vm, aria::binding::BindingEngine& be)
     [(UIStackView*)view_ addArrangedSubview:mailField];
 
     // Step label (i18n).
-    step1Lbl.text = [NSString stringWithUTF8String:wb::i18n::str_in("wizard","step1").c_str()];
+    step1Lbl.text = [NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "wizard","step1").c_str()];
 
     // Step 1: username + email.
-    userField.placeholder = [NSString stringWithUTF8String:wb::i18n::str_in("wizard","username").c_str()];
-    mailField.placeholder = [NSString stringWithUTF8String:wb::i18n::str_in("wizard","email").c_str()];
+    userField.placeholder = [NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "wizard","username").c_str()];
+    mailField.placeholder = [NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "wizard","email").c_str()];
     be.bind_text(vm.draft->username, wb::ios::ui::view_for(userField));
     be.bind_text(vm.draft->email,    wb::ios::ui::view_for(mailField));
 }
@@ -51,14 +51,14 @@ Step2View::Step2View(Step2Vm& vm, aria::binding::BindingEngine& be)
     [(UIStackView*)view_ addArrangedSubview:pickSolar];
 
     // Step label (i18n).
-    step2Lbl.text = [NSString stringWithUTF8String:wb::i18n::str_in("wizard","step2").c_str()];
+    step2Lbl.text = [NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "wizard","step2").c_str()];
 
     // Step 2: theme picker — three buttons drive Step2Vm commands.
-    [pickLight setTitle:[NSString stringWithUTF8String:wb::i18n::str_in("wizard","theme_light").c_str()]
+    [pickLight setTitle:[NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "wizard","theme_light").c_str()]
               forState:UIControlStateNormal];
-    [pickDark  setTitle:[NSString stringWithUTF8String:wb::i18n::str_in("wizard","theme_dark").c_str()]
+    [pickDark  setTitle:[NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "wizard","theme_dark").c_str()]
               forState:UIControlStateNormal];
-    [pickSolar setTitle:[NSString stringWithUTF8String:wb::i18n::str_in("wizard","theme_solarized").c_str()]
+    [pickSolar setTitle:[NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "wizard","theme_solarized").c_str()]
               forState:UIControlStateNormal];
     be.bind_command(vm.pickLight,     wb::ios::ui::view_for(pickLight));
     be.bind_command(vm.pickDark,      wb::ios::ui::view_for(pickDark));
@@ -81,10 +81,10 @@ Step3View::Step3View(Step3Vm& vm, aria::binding::BindingEngine& be)
     [(UIStackView*)view_ addArrangedSubview:resultLbl];
 
     // Step label (i18n).
-    step3Lbl.text = [NSString stringWithUTF8String:wb::i18n::str_in("wizard","step3").c_str()];
+    step3Lbl.text = [NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "wizard","step3").c_str()];
 
     // Step 3: finish + result.
-    [finishBtn setTitle:[NSString stringWithUTF8String:wb::i18n::str_in("wizard","finish").c_str()]
+    [finishBtn setTitle:[NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "wizard","finish").c_str()]
                forState:UIControlStateNormal];
     be.bind_command(vm.finishCmd, wb::ios::ui::view_for(finishBtn));
     be.bind_text_oneway(vm.finishedSummary, wb::ios::ui::view_for(resultLbl));

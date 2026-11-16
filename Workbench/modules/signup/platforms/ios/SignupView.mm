@@ -41,11 +41,11 @@ SignupView::SignupView(SignupVm& host, aria::binding::BindingEngine& be)
     be.bind_text_oneway(host.desc,  wb::ios::ui::view_for(desc));
 
     // Field labels (i18n).
-    userLbl.text  = [NSString stringWithUTF8String:wb::i18n::str_in("signup","username").c_str()];
-    emailLbl.text = [NSString stringWithUTF8String:wb::i18n::str_in("signup","email").c_str()];
-    pwdLbl.text   = [NSString stringWithUTF8String:wb::i18n::str_in("signup","password").c_str()];
-    confLbl.text  = [NSString stringWithUTF8String:wb::i18n::str_in("signup","confirm").c_str()];
-    [submitBtn setTitle:[NSString stringWithUTF8String:wb::i18n::str_in("signup","submit").c_str()]
+    userLbl.text  = [NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "signup","username").c_str()];
+    emailLbl.text = [NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "signup","email").c_str()];
+    pwdLbl.text   = [NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "signup","password").c_str()];
+    confLbl.text  = [NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "signup","confirm").c_str()];
+    [submitBtn setTitle:[NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "signup","submit").c_str()]
                forState:UIControlStateNormal];
 
     be.bind_text(vm.username.value, wb::ios::ui::view_for(userField));

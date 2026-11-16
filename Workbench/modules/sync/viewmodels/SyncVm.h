@@ -14,7 +14,7 @@ namespace wb::sync {
 
 class SyncVm final : public wb::core::BaseVm {
 public:
-    SyncVm(wb::services::ISyncService& sync,
+    SyncVm(wb::i18n::Context context, wb::services::ISyncService& sync,
            wb::services::ISettingsService& settings,
            wb::services::ISecretStore& secrets);
 

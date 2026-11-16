@@ -16,7 +16,7 @@ void CalendarModule::ensure_initialized_(wb::module_api::ModuleContext& ctx) {
 std::shared_ptr<aria::binding::ViewModel>
 CalendarModule::create_view_model(wb::module_api::ModuleContext& ctx) {
     ensure_initialized_(ctx);
-    return std::make_shared<CalendarVm>(model_);
+    return std::make_shared<CalendarVm>(ctx.i18n_context(), model_);
 }
 
 std::shared_ptr<wb::module_api::IModule> make_calendar_module() {

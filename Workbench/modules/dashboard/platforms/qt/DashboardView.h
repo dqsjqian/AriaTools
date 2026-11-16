@@ -28,6 +28,7 @@ namespace wb::dashboard::qtview {
 class DashboardView {
 public:
     DashboardView(DashboardVm& vm, aria::binding::BindingEngine& be);
+    ~DashboardView();
     QWidget* widget() const { return root_; }
 
 private:

@@ -65,6 +65,10 @@ public:
     [[nodiscard]] aria::async::ThreadPoolExecutor& worker() { return worker_; }
     [[nodiscard]] aria::IDelayedScheduler&    timer();
 
+    [[nodiscard]] std::shared_ptr<services::II18nService> i18n_context() {
+        return container_.resolve<services::II18nService>();
+    }
+
     // Convenience direct access (high-frequency services).
     [[nodiscard]] services::II18nService&     i18n()     { return service<services::II18nService>(); }
     [[nodiscard]] services::IStorageService&  storage()  { return service<services::IStorageService>(); }

@@ -21,7 +21,7 @@ struct SearchHit {
 
 class SearchVm final : public wb::core::BaseVm {
 public:
-    explicit SearchVm(aria::IDelayedScheduler& timer);
+    explicit SearchVm(wb::i18n::Context context, aria::IDelayedScheduler& timer);
 
     aria::Property<std::string> title;
     aria::Property<std::string> desc;

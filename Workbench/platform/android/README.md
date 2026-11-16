@@ -40,7 +40,7 @@ cmake -S Workbench -B build/platforms/android -G Ninja \
       -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-24 \
       -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake"
 ```
-产出 `build/platforms/android/lib/*.a`（wb_* + aria_*）+ `build/platforms/android/i18n/`。
+产出 `build/platforms/android/lib/libwb_*.a` + `build/platforms/android/i18n/`；Aria 静态库由 `aria-sdk.txt` 指向的共享 SDK 提供。
 
 ## 架构（JNI side-channel，同 Aria demo5）
 ```
@@ -49,6 +49,8 @@ JNI 回调（JniBridge.onPropertyChanged）→ Kotlin StateFlow → Compose 重�
 ```
 业务逻辑全在 C++；Kotlin 只做 StateFlow 薄壳。
 
+当前 side-channel 以模块 ID 共用一份属性表，写入与命令路由到主模块 VM；同一模块同时出现在主页面、挂载区和导航弹窗时，尚未隔离各 VM 实例。因此弹窗展示及编辑的属性不保证对应导航参数创建的实例，实例隔离需要由 Android 桥接层补齐。
+
 ## 桥接入口
 - Compose 页面由 [ModulePages.kt](app/src/main/java/com/dqsjqian/ariatools/ui/ModulePages.kt) 注册；各模块在 `Workbench/modules/<module>/platforms/android/` 提供页面与 JNI 绑定。
 - [JniBridge.kt](app/src/main/java/com/dqsjqian/ariatools/JniBridge.kt) 的 `postToMain` 通过主线程 Handler 驱动原生任务队列。
@@ -56,4 +58,4 @@ JNI 回调（JniBridge.onPropertyChanged）→ Kotlin StateFlow → Compose 重�
 
 ## 依赖
 - Android NDK r30 (30.0.16248370)、SDK CMake 3.22.1 + Ninja
-- Gradle 8.7（wrapper 自带）、AGP 8.5.2、Kotlin 1.9.22、Compose BOM 2024.06.00
+- Gradle、AGP、Kotlin、Compose 与 SDK 版本以 [android-dependencies.json](android-dependencies.json) 的已验证 profile 为准；wrapper 使用其中锁定的 Gradle。

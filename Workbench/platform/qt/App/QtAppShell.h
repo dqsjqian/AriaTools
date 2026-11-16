@@ -21,7 +21,7 @@ namespace wb::qt {
 
 class QtAppShell {
 public:
-    explicit QtAppShell(QObject* qt_ctx);
+    explicit QtAppShell(QObject* qt_ctx, std::string data_directory = {});
     ~QtAppShell();
 
     QtAppShell(const QtAppShell&) = delete;

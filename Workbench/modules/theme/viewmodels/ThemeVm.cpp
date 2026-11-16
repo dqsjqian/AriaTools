@@ -52,7 +52,8 @@ const char* i18n_key_for(const std::string& id) {
 
 }  // namespace
 
-ThemeVm::ThemeVm() : container_(std::make_shared<aria::runtime::Container>()) {
+ThemeVm::ThemeVm(wb::i18n::Context context)
+    : BaseVm(std::move(context)), container_(std::make_shared<aria::runtime::Container>()) {
     text(title, "title");
     text(desc, "desc");
     text(themeLightLabel, "theme_light");
@@ -85,13 +86,13 @@ std::vector<ThemeOption> ThemeVm::available_themes() const {
     std::vector<ThemeOption> out;
     out.reserve(3);
     for (const auto& e : all_themes()) {
-        out.push_back({e.id, wb::i18n::str_in("theme", i18n_key_for(e.id))});
+        out.push_back({e.id, wb::i18n::str_in(i18n(), "theme", i18n_key_for(e.id))});
     }
     return out;
 }
 
 std::string ThemeVm::display_name(const std::string& id) const {
-    return wb::i18n::str_in("theme", i18n_key_for(id));
+    return wb::i18n::str_in(i18n(), "theme", i18n_key_for(id));
 }
 
 }  // namespace wb::theme

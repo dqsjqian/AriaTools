@@ -73,10 +73,6 @@ ServiceHub::ServiceHub(std::string i18nBaseDir, std::string initialLang) {
     container_.register_instance<ICryptoService>(crypto);
     container_.register_instance<ISyncService>(sync);
     container_.register_instance<IHttpClient>(http);
-
-    // Inject the i18n backend into the global facade so wb::i18n::str/bind
-    // work without per-VM injection.
-    wb::i18n::set_backend(i18n.get());
 }
 
 ServiceHub::~ServiceHub() = default;

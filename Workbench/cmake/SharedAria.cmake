@@ -22,7 +22,7 @@ if(NOT ARIA_SDK_SOURCE AND DEFINED ENV{ARIA_SDK_SOURCE})
     set(ARIA_SDK_SOURCE "$ENV{ARIA_SDK_SOURCE}")
 endif()
 if(NOT ARIA_SDK_PREFIX)
-    foreach(_feature QT HTTP TLS JNI APPKIT UIKIT SHARED)
+    foreach(_feature QT HTTP TLS JNI APPKIT UIKIT I18N APP SHARED)
         if(NOT DEFINED ARIA_SDK_${_feature})
             set(ARIA_SDK_${_feature} OFF)
         endif()
@@ -34,6 +34,7 @@ if(NOT ARIA_SDK_PREFIX)
     forgerecipes_sdk(FILE "${ARIA_DEPENDENCIES_FILE}" ${_source_args}
         QT "${ARIA_SDK_QT}" HTTP "${ARIA_SDK_HTTP}" TLS "${ARIA_SDK_TLS}"
         JNI "${ARIA_SDK_JNI}" APPKIT "${ARIA_SDK_APPKIT}" UIKIT "${ARIA_SDK_UIKIT}"
+        I18N "${ARIA_SDK_I18N}" APP "${ARIA_SDK_APP}"
         SHARED "${ARIA_SDK_SHARED}" EXTRA_PACKAGES json PREFIXES ARIA_SDK_PREFIXES)
     # The recipe package layout (where the CMake config lands inside a prefix)
     # is owned by the recipe layer, not duplicated here.
@@ -44,7 +45,7 @@ if(NOT ARIA_SDK_PREFIX)
     endif()
 endif()
 set(_aria_components core async runtime binding)
-foreach(_feature QT HTTP JNI APPKIT UIKIT)
+foreach(_feature QT HTTP JNI APPKIT UIKIT I18N APP)
     if(ARIA_SDK_${_feature})
         string(TOLOWER "${_feature}" _component)
         if(_feature STREQUAL "QT")

@@ -10,7 +10,8 @@ namespace wb::wizard {
 
 class WizardVmHostVm final : public wb::core::BaseVm {
 public:
-    WizardVmHostVm() {
+    WizardVmHostVm(wb::i18n::Context context)
+        : BaseVm(context), vm_(std::move(context)) {
         text(title, "title");
         text(desc,  "desc");
         text(step1Label,       "step1");

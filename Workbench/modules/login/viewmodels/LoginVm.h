@@ -35,7 +35,7 @@ public:
     // UI text (i18n, auto-refresh on language change).
     aria::Property<std::string> title;
     aria::Property<std::string> desc;
-    LoginVm(aria::async::IExecutor& ui, aria::async::IExecutor& worker);
+    LoginVm(wb::i18n::Context context, aria::async::IExecutor& ui, aria::async::IExecutor& worker);
 
     aria::Property<std::string> username{"alice"};
     aria::Property<std::string> password{""};

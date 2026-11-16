@@ -23,7 +23,7 @@ std::string QtAppShell::resolve_i18n_dir() {
     return QDir(appDir + "/i18n").absolutePath().toStdString();
 }
 
-QtAppShell::QtAppShell(QObject* qt_ctx)
+QtAppShell::QtAppShell(QObject* qt_ctx, std::string data_directory)
     : dispatcher_(std::make_shared<aria::adapters::qt6::QtDispatcher>(qt_ctx)),
       ui_exec_(*dispatcher_),
       delay_(*dispatcher_),
@@ -39,6 +39,10 @@ QtAppShell::QtAppShell(QObject* qt_ctx)
     // different thread.
     core_.set_ui_executor(&ui_exec_);
     core_.set_timer(&delay_);
+    if (!data_directory.empty()) {
+        core_.services().storage().set_data_dir(data_directory);
+        core_.services().settings().sync().dataDir = std::move(data_directory);
+    }
     core_.load_modules();
     register_all_views();  // Register each module's Qt View builder.
 }

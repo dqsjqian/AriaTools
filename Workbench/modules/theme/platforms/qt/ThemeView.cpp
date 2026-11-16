@@ -62,8 +62,8 @@ ThemeView::ThemeView(ThemeVm& host, aria::binding::BindingEngine& be)
 
     auto* card = new QFrame;
     auto* cardLay = new QVBoxLayout(card);
-    auto* title = new QLabel(QString::fromStdString(wb::i18n::str_in("theme", "card_title")));
-    auto* body = new QLabel(QString::fromStdString(wb::i18n::str_in("theme", "card_body")));
+    auto* title = new QLabel(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "theme", "card_title")));
+    auto* body = new QLabel(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "theme", "card_body")));
     body->setWordWrap(true);
     cardLay->addWidget(title);
     cardLay->addWidget(body);
@@ -88,8 +88,8 @@ ThemeView::ThemeView(ThemeVm& host, aria::binding::BindingEngine& be)
     s_subs.push_back(vm.currentDisplayName.on_changed(
         [picker, &vm, title, body](const std::string&) {
             repopulate_picker(picker, vm);
-            title->setText(QString::fromStdString(wb::i18n::str_in("theme", "card_title")));
-            body ->setText(QString::fromStdString(wb::i18n::str_in("theme", "card_body")));
+            title->setText(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "theme", "card_title")));
+            body ->setText(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "theme", "card_body")));
         }));
 }
 

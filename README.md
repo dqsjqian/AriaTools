@@ -10,7 +10,7 @@
 
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 [![Release](https://img.shields.io/badge/AriaTools-v1.1.0-green.svg)](https://github.com/dqsjqian/AriaTools/releases)
-[![Framework](https://img.shields.io/badge/Aria-v3.1.1-blueviolet.svg)](https://github.com/dqsjqian/Aria)
+[![Framework](https://img.shields.io/badge/Aria-v3.3.0-blueviolet.svg)](https://github.com/dqsjqian/Aria)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Qt6%20%7C%20iOS%20%7C%20Android%20%7C%20Web-lightgrey.svg)](#)
 
@@ -38,11 +38,11 @@
 
 ## ✨ 核心特性
 
-- 🧩 **热插拔模块架构** —— `IModule` 契约 + `make_<mod>_module()` 工厂；CMake **自动扫描** `modules/` 目录生成模块列表（`GeneratedModuleList.h`），新增模块只需加目录、删除模块只需删目录，**不改任何核心文件**
+- 🧩 **静态模块装配** —— `IModule` 契约 + `make_<mod>_module()` 工厂；CMake **自动扫描** `modules/` 目录生成模块列表（`GeneratedModuleList.h`），新增模块只需加目录、删除模块只需删目录，**不改任何核心文件**
 - 📦 **一个模块一个库** —— `wb_add_module()` 单行声明；SOURCES（跨平台逻辑）+ QT_SOURCES / IOS_SOURCES / Android 页面（平台 View）按平台条件编译；每个模块可独立编译为静态库
 - 🔓 **模块间零耦合** —— 模块间通过 `EventBus` 通信（publish/subscribe），无直接依赖；演示：cart 加商品 → dashboard/chat/notes 三模块同时收到通知
 - 🎛 **强类型 MVVM** —— View → ViewModel → Model → Service → 基础设施，依赖注入走 `ServiceHub`/DI Container，无 Service Locator、无全局单例
-- 🌍 **国际化** —— XML i18n，运行时切语言，VM 文案属性自动刷新（`BaseVm::text()`）
+- 🌍 **国际化** —— 通过 `aria::i18n` 的显式 `LocaleContext`、XML catalog 和组合式 text binding 提供运行时切语言；`BaseVm::text()` 只保留 Workbench 源文件域名推导
 - 🔌 **平台服务注入** —— UI 线程 executor / 工作线程池 / 延时调度器由各平台壳注入 `ServiceHub`，模块经 `ModuleContext` 获取，业务代码零平台依赖
 - 🖥 **四平台 View 壳** —— Qt6（桌面）、iOS（UIKit）、Android（Compose side-channel + 原生 View/JniAdapter 双路径）、Web（HTTP/REST/SSE 薄客户端）
 - 🧭 **路由呈现方式（presentation）** —— `NavigatorHost::Push<I>(payload, NavOptions)` 一次调用指定目标**如何呈现**：`Push`（栈内嵌）/ `Modal`（模态对话框）/ `Window`（独立顶层窗口）；三端 View 各自映射原生呈现（Qt QStackedWidget / QDialog / 顶层窗口，iOS child VC / present VC，Android 内嵌 / Compose Dialog），关闭模态或窗口自动 Pop 栈条目
@@ -113,11 +113,11 @@ AriaTools 基于 Aria 框架 + 各平台原生 View 壳实现，一份 C++ ViewM
 
 > **关于 Windows / Linux 截图**：Mac 的壳基于 **Aria（框架技术底座）+ Qt6 Adapter（View 层）** 构建，在 Windows / Linux 上跑出来的程序与 Mac 视觉上完全一致（同一份 Qt 控件 + 同一份 C++ ViewModel），所以不必重复截图。Windows 下还另有 MSVC + Qt6 与 MSYS2 UCRT64 两条工具链可以独立验证。
 
-## 🔌 模块热插拔
+## 🔌 模块装配与运行时扩展
 
-AriaTools 的模块系统支持**热插拔**——新增、删除模块**不需要修改任何核心文件**。
+AriaTools 的模块在构建时静态链接；新增、删除模块通过重新构建生效。运行时支持槽位启停和注册撤销，没有动态库加载或二进制卸载。
 
-**CMake 自动发现**：`Workbench/CMakeLists.txt` 用 `file(GLOB)` 扫描 `modules/*/CMakeLists.txt`，自动生成 `GeneratedModuleList.h`，`ModulesManifest.cpp` 和 Qt/iOS `ViewManifest` 通过宏展开自动注册；Android 由 `ModulePages.kt` 维护 Compose 入口清单。
+**CMake 自动发现**：`Workbench/CMakeLists.txt` 用 `file(GLOB CONFIGURE_DEPENDS)` 扫描 `modules/*/CMakeLists.txt`，在各自构建目录的 `generated/app/` 下生成 `GeneratedModuleList.h`，`ModulesManifest.cpp` 和 Qt/iOS `ViewManifest` 通过宏展开自动注册；Android 由 `ModulePages.kt` 维护 Compose 入口清单。
 
 ### 平台 View 目录契约
 
@@ -187,27 +187,27 @@ bus.subscribe<wb::shared::events::ItemAddedToCart>([](const auto& ev) {
 
 ```cpp
 // 提供者（cart 模块，register_mounts 里）
-mounts.Provide(wb::module_api::slots::kDashboardContent, id(),
+mounts.Provide(wb::module_api::DashboardSlots::kContent, id(),
                [](ModuleContext& ctx) {
                    return ctx.primary_vm("cart");  // 共享主 VM：与 tab 数据一致
                });
 
 // 宿主（dashboard 模块）
-if (auto m = ctx.mounts().Resolve(slots::kDashboardContent)) {
+if (auto m = ctx.mounts().Resolve(DashboardSlots::kContent)) {
     // 渲染 m->moduleId 的 UI（按 ViewFactory），数据来自 m->vm
 } else {
     render_placeholder();  // 无填充物 → 占位（优雅降级）
 }
 ```
 
-- **零耦合**：宿主只认识槽位 id（`slots::kDashboardContent`），提供者不知道谁在消费；删掉提供者模块 → 槽位自动空置，不崩
+- **零耦合**：宿主只认识槽位 id（`DashboardSlots::kContent`），提供者不知道谁在消费；删掉提供者模块 → 槽位自动空置，不崩
 - **热切换**：`SetEnabled(slotId, bool)` 保留提供者 factory 只切换开关——dashboard 的"切换拓展挂载"按钮即演示
 - **共享实例**：挂载的是提供者**主 VM**，挂载 UI 与模块 tab 显示/编辑同一份数据；Android side-channel 命令路由因此零改动即可交互
 - **与导航正交**：导航 = 推入新页面实例（可返回）；挂载 = 常驻共享面板。dashboard 同时演示两者（挂载 cart + 模态/窗口导航）
 
 ## 统一 Python 入口
 
-`python scripts/build.py --platform qt` 串联现有锁定依赖获取与 Qt 构建；`--platform web|ios|android` 选择实际存在的壳或原生核心。`--dry-run` 只输出计划，`--offline` 复用缓存。桌面构建加 `--test` 会分别配置、构建并运行 calendar、cart、dashboard、frameworklab、notes、tools 六个模块的独立 CTest 工程；移动端执行仍需模拟器或真机 runner。构建目录隔离平台、工具链、配置、架构和 iOS SDK，避免 MSVC/MinGW 与设备/模拟器缓存混用。
+`python scripts/build.py --platform qt` 串联现有锁定依赖获取与 Qt 构建；`--platform web|ios|android` 选择实际存在的壳或原生核心。`--dry-run` 只输出计划，`--offline` 复用缓存。桌面构建加 `--test` 会开启并运行主应用 CTest（含 i18n、模块组装及 Qt 离屏 probe），再分别配置、构建并运行 calendar、cart、dashboard、frameworklab、notes、tools 六个模块的独立 CTest 工程；移动端执行仍需模拟器或真机 runner。构建目录隔离平台、工具链、配置、架构和 iOS SDK，避免 MSVC/MinGW 与设备/模拟器缓存混用。
 
 Android 需 `--ndk`，iOS 需 macOS/Xcode；入口不代替 APK 打包、真机签名和部署，保留现有平台脚本处理这些环节。Windows MSVC 外部 TLS 构建仍需 Developer PowerShell 与 Perl/NASM；MSYS2 UCRT64 需 make、perl 和 git。`--qt-prefix` 可显式选择匹配编译器的 Qt。
 
@@ -224,6 +224,8 @@ python scripts/build.py --test
 ```
 
 默认从 `dependencies.json` 的已解析锁准备源码和 SDK；构建不自动选择新版本。`FORGEDEPS_HOME` 可覆盖已注册工作区。源码位于工作区 `sources/`，Aria 和第三方产物位于 `build/<name>/<target>/`；应用直接链接此处，每个目标只保留当前产物。版本、编译器、ABI、源码或配方变化会触发显式构建替换，失败保留旧产物。
+
+本工程使用 Aria 3.3.0 的 `aria::i18n` 与 `aria::app`，由 ForgeRecipes 0.1.9 配置 SDK；构建工具固定在 `requirements-build.txt`，Aria 源码版本与 revision 固定在 `dependencies.json`。
 
 `--aria-root /path/to/Aria`（CMake 的 `ARIA_DIR`，Tutorial 为 `ARIA_ROOT`）提供可编辑源码；其内容仍被哈希并编译进共享 SDK，不再嵌入应用子目录。Qt、NDK 和 Apple SDK 由用户安装，实际工具链与 Qt 内容进入产物身份。更新版本使用 `scripts/ci/update_dependencies.py`，审查并提交锁文件。
 

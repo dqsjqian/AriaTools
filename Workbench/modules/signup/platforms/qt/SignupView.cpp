@@ -61,10 +61,10 @@ SignupView::SignupView(SignupVm& host, aria::binding::BindingEngine& be)
     auto* pwdHint   = new QLabel;
     auto* confEdit  = new QLineEdit; confEdit->setEchoMode(QLineEdit::Password);
     auto* confHint  = new QLabel;
-    form->addRow(QString::fromStdString(wb::i18n::str_in("signup", "username")), userEdit);  form->addRow("", userHint);
-    form->addRow(QString::fromStdString(wb::i18n::str_in("signup", "email")),   emailEdit); form->addRow("", emailHint);
-    form->addRow(QString::fromStdString(wb::i18n::str_in("signup", "password")),   pwdEdit);   form->addRow("", pwdHint);
-    form->addRow(QString::fromStdString(wb::i18n::str_in("signup", "confirm")),   confEdit);  form->addRow("", confHint);
+    form->addRow(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "signup", "username")), userEdit);  form->addRow("", userHint);
+    form->addRow(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "signup", "email")),   emailEdit); form->addRow("", emailHint);
+    form->addRow(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "signup", "password")),   pwdEdit);   form->addRow("", pwdHint);
+    form->addRow(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "signup", "confirm")),   confEdit);  form->addRow("", confHint);
     lay->addLayout(form);
     wire_field(s_subs, be, vm.username, userEdit,  userHint);
     wire_field(s_subs, be, vm.email,    emailEdit, emailHint);
@@ -82,7 +82,7 @@ SignupView::SignupView(SignupVm& host, aria::binding::BindingEngine& be)
     };
     syncFormError(vm.form.first_error.get());
     s_subs.push_back(vm.form.first_error.on_changed(syncFormError));
-    auto* submit = new QPushButton(QString::fromStdString(wb::i18n::str_in("signup", "submit")));
+    auto* submit = new QPushButton(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "signup", "submit")));
     submit->setStyleSheet(
         "QPushButton:enabled  { background:#2e7d32; color:white; padding:8px; }"
         "QPushButton:disabled { background:#bdbdbd; color:#616161; padding:8px; }");
@@ -95,7 +95,7 @@ SignupView::SignupView(SignupVm& host, aria::binding::BindingEngine& be)
     syncEnabled(vm.form.is_valid.get());
     s_subs.push_back(vm.form.is_valid.on_changed(syncEnabled));
     auto* summary = new QLabel;
-    summary->setText(QString::fromStdString(wb::i18n::str_in("signup", "unregistered")));
+    summary->setText(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "signup", "unregistered")));
     lay->addWidget(summary);
     be.bind_text_oneway(vm.submittedSummary, view_for(summary));
     lay->addStretch();

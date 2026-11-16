@@ -14,7 +14,7 @@ std::string bundle_i18n_dir() {
     return std::string([[res stringByAppendingPathComponent:@"i18n"] UTF8String]);
 }
 
-// Initial language follows the device language (the XmlI18nService maps
+// Initial language follows the device language (the XML catalog maps
 // "en" -> strings_en.xml; anything else falls back to strings.xml, the
 // default Chinese bundle). Previously hard-coded "zh-CN" made the whole
 // UI stay Chinese even on an English device.
@@ -70,7 +70,7 @@ UIViewController* IosShell::build_root() {
     // Refresh every tab's title when the language changes (app-level switch
     // via the settings module). Without this, titles are set once at launch
     // and stay in the old language — mirroring Qt main.cpp's langSub.
-    lang_sub_ = core_.i18n().language().on_changed(
+    lang_sub_ = core_.i18n().on_language_changed(
         [tab, this](const std::string&) {
             const auto& ms = core_.modules();
             NSArray<UIViewController*>* tabs = tab.viewControllers;

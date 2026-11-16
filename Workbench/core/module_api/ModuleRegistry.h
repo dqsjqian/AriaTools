@@ -1,30 +1,27 @@
 #pragma once
-//
-// ModuleRegistry — Runtime registry of assembled modules (filled by the app layer via an explicit manifest).
-// Does not rely on global constructor auto-registration (static libraries get stripped by the linker);
-// instead ModulesManifest calls add() explicitly.
-//
-#include "module_api/IModule.h"
 
-#include <memory>
-#include <vector>
+// Workbench's manifest convenience facade. Aria owns identity validation,
+// ordering and registration lifetime; this facade retains the manifest tokens.
+#include "module_api/IModule.h"
+#include "aria/app/module_registry.hpp"
 
 namespace wb::module_api {
 
 class ModuleRegistry {
 public:
-    /// Add a module instance (called by the manifest).
-    void add(std::shared_ptr<IModule> m) { modules_.push_back(std::move(m)); }
-
-    /// Return all modules sorted by order ascending.
-    [[nodiscard]] std::vector<std::shared_ptr<IModule>> ordered() const;
-
-    [[nodiscard]] const std::vector<std::shared_ptr<IModule>>& all() const {
-        return modules_;
+    void add(std::shared_ptr<IModule> module) {
+        if (!module) throw std::invalid_argument("null Workbench module");
+        aria::app::ModuleDescriptor descriptor{module->id(), module->order()};
+        registrations_ += modules_.add(std::move(descriptor), std::move(module));
     }
+    [[nodiscard]] auto ordered() const { return modules_.ordered(); }
+    [[nodiscard]] auto all() const { return modules_.all(); }
+    [[nodiscard]] auto find(const std::string& id) const { return modules_.find(id); }
+    void clear() { registrations_.clear(); modules_.clear(); }
 
 private:
-    std::vector<std::shared_ptr<IModule>> modules_;
+    aria::app::ModuleRegistry<IModule> modules_;
+    aria::SubscriptionBag registrations_;
 };
 
 }  // namespace wb::module_api

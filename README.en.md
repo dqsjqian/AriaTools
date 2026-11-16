@@ -10,7 +10,7 @@ One C++23 core, four platform view shells: Qt / iOS / Android / Web
 
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 [![Release](https://img.shields.io/badge/AriaTools-v1.1.0-green.svg)](https://github.com/dqsjqian/AriaTools/releases)
-[![Framework](https://img.shields.io/badge/Aria-v3.1.1-blueviolet.svg)](https://github.com/dqsjqian/Aria)
+[![Framework](https://img.shields.io/badge/Aria-v3.3.0-blueviolet.svg)](https://github.com/dqsjqian/Aria)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Qt6%20%7C%20iOS%20%7C%20Android%20%7C%20Web-lightgrey.svg)](#)
 
@@ -156,9 +156,11 @@ AriaTools runs on the Aria framework plus native view shells per platform; one C
 `python scripts/build.py --platform qt` reuses the locked dependency fetcher and
 builds the Qt app; `--platform web|ios|android` selects the implemented native
 shell/core. Use `--dry-run` for a read-only command plan, `--offline` for cached
-dependencies. For desktop builds, `--test` separately configures, builds and runs
-the six module CTest projects: calendar, cart, dashboard, frameworklab, notes and
-tools. Mobile execution still requires a simulator or device runner. Build
+dependencies. For desktop builds, `--test` enables and runs the application's
+CTest suite, including localization, module composition, and the Qt offscreen
+probe, then separately configures, builds and runs the six module CTest projects:
+calendar, cart, dashboard, frameworklab, notes and tools. Mobile execution still
+requires a simulator or device runner. Build
 directories isolate platform, toolchain, configuration, architecture and iOS SDK. Android requires `--ndk`;
 iOS requires macOS/Xcode. This entry does not package APKs or deploy/sign device
 apps: retain the existing platform scripts for those actions. Windows MSVC with
@@ -183,6 +185,8 @@ python scripts/build.py --test
 ```
 
 Builds use the recorded `dependencies.json` selection without selecting new releases. `FORGEDEPS_HOME` overrides the registered workspace. Sources live in `sources/`; Aria and third-party SDKs live in `build/<name>/<target>/`. Applications link those prefixes directly. Each target keeps one current artifact; changes to versions, compilers, ABI, source contents or recipes rebuild it transactionally and preserve the previous artifact on failure.
+
+This project uses Aria 3.3.0's `aria::i18n` and `aria::app`, configured by ForgeRecipes 0.1.9. Build tooling is pinned in `requirements-build.txt`; the Aria source version and revision are pinned in `dependencies.json`.
 
 `--aria-root /path/to/Aria` (CMake `ARIA_DIR`, or Tutorial `ARIA_ROOT`) selects editable sources which are still content-hashed and built into the shared SDK. Qt, NDK and Apple SDKs are installed separately; actual toolchain and Qt contents participate in artifact identity. Use `scripts/ci/update_dependencies.py` to change versions, then review and commit the lock.
 

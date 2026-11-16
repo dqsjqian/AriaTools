@@ -10,6 +10,7 @@ add_library(wb_ios_support STATIC
 target_include_directories(wb_ios_support PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(wb_ios_support PUBLIC
     aria::adapters::uikit
+    aria::app
     "-framework UIKit"
     "-framework Foundation")
 target_compile_options(wb_ios_support PRIVATE -fobjc-arc)
@@ -27,6 +28,7 @@ target_link_libraries(workbench PRIVATE
     wb_core_app
     wb_ios_support
     aria::adapters::uikit
+    aria::app
     "-framework UIKit"
     "-framework Foundation")
 target_compile_options(workbench PRIVATE -fobjc-arc)

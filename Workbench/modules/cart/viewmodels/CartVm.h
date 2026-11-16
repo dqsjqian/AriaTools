@@ -42,7 +42,7 @@ public:
     static constexpr double kTaxRate = 0.08;
 
     /// Construct with the shared EventBus (for cross-module publishing).
-    explicit CartVm(aria::runtime::EventBus& bus);
+    explicit CartVm(wb::i18n::Context context, aria::runtime::EventBus& bus);
 
     aria::ObservableList<CartItem> items;
 

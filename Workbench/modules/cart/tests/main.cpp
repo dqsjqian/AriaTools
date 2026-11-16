@@ -41,7 +41,7 @@ int main() {
     auto orderSub = bus.subscribe<wb::shared::events::OrderPlaced>(
         [&](const auto& ev) { ++orderEvents; lastOrder = ev; });
 
-    wb::cart::CartVm vm(bus);
+    wb::cart::CartVm vm(wb::i18n::make_context("./i18n"), bus);
     check(!vm.checkout.can_execute(), "checkout initially disabled");
     check(near(vm.subtotal.get(), 0.0), "initial subtotal");
     check(vm.itemCount.get() == 0, "initial item count");

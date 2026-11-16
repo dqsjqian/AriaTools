@@ -6,8 +6,8 @@
 
 namespace wb::tools {
 
-ToolsVm::ToolsVm(std::shared_ptr<ToolsModel> model)
-    : base64Input(""),
+ToolsVm::ToolsVm(wb::i18n::Context context, std::shared_ptr<ToolsModel> model)
+    : BaseVm(std::move(context)), base64Input(""),
       base64Output(""),
       base64Encode([this] {
           base64Output.set(model_->encode_base64(base64Input.get()));
@@ -58,18 +58,18 @@ ToolsVm::ToolsVm(std::shared_ptr<ToolsModel> model)
 void ToolsVm::apply_json_result_(const ToolResult& result) {
     if (result.ok) {
         jsonOutput.set(result.value);
-        jsonStatus.set(wb::i18n::str("json_valid"));
+        jsonStatus.set(wb::i18n::str(i18n(), "json_valid"));
     } else {
         jsonOutput.set("");
-        jsonStatus.set(wb::i18n::str("json_error") + ": " + result.error);
+        jsonStatus.set(wb::i18n::str(i18n(), "json_error") + ": " + result.error);
     }
 }
 
 void ToolsVm::apply_file_result_(const ToolResult& result, std::string_view successKey) {
     if (result.ok) {
-        fileStatus.set(wb::i18n::str(successKey) + ": " + result.value);
+        fileStatus.set(wb::i18n::str(i18n(), successKey) + ": " + result.value);
     } else {
-        fileStatus.set(wb::i18n::str("file_error") + ": " + result.error);
+        fileStatus.set(wb::i18n::str(i18n(), "file_error") + ": " + result.error);
     }
 }
 

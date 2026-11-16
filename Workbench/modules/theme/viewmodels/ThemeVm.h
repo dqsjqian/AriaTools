@@ -39,7 +39,7 @@ struct ThemeOption {
 
 class ThemeVm final : public wb::core::BaseVm {
 public:
-    ThemeVm();
+    ThemeVm(wb::i18n::Context context);
 
     aria::Property<std::string> title;
     aria::Property<std::string> desc;

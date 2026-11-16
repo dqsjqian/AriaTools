@@ -1,10 +1,15 @@
 package com.dqsjqian.ariatools.pages
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -39,7 +44,7 @@ private const val MOD = "dashboard"
 fun DashboardPage(vm: AppViewModel) {
     val props by vm.props.collectAsState()
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         WelcomeText(props)
@@ -59,7 +64,11 @@ fun DashboardPage(vm: AppViewModel) {
             val mountPage = ComposeViewFactory.build(mountedModule, vm)
             if (mountPage != null) {
                 HorizontalDivider()
-                mountPage()
+                // Provider pages can contain lazy lists and fillMaxSize().
+                // Give them finite constraints inside this scrolling host.
+                Box(Modifier.fillMaxWidth().height(520.dp)) {
+                    mountPage()
+                }
             }
         }
 

@@ -72,6 +72,8 @@ option(ARIA_SDK_HTTP "Shared SDK HTTP adapter" ${WORKBENCH_TARGET_WEB})
 option(ARIA_SDK_TLS "Shared SDK HTTP TLS" OFF)
 option(ARIA_SDK_JNI "Shared SDK JNI adapter" ${WORKBENCH_TARGET_ANDROID})
 option(ARIA_SDK_UIKIT "Shared SDK UIKit adapter" ${WORKBENCH_TARGET_IOS})
+set(ARIA_SDK_I18N ON)
+set(ARIA_SDK_APP ON)
 option(ARIA_SDK_SHARED "Build shared Aria libraries" OFF)
 include(SharedAria)
 if(WORKBENCH_TARGET_ANDROID)
@@ -94,7 +96,7 @@ endif()
 # Auto-discovery: scan modules/ for any subdir with a CMakeLists.txt.
 # To add a module: create modules/<name>/CMakeLists.txt (using wb_add_module).
 # To remove a module: delete modules/<name>/ — no core file changes needed.
-file(GLOB WB_MODULE_DIRS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/modules"
+file(GLOB WB_MODULE_DIRS CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/modules"
      "${CMAKE_CURRENT_SOURCE_DIR}/modules/*/CMakeLists.txt")
 set(WB_MODULES "")
 foreach(dir ${WB_MODULE_DIRS})
@@ -111,7 +113,9 @@ set(WB_MODULE_LIBS ${WB_MODULE_LIBS} CACHE INTERNAL "Discovered module libs")
 
 # Generate a header listing all enabled modules, so ModulesManifest.cpp
 # can auto-include + auto-register them without manual maintenance.
-set(WB_MODULE_LIST_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/core/app/GeneratedModuleList.h")
+set(WB_GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+file(MAKE_DIRECTORY "${WB_GENERATED_INCLUDE_DIR}/app")
+set(WB_MODULE_LIST_HEADER "${WB_GENERATED_INCLUDE_DIR}/app/GeneratedModuleList.h")
 set(WB_MODULE_LIST_TMP "${CMAKE_CURRENT_BINARY_DIR}/GeneratedModuleList.h.tmp")
 # NOTE: No #pragma once — the file is intentionally included twice
 # (Phase 1: forward-declare, Phase 2: register) by ModulesManifest.cpp
@@ -127,16 +131,9 @@ foreach(m ${WB_MODULES})
     set(_ModName "${_first_upper}${_rest}")
     file(APPEND ${WB_MODULE_LIST_TMP} "WB_MODULE_ENTRY(${m}, ${_ModName})\n")
 endforeach()
-# Only overwrite if changed (avoids unnecessary rebuilds)
-if(EXISTS ${WB_MODULE_LIST_HEADER})
-    file(READ ${WB_MODULE_LIST_HEADER} _old_content)
-    file(READ ${WB_MODULE_LIST_TMP} _new_content)
-    if(NOT _old_content STREQUAL _new_content)
-        file(RENAME ${WB_MODULE_LIST_TMP} ${WB_MODULE_LIST_HEADER})
-    endif()
-else()
-    file(RENAME ${WB_MODULE_LIST_TMP} ${WB_MODULE_LIST_HEADER})
-endif()
+# Keep generated output local to this build and avoid unnecessary recompiles.
+configure_file("${WB_MODULE_LIST_TMP}" "${WB_MODULE_LIST_HEADER}" COPYONLY)
+file(REMOVE "${WB_MODULE_LIST_TMP}")
 
 # platform/qt must provide wb_qt_support first (module platforms/qt depend on it).
 if(WORKBENCH_TARGET_QT)
@@ -198,3 +195,10 @@ include([==[${CMAKE_CURRENT_SOURCE_DIR}/cmake/StageWorkbenchLicenses.cmake]==])
         add_dependencies(${_shell} ${_shell}_licenses)
     endif()
 endforeach()
+
+# Consumer regression suite shares the production libraries and staged resources.
+option(WORKBENCH_BUILD_TESTS "Build Workbench consumer regression tests" OFF)
+if(WORKBENCH_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()

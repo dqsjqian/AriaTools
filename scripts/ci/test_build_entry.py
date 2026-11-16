@@ -125,12 +125,15 @@ class BuildEntryTests(unittest.TestCase):
         self.plan("--dry-run")
         self.assertFalse((self.root / "build").exists())
 
-    def test_tools_test_builds_all_six_module_projects(self):
+    def test_tools_test_runs_application_and_all_six_module_projects(self):
         self.layout("tools")
         commands = self.plan("--platform", "web", "--test", "--offline")
         tests = [row for row in commands if row[0] == "ctest"]
-        self.assertEqual(len(tests), 6)
-        self.assertEqual([Path(row[2]).name for row in tests],
+        self.assertIn("-DWORKBENCH_BUILD_TESTS=ON", commands[0])
+        self.assertEqual(len(tests), 7)
+        self.assertEqual(tests[0][2], commands[0][commands[0].index("-B") + 1])
+        self.assertEqual(tests[0][-2:], ["--timeout", "120"])
+        self.assertEqual([Path(row[2]).name for row in tests[1:]],
                          ["calendar", "cart", "dashboard", "frameworklab", "notes", "tools"])
         for row in tests:
             self.assertIn("--no-tests=error", row)
@@ -140,6 +143,25 @@ class BuildEntryTests(unittest.TestCase):
         for row in module_configs:
             self.assertIn("-DWORKBENCH_TARGET_QT=OFF", row)
             self.assertIn("-DARIA_DEPENDENCIES_OFFLINE=ON", row)
+
+    def test_tools_test_cannot_disable_application_regressions(self):
+        self.layout("tools")
+        with self.assertRaisesRegex(ValueError, "WORKBENCH_BUILD_TESTS"):
+            self.plan("--test", "--cmake-arg=-DWORKBENCH_BUILD_TESTS=OFF")
+        configure = self.plan("--platform", "qt", "--test", "--configure-only")
+        self.assertEqual(len(configure), 1)
+        self.assertIn("-DWORKBENCH_BUILD_TESTS=ON", configure[0])
+
+    def test_tools_mobile_builds_do_not_run_host_regressions(self):
+        self.layout("tools")
+        for target, host in (("android", "Linux"), ("ios", "Darwin")):
+            with self.subTest(target=target):
+                args = ["--platform", target, "--ndk", str(self.root / "NDK")]
+                commands = self.plan(*args, host=host)
+                self.assertFalse(any(row[0] == "ctest" for row in commands))
+                self.assertNotIn("-DWORKBENCH_BUILD_TESTS=ON", commands[0])
+                with self.assertRaisesRegex(ValueError, "device runner"):
+                    self.plan(*args, "--test", host=host)
 
     def test_cache_conflict_does_not_delete_existing_build(self):
         directory = self.root / "existing"

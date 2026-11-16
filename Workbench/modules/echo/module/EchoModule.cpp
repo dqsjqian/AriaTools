@@ -2,8 +2,8 @@
 #include "viewmodels/EchoVm.h"
 namespace wb::echo {
 std::shared_ptr<aria::binding::ViewModel>
-EchoModule::create_view_model(wb::module_api::ModuleContext&) {
-    auto vm = std::make_shared<EchoVm>();
+EchoModule::create_view_model(wb::module_api::ModuleContext& ctx) {
+    auto vm = std::make_shared<EchoVm>(ctx.i18n_context());
     vm->message.set("Echo module — hot-pluggable!");
     return vm;
 }

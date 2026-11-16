@@ -17,7 +17,7 @@ namespace wb::frameworklab {
 
 class FrameworkLabVm final : public wb::core::BaseVm {
 public:
-    FrameworkLabVm();
+    FrameworkLabVm(wb::i18n::Context context);
 
     aria::Property<std::string> title;
     aria::Property<std::string> desc;

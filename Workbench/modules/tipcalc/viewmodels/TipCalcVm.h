@@ -26,7 +26,7 @@ namespace wb::tipcalc {
 
 class TipCalcVm : public wb::core::BaseVm {
 public:
-    TipCalcVm();
+    TipCalcVm(wb::i18n::Context context);
 
     // i18n-driven UI text (View renders these; no literals in Views).
     aria::Property<std::string> title;        ///< "小费计算器"

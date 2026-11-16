@@ -29,9 +29,9 @@ PublisherView::PublisherView(ChatVm& vm, aria::binding::BindingEngine& be)
     [(UIStackView*)view_ addArrangedSubview:sendBtn];
 
     // Field labels + button (i18n).
-    userLbl.text  = [NSString stringWithUTF8String:wb::i18n::str_in("chat","user").c_str()];
-    draftLbl.text = [NSString stringWithUTF8String:wb::i18n::str_in("chat","draft").c_str()];
-    [sendBtn setTitle:[NSString stringWithUTF8String:wb::i18n::str_in("chat","send").c_str()]
+    userLbl.text  = [NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "chat","user").c_str()];
+    draftLbl.text = [NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "chat","draft").c_str()];
+    [sendBtn setTitle:[NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "chat","send").c_str()]
              forState:UIControlStateNormal];
 
     be.bind_text  (pub.user,  wb::ios::ui::view_for(userField));

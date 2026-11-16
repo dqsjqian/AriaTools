@@ -2,7 +2,8 @@
 
 namespace wb::search {
 
-SearchVm::SearchVm(aria::IDelayedScheduler& timer) {
+SearchVm::SearchVm(wb::i18n::Context context, aria::IDelayedScheduler& timer)
+    : BaseVm(std::move(context)) {
     text(title, "title");
     text(desc, "desc");
     text(placeholder, "placeholder");

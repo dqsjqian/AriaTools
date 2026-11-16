@@ -18,8 +18,8 @@ env:
   # to cp1252 and raises UnicodeEncodeError on them.
   PYTHONUTF8: "1"
   PYTHONIOENCODING: utf-8
-  # Candidate source is explicit; published dependency locks remain unchanged.
-  # The reviewed Aria source is the released tag the dependency lock names.
+  # Check out the exact released Aria tag recorded in the dependency lock.
+  # The explicit source path keeps every SDK build on that reviewed revision.
   ARIA_SDK_SOURCE: ${{ github.workspace }}/build/aria-candidate
   GCC_VERSION: "16"
   LLVM_VERSION: "23"
@@ -40,11 +40,11 @@ jobs:
         if: env.VIRTUAL_ENV == ''
         with:
           python-version: '3.14'
-      - name: Checkout reviewed Aria SDK candidate
+      - name: Checkout pinned Aria SDK source
         uses: actions/checkout@v7
         with:
           repository: dqsjqian/Aria
-          ref: v3.2.5
+          ref: v3.3.0
           path: build/aria-candidate
           persist-credentials: false
       - name: Install shared dependency tooling
@@ -66,11 +66,11 @@ jobs:
         if: env.VIRTUAL_ENV == ''
         with:
           python-version: '3.14'
-      - name: Checkout reviewed Aria SDK candidate
+      - name: Checkout pinned Aria SDK source
         uses: actions/checkout@v7
         with:
           repository: dqsjqian/Aria
-          ref: v3.2.5
+          ref: v3.3.0
           path: build/aria-candidate
           persist-credentials: false
       - name: Install shared dependency tooling
@@ -98,11 +98,11 @@ jobs:
         if: env.VIRTUAL_ENV == ''
         with:
           python-version: '3.14'
-      - name: Checkout reviewed Aria SDK candidate
+      - name: Checkout pinned Aria SDK source
         uses: actions/checkout@v7
         with:
           repository: dqsjqian/Aria
-          ref: v3.2.5
+          ref: v3.3.0
           path: build/aria-candidate
           persist-credentials: false
       - name: Install shared dependency tooling
@@ -133,8 +133,8 @@ jobs:
         run: |
           # install-qt-action prepends its own interpreter to PATH; the shared
           # tooling lives in the pinned one recorded at install time.
-          & "$env:FORGEDEPS_PYTHON_EXECUTABLE" scripts/build.py --platform qt --build-dir build/ci-vs2026 --generator "Visual Studio 18 2026" --generator-platform x64 --jobs 3
-      - name: Probe Qt views
+          & "$env:FORGEDEPS_PYTHON_EXECUTABLE" scripts/build.py --platform qt --build-dir build/ci-vs2026 --generator "Visual Studio 18 2026" --generator-platform x64 --jobs 3 --cmake-arg=-DWORKBENCH_BUILD_TESTS=ON
+      - name: Probe Qt views and run application regressions
         env:
           QT_QPA_PLATFORM: offscreen
         # Exercise the deployed plugins without install-qt-action's fallback
@@ -146,6 +146,8 @@ jobs:
           $env:QT_QPA_PLATFORM_PLUGIN_PATH = $platforms
           $env:QT_QPA_PLATFORM = "offscreen"
           & "$env:FORGEDEPS_PYTHON_EXECUTABLE" -m forgedeps.build_kit.session --build-dir build/ci-vs2026 -- "$env:FORGEDEPS_PYTHON_EXECUTABLE" scripts/ci/run_probe.py ./build/ci-vs2026/bin/Release/workbench.exe
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & "$env:FORGEDEPS_PYTHON_EXECUTABLE" -m forgedeps.build_kit.session --build-dir build/ci-vs2026 -- ctest --test-dir build/ci-vs2026 -C Release --output-on-failure --no-tests=error --timeout 120
       - name: Run standalone module tests
         run: |
           foreach ($module in @('calendar', 'cart', 'dashboard', 'frameworklab', 'notes', 'tools')) {
@@ -161,9 +163,11 @@ jobs:
           }
       - name: Build and probe Web shell
         run: |
-          & "$env:FORGEDEPS_PYTHON_EXECUTABLE" -m forgedeps.build_kit.session --configure -- cmake -S Workbench -B build/ci-vs2026-web -G "Visual Studio 18 2026" -A x64 -DWORKBENCH_TARGET_WEB=ON -DWORKBENCH_TARGET_QT=OFF
+          & "$env:FORGEDEPS_PYTHON_EXECUTABLE" -m forgedeps.build_kit.session --configure -- cmake -S Workbench -B build/ci-vs2026-web -G "Visual Studio 18 2026" -A x64 -DWORKBENCH_TARGET_WEB=ON -DWORKBENCH_TARGET_QT=OFF -DWORKBENCH_BUILD_TESTS=ON
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           & "$env:FORGEDEPS_PYTHON_EXECUTABLE" -m forgedeps.build_kit.session --build-dir build/ci-vs2026-web -- cmake --build build/ci-vs2026-web --config Release --parallel 3
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & "$env:FORGEDEPS_PYTHON_EXECUTABLE" -m forgedeps.build_kit.session --build-dir build/ci-vs2026-web -- ctest --test-dir build/ci-vs2026-web -C Release --output-on-failure --no-tests=error --timeout 120
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           & "$env:FORGEDEPS_PYTHON_EXECUTABLE" -m forgedeps.build_kit.session --build-dir build/ci-vs2026-web -- "$env:FORGEDEPS_PYTHON_EXECUTABLE" scripts/ci/run_probe.py ./build/ci-vs2026-web/bin/Release/workbench_web.exe
 
@@ -181,11 +185,11 @@ jobs:
         if: env.VIRTUAL_ENV == ''
         with:
           python-version: '3.14'
-      - name: Checkout reviewed Aria SDK candidate
+      - name: Checkout pinned Aria SDK source
         uses: actions/checkout@v7
         with:
           repository: dqsjqian/Aria
-          ref: v3.2.5
+          ref: v3.3.0
           path: build/aria-candidate
           persist-credentials: false
       - uses: msys2/setup-msys2@v2
@@ -221,7 +225,7 @@ jobs:
           echo "FORGEDEPS_HOME=$RUNNER_TEMP/forgedeps" >> "$GITHUB_ENV"
       - name: Build Qt desktop
         run: |
-          python -m forgedeps.build_kit.session --configure -- cmake -S Workbench -B build/ci-win -G Ninja -DCMAKE_BUILD_TYPE=Release -DWORKBENCH_TARGET_QT=ON -DQt6_DIR="$QT_ROOT_WIN/lib/cmake/Qt6"
+          python -m forgedeps.build_kit.session --configure -- cmake -S Workbench -B build/ci-win -G Ninja -DCMAKE_BUILD_TYPE=Release -DWORKBENCH_TARGET_QT=ON -DWORKBENCH_BUILD_TESTS=ON -DQt6_DIR="$QT_ROOT_WIN/lib/cmake/Qt6"
           python -m forgedeps.build_kit.session --build-dir build/ci-win -- cmake --build build/ci-win --parallel 3
       # The Qt probe must finish within the existing 120-second limit.
       # A timeout or probe failure fails the job, just like the other platforms.
@@ -229,7 +233,7 @@ jobs:
         run: |
           mkdir -p build/ci-win/bin/platforms
           cp -f /ucrt64/share/qt6/plugins/platforms/qoffscreen.dll build/ci-win/bin/platforms/
-      - name: Probe Qt views
+      - name: Probe Qt views and run application regressions
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
@@ -237,6 +241,7 @@ jobs:
           unset QT_PLUGIN_PATH
           export QT_QPA_PLATFORM_PLUGIN_PATH="$(cygpath -w "$PWD/build/ci-win/bin/platforms")"
           python -m forgedeps.build_kit.session --build-dir build/ci-win -- /usr/bin/timeout -s KILL 120 ./build/ci-win/bin/workbench.exe --probe
+          python -m forgedeps.build_kit.session --build-dir build/ci-win -- ctest --test-dir build/ci-win --output-on-failure --no-tests=error --timeout 120
       - name: Run standalone module tests
         run: |
           for module in calendar cart dashboard frameworklab notes tools; do
@@ -246,8 +251,9 @@ jobs:
           done
       - name: Build and probe Web shell
         run: |
-          python -m forgedeps.build_kit.session --configure -- cmake -S Workbench -B build/ci-win-web -G Ninja -DCMAKE_BUILD_TYPE=Release -DWORKBENCH_TARGET_WEB=ON -DWORKBENCH_TARGET_QT=OFF
+          python -m forgedeps.build_kit.session --configure -- cmake -S Workbench -B build/ci-win-web -G Ninja -DCMAKE_BUILD_TYPE=Release -DWORKBENCH_TARGET_WEB=ON -DWORKBENCH_TARGET_QT=OFF -DWORKBENCH_BUILD_TESTS=ON
           python -m forgedeps.build_kit.session --build-dir build/ci-win-web -- cmake --build build/ci-win-web --parallel 3
+          python -m forgedeps.build_kit.session --build-dir build/ci-win-web -- ctest --test-dir build/ci-win-web --output-on-failure --no-tests=error --timeout 120
           python -m forgedeps.build_kit.session --build-dir build/ci-win-web -- /usr/bin/timeout -s KILL 120 ./build/ci-win-web/bin/workbench_web.exe --probe
 
   qt:
@@ -276,11 +282,11 @@ jobs:
         if: env.VIRTUAL_ENV == ''
         with:
           python-version: '3.14'
-      - name: Checkout reviewed Aria SDK candidate
+      - name: Checkout pinned Aria SDK source
         uses: actions/checkout@v7
         with:
           repository: dqsjqian/Aria
-          ref: v3.2.5
+          ref: v3.3.0
           path: build/aria-candidate
           persist-credentials: false
       - name: Install shared dependency tooling
@@ -299,12 +305,12 @@ jobs:
       - name: Configure
         run: |
           python3 scripts/build.py --platform qt --build-dir build/ci-qt \
-            --generator Ninja --configure-only --jobs 3
+            --generator Ninja --test --configure-only --jobs 3
 
       - name: Build
         run: python -m forgedeps.build_kit.session --build-dir build/ci-qt -- cmake --build build/ci-qt -j
 
-      - name: Run standalone module tests
+      - name: Run application and standalone module regressions
         run: |
           python3 scripts/build.py --platform qt --build-dir build/ci-qt \
             --generator Ninja --test --jobs 3
@@ -324,8 +330,10 @@ jobs:
           python -m forgedeps.build_kit.session --configure -- cmake -S Workbench -B build/ci-web -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DWORKBENCH_TARGET_WEB=ON \
-            -DWORKBENCH_TARGET_QT=OFF
+            -DWORKBENCH_TARGET_QT=OFF \
+            -DWORKBENCH_BUILD_TESTS=ON
           python -m forgedeps.build_kit.session --build-dir build/ci-web -- cmake --build build/ci-web -j
+          python -m forgedeps.build_kit.session --build-dir build/ci-web -- ctest --test-dir build/ci-web --output-on-failure --no-tests=error --timeout 120
 
       - name: Probe HTTP wire protocol and shared TipCalc VM
         run: python -m forgedeps.build_kit.session --build-dir build/ci-web -- ./build/ci-web/bin/workbench_web --probe
@@ -340,11 +348,11 @@ jobs:
         if: env.VIRTUAL_ENV == ''
         with:
           python-version: '3.14'
-      - name: Checkout reviewed Aria SDK candidate
+      - name: Checkout pinned Aria SDK source
         uses: actions/checkout@v7
         with:
           repository: dqsjqian/Aria
-          ref: v3.2.5
+          ref: v3.3.0
           path: build/aria-candidate
           persist-credentials: false
       - name: Install shared dependency tooling
@@ -391,11 +399,11 @@ jobs:
         if: env.VIRTUAL_ENV == ''
         with:
           python-version: '3.14'
-      - name: Checkout reviewed Aria SDK candidate
+      - name: Checkout pinned Aria SDK source
         uses: actions/checkout@v7
         with:
           repository: dqsjqian/Aria
-          ref: v3.2.5
+          ref: v3.3.0
           path: build/aria-candidate
           persist-credentials: false
       - name: Install shared dependency tooling

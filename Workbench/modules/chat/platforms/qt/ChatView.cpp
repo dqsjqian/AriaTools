@@ -22,10 +22,10 @@ namespace {
 QWidget* build_publisher_view(ChatPublisherVm& pub, aria::binding::BindingEngine& be) {
     auto* row_ = new QWidget;
     auto* row = new QHBoxLayout(row_);
-    auto* userEdit = new QLineEdit; userEdit->setPlaceholderText(QString::fromStdString(wb::i18n::str_in("chat", "user")));
+    auto* userEdit = new QLineEdit; userEdit->setPlaceholderText(QString::fromStdString(wb::i18n::str_in(pub.i18n(), "chat", "user")));
     userEdit->setMaximumWidth(100);
-    auto* draftEdit = new QLineEdit; draftEdit->setPlaceholderText(QString::fromStdString(wb::i18n::str_in("chat", "draft")));
-    auto* sendBtn = new QPushButton(QString::fromStdString(wb::i18n::str_in("chat", "send")));
+    auto* draftEdit = new QLineEdit; draftEdit->setPlaceholderText(QString::fromStdString(wb::i18n::str_in(pub.i18n(), "chat", "draft")));
+    auto* sendBtn = new QPushButton(QString::fromStdString(wb::i18n::str_in(pub.i18n(), "chat", "send")));
     row->addWidget(userEdit);
     row->addWidget(draftEdit, 1);
     row->addWidget(sendBtn);

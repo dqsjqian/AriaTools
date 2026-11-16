@@ -10,6 +10,9 @@ namespace fs = std::filesystem;
 
 int main() {
     wb::infra::ServiceHub hub{"./i18n", "zh-CN"};
+    const fs::path test_root = fs::current_path() / "tools-fixtures";
+    fs::create_directories(test_root);
+    hub.storage().set_data_dir((test_root / "data").string());
     auto service = std::make_shared<wb::tools::ToolsService>(hub.crypto(), hub.storage());
     wb::tools::ToolsModel model{std::move(service)};
 
@@ -26,7 +29,7 @@ int main() {
         return 1;
     }
 
-    const fs::path input = fs::temp_directory_path() / "wb-tools-harness.txt";
+    const fs::path input = test_root / "input.txt";
     const std::string content = "Aria Workbench crypto roundtrip\n";
     { std::ofstream out(input, std::ios::binary); out << content; }
 

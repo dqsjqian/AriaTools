@@ -13,7 +13,7 @@ namespace wb::tools {
 
 class ToolsVm final : public wb::core::BaseVm {
 public:
-    explicit ToolsVm(std::shared_ptr<ToolsModel> model);
+    explicit ToolsVm(wb::i18n::Context context, std::shared_ptr<ToolsModel> model);
 
     // Base64
     aria::Property<std::string> base64Input;

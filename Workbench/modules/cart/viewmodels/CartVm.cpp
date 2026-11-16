@@ -6,8 +6,8 @@
 
 namespace wb::cart {
 
-CartVm::CartVm(aria::runtime::EventBus& bus)
-    : bus_(bus),
+CartVm::CartVm(wb::i18n::Context context, aria::runtime::EventBus& bus)
+    : BaseVm(std::move(context)), bus_(bus),
       subtotal([this] {
           (void)itemsRevision_.get();
           return compute_subtotal_();

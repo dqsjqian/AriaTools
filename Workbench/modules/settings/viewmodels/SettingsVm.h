@@ -12,7 +12,7 @@ namespace wb::settings {
 
 class SettingsVm final : public wb::core::BaseVm {
 public:
-    SettingsVm();
+    SettingsVm(wb::i18n::Context context);
 
     aria::Property<std::string> language;   ///< Current language code
 

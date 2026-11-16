@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dqsjqian.ariatools.AppViewModel
+import java.util.Locale
 
 private const val MOD = "cart"
 
@@ -65,10 +66,21 @@ private fun CartList(props: Map<String, String>) {
     }
 }
 
+private fun cartMoney(props: Map<String, String>, key: String): String =
+    String.format(Locale.ROOT, "%.2f", props["$MOD.$key"]?.toDoubleOrNull() ?: 0.0)
+
 @Composable
 private fun CartTotals(props: Map<String, String>) {
-    Text("${props["$MOD.count"] ?: ""}: ${props["$MOD.itemCount"] ?: ""}", style = MaterialTheme.typography.bodyMedium)
-    Text("${props["$MOD.subtotal"] ?: ""}: ${props["$MOD.subtotal"] ?: ""}", style = MaterialTheme.typography.bodyMedium)
-    Text("${props["$MOD.tax"] ?: ""}: ${props["$MOD.tax"] ?: ""}", style = MaterialTheme.typography.bodyMedium)
-    Text("${props["$MOD.total"] ?: ""}: ${props["$MOD.total"] ?: ""}", style = MaterialTheme.typography.bodyMedium)
+    val count = (props["$MOD.countLabel"] ?: "%1 items")
+        .replace("%1", props["$MOD.itemCount"] ?: "0")
+    val subtotal = (props["$MOD.subtotalLabel"] ?: "Subtotal: %1")
+        .replace("%1", cartMoney(props, "subtotal"))
+    val tax = (props["$MOD.taxLabel"] ?: "Tax: %1")
+        .replace("%1", cartMoney(props, "tax"))
+    val total = (props["$MOD.totalLabel"] ?: "Total: %1")
+        .replace("%1", cartMoney(props, "total"))
+    Text(count, style = MaterialTheme.typography.bodyMedium)
+    Text(subtotal, style = MaterialTheme.typography.bodyMedium)
+    Text(tax, style = MaterialTheme.typography.bodyMedium)
+    Text(total, style = MaterialTheme.typography.bodyMedium)
 }

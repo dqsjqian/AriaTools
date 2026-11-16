@@ -28,9 +28,9 @@ LoginView::LoginView(LoginVm& vm, aria::binding::BindingEngine& be)
     be.bind_text_oneway(vm.desc,  wb::ios::ui::view_for(desc));
 
     // Labels + button (i18n).
-    userLbl.text = [NSString stringWithUTF8String:wb::i18n::str_in("login","username").c_str()];
-    pwdLbl.text  = [NSString stringWithUTF8String:wb::i18n::str_in("login","password").c_str()];
-    [loginBtn setTitle:[NSString stringWithUTF8String:wb::i18n::str_in("login","login").c_str()]
+    userLbl.text = [NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "login","username").c_str()];
+    pwdLbl.text  = [NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "login","password").c_str()];
+    [loginBtn setTitle:[NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "login","login").c_str()]
               forState:UIControlStateNormal];
 
     be.bind_text(vm.username, wb::ios::ui::view_for(userField));
@@ -39,13 +39,13 @@ LoginView::LoginView(LoginVm& vm, aria::binding::BindingEngine& be)
 
     // Active/inactive status label.
     be.bind_text_projected(vm.is_active(), wb::ios::ui::view_for(activeLbl),
-        [](const bool a) {
-            return wb::i18n::str_in("login", a ? "vm_active" : "vm_inactive");
+        [&vm](const bool a) {
+            return wb::i18n::str_in(vm.i18n(), "login", a ? "vm_active" : "vm_inactive");
         });
     // Welcome / not-logged-in.
     be.bind_optional_text(vm.login.last_result, wb::ios::ui::view_for(welcomeLbl),
         [](const LoginResult& r) { return r.welcome; },
-        wb::i18n::str_in("login", "not_logged_in"));
+        wb::i18n::str_in(vm.i18n(), "login", "not_logged_in"));
     be.bind_text_oneway(vm.login.last_error_message, wb::ios::ui::view_for(errLbl));
 }
 

@@ -27,12 +27,12 @@ LoginView::LoginView(LoginVm& vm, aria::binding::BindingEngine& be)
     auto* userEdit = new QLineEdit;
     auto* pwdEdit  = new QLineEdit;
     pwdEdit->setEchoMode(QLineEdit::Password);
-    form->addRow(QString::fromStdString(wb::i18n::str_in("login", "username")), userEdit);
-    form->addRow(QString::fromStdString(wb::i18n::str_in("login", "password")),   pwdEdit);
+    form->addRow(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "login", "username")), userEdit);
+    form->addRow(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "login", "password")),   pwdEdit);
     lay->addLayout(form);
     be.bind_text(vm.username, view_for(userEdit));
     be.bind_text(vm.password, view_for(pwdEdit));
-    auto* btn = new QPushButton(QString::fromStdString(wb::i18n::str_in("login", "login")));
+    auto* btn = new QPushButton(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "login", "login")));
     lay->addWidget(btn);
     auto* spinner = new QProgressBar;
     spinner->setRange(0, 0);
@@ -55,14 +55,14 @@ LoginView::LoginView(LoginVm& vm, aria::binding::BindingEngine& be)
         const bool busy   = vm.login.is_executing.get();
         const bool active = vm.is_active().get();
         btn->setEnabled(active && !busy);
-        btn->setText(busy ? QString::fromStdString(wb::i18n::str_in("login", "logging_in")) : QString::fromStdString(wb::i18n::str_in("login", "login")));
+        btn->setText(busy ? QString::fromStdString(wb::i18n::str_in(vm.i18n(), "login", "logging_in")) : QString::fromStdString(wb::i18n::str_in(vm.i18n(), "login", "login")));
     };
     refreshBtn();
     s_subs.push_back(vm.login.is_executing.on_changed([refreshBtn](bool){ refreshBtn(); }));
     // Active/inactive status label — composed from i18n keys + state glyph.
     auto syncActive = [activeLbl, &vm](bool a) {
         const std::string key = a ? "vm_active" : "vm_inactive";
-        activeLbl->setText(QString::fromStdString(wb::i18n::str_in("login", key))
+        activeLbl->setText(QString::fromStdString(wb::i18n::str_in(vm.i18n(), "login", key))
                            + (a ? " ●" : " ○"));
     };
     syncActive(vm.is_active().get());
@@ -77,7 +77,7 @@ LoginView::LoginView(LoginVm& vm, aria::binding::BindingEngine& be)
         [](const std::string& e) { return e.empty() ? std::string{} : "✗ " + e; });
     be.bind_optional_text(vm.login.last_result, view_for(welcome),
         [](const LoginResult& r) { return r.welcome; },
-        wb::i18n::str_in("login", "not_logged_in"));
+        wb::i18n::str_in(vm.i18n(), "login", "not_logged_in"));
 }
 
 }  // namespace wb::login::qtview

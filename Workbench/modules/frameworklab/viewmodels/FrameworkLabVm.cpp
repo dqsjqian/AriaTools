@@ -5,8 +5,8 @@
 
 namespace wb::frameworklab {
 
-FrameworkLabVm::FrameworkLabVm()
-    : tasks(std::make_shared<aria::ObservableList<LabTask>>()),
+FrameworkLabVm::FrameworkLabVm(wb::i18n::Context context)
+    : BaseVm(std::move(context)), tasks(std::make_shared<aria::ObservableList<LabTask>>()),
       active(tasks, [](const LabTask& task) { return !task.completed; }),
       completed(tasks, [](const LabTask& task) { return task.completed; }),
       totalCount([this] {

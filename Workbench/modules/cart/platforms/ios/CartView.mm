@@ -48,9 +48,9 @@ CartView::CartView(CartVm& vm, aria::binding::BindingEngine& be)
     be.bind_text_oneway(vm.desc,  wb::ios::ui::view_for(desc));
 
     // Field labels (i18n).
-    nameLbl.text  = [NSString stringWithUTF8String:wb::i18n::str_in("cart","name_label").c_str()];
-    priceLbl.text = [NSString stringWithUTF8String:wb::i18n::str_in("cart","price_label").c_str()];
-    [addBtn setTitle:[NSString stringWithUTF8String:wb::i18n::str_in("cart","add").c_str()]
+    nameLbl.text  = [NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "cart","name_label").c_str()];
+    priceLbl.text = [NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "cart","price_label").c_str()];
+    [addBtn setTitle:[NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "cart","add").c_str()]
             forState:UIControlStateNormal];
 
     be.bind_text(vm.draftName,  wb::ios::ui::view_for(nameField));
@@ -59,15 +59,15 @@ CartView::CartView(CartVm& vm, aria::binding::BindingEngine& be)
 
     // Summary values are Computed<T>; keep the manual subscriptions scoped
     // to this View wrapper until BindingEngine gains read-only source support.
-    auto sync_count = [countLbl](int value) {
-        const auto text = wb::i18n::str_in("cart", "count")
+    auto sync_count = [countLbl, &vm](int value) {
+        const auto text = wb::i18n::str_in(vm.i18n(), "cart", "count")
                         + " " + std::to_string(value);
         countLbl.text = [NSString stringWithUTF8String:text.c_str()];
     };
-    auto fmt_money = [](const char* key, double value) {
+    auto fmt_money = [&vm](const char* key, double value) {
         char buf[32];
         snprintf(buf, sizeof buf, "%.2f", value);
-        return wb::i18n::str_in("cart", key) + std::string(buf);
+        return wb::i18n::str_in(vm.i18n(), "cart", key) + std::string(buf);
     };
     auto sync_money = [fmt_money](UILabel* label, const char* key, double value) {
         const auto text = fmt_money(key, value);

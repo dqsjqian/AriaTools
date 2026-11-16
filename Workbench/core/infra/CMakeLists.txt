@@ -5,7 +5,6 @@
 add_library(wb_infra STATIC
     ServiceHub.cpp
     log/Log.cpp
-    i18n/XmlI18nService.cpp
     i18n/I18n.cpp
     storage/LocalFileStorageService.cpp
     secret/StubSecretStore.cpp
@@ -27,6 +26,7 @@ target_link_libraries(wb_infra PUBLIC
     aria::runtime
     aria::async
     aria::core
+    aria::i18n
 )
 
 # Apple platforms use system CommonCrypto + Security, no third-party dynamic dependency.

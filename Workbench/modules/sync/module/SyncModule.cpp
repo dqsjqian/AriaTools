@@ -9,7 +9,7 @@ namespace wb::sync {
 
 std::shared_ptr<aria::binding::ViewModel>
 SyncModule::create_view_model(wb::module_api::ModuleContext& ctx) {
-    return std::make_shared<SyncVm>(
+    return std::make_shared<SyncVm>(ctx.i18n_context(),
         ctx.service<wb::services::ISyncService>(),
         ctx.service<wb::services::ISettingsService>(),
         ctx.service<wb::services::ISecretStore>());

@@ -36,6 +36,9 @@ public:
     explicit ModuleContext(wb::infra::ServiceHub& hub) : hub_(hub) {}
 
     [[nodiscard]] wb::infra::ServiceHub& services() { return hub_; }
+    [[nodiscard]] std::shared_ptr<wb::services::II18nService> i18n_context() {
+        return hub_.i18n_context();
+    }
     [[nodiscard]] aria::runtime::EventBus& bus() { return hub_.bus(); }
 
     /// UI-thread executor (platform-injected; InlineExecutor fallback).

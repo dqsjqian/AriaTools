@@ -47,9 +47,9 @@ UnitConvertView::UnitConvertView(UnitConvertVm& host, aria::binding::BindingEngi
     be.bind_text_oneway(host.desc,  wb::ios::ui::view_for(desc));
 
     // Category buttons: localized labels via i18n + command wiring.
-    [catTemp setTitle:[NSString stringWithUTF8String:wb::i18n::str_in("unitconvert","cat_temperature").c_str()] forState:UIControlStateNormal];
-    [catLen  setTitle:[NSString stringWithUTF8String:wb::i18n::str_in("unitconvert","cat_length").c_str()]     forState:UIControlStateNormal];
-    [catWt   setTitle:[NSString stringWithUTF8String:wb::i18n::str_in("unitconvert","cat_weight").c_str()]     forState:UIControlStateNormal];
+    [catTemp setTitle:[NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "unitconvert","cat_temperature").c_str()] forState:UIControlStateNormal];
+    [catLen  setTitle:[NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "unitconvert","cat_length").c_str()]     forState:UIControlStateNormal];
+    [catWt   setTitle:[NSString stringWithUTF8String:wb::i18n::str_in(vm.i18n(), "unitconvert","cat_weight").c_str()]     forState:UIControlStateNormal];
     be.bind_command(vm.selectTemperature, wb::ios::ui::view_for(catTemp));
     be.bind_command(vm.selectLength,      wb::ios::ui::view_for(catLen));
     be.bind_command(vm.selectWeight,      wb::ios::ui::view_for(catWt));

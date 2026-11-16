@@ -34,6 +34,7 @@ target_include_directories(wb_module_api PUBLIC
 target_link_libraries(wb_module_api PUBLIC
     wb_infra
     aria::binding
+    aria::app
     aria::core
 
     nlohmann_json::nlohmann_json)

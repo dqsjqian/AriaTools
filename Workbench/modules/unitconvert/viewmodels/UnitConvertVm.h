@@ -27,7 +27,7 @@ enum class Category { Temperature, Length, Weight };
 
 class UnitConvertVm final : public wb::core::BaseVm {
 public:
-    UnitConvertVm() {
+    UnitConvertVm(wb::i18n::Context context) : BaseVm(std::move(context)) {
         text(title, "title");
         text(desc, "desc");
         text(catTemperatureLabel, "cat_temperature");

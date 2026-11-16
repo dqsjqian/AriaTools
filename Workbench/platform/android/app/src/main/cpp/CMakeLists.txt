@@ -41,7 +41,7 @@ list(PREPEND CMAKE_PREFIX_PATH ${_prefixes})
 # CMAKE_FIND_ROOT_PATH, so PATHS never reaches the SDK that gen-android.sh
 # just staged.
 set(aria_DIR "${ARIA_SDK_PREFIX}/lib/cmake/aria" CACHE PATH "Aria package config" FORCE)
-find_package(aria CONFIG REQUIRED COMPONENTS core async runtime binding jni NO_DEFAULT_PATH)
+find_package(aria CONFIG REQUIRED COMPONENTS core async runtime binding i18n app jni NO_DEFAULT_PATH)
 # The JSON package is header-only and comes from the host-visible shared
 # ForgeDeps workspace. Do not remap that prefix through the Android sysroot.
 find_package(nlohmann_json CONFIG REQUIRED NO_CMAKE_FIND_ROOT_PATH)
@@ -123,6 +123,8 @@ target_link_libraries(aria_jni
     ${WB_LIB}/libwb_utils.a
     aria::adapters::jni
     aria::binding
+    aria::i18n
+    aria::app
     aria::runtime
     aria::abi
     nlohmann_json::nlohmann_json

@@ -148,10 +148,14 @@ int probe(unsigned short port, aria::runtime::SimpleDispatcher& dispatcher) {
 
 int main(int argc, char** argv) {
     bool probe_mode = false;
+    std::string data_directory;
     unsigned short requested_port = 19090;
     for (int i = 1; i < argc; ++i) {
         const std::string arg = argv[i];
         if (arg == "--probe") probe_mode = true;
+        else if (arg == "--data-dir" && i + 1 < argc) {
+            data_directory = argv[++i];
+        }
         else if (arg == "--port" && i + 1 < argc) {
             requested_port = static_cast<unsigned short>(std::stoi(argv[++i]));
         }
@@ -165,6 +169,10 @@ int main(int argc, char** argv) {
     wb::core::AppCore core{WB_WEB_I18N_ROOT, "zh-CN"};
     core.set_ui_executor(&ui_executor);
     core.set_timer(&timer);
+    if (!data_directory.empty()) {
+        core.services().storage().set_data_dir(data_directory);
+        core.services().settings().sync().dataDir = data_directory;
+    }
     core.load_modules();
 
     auto vm = find_tipcalc(core);

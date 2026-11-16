@@ -8,10 +8,10 @@ namespace {
 constexpr const char* kTokenKey = "gitee.token";
 }
 
-SyncVm::SyncVm(wb::services::ISyncService& sync,
+SyncVm::SyncVm(wb::i18n::Context context, wb::services::ISyncService& sync,
                wb::services::ISettingsService& settings,
                wb::services::ISecretStore& secrets)
-    : dataDir(""),
+    : BaseVm(std::move(context)), dataDir(""),
       remoteUrl(""),
       branch("main"),
       username(""),
@@ -51,7 +51,7 @@ SyncVm::SyncVm(wb::services::ISyncService& sync,
     text(syncLabel,     "sync_now");
     text(pullLabel,     "pull");
     text(pushLabel,     "push");
-    localize([this] { status.set(wb::i18n::str("ready")); });
+    localize([this] { status.set(wb::i18n::str(i18n(), "ready")); });
 
     load_config_();
 }
@@ -79,7 +79,7 @@ void SyncVm::save_config_() {
     s.encryptScope = static_cast<wb::services::EncryptScope>(encryptScope.get());
     settings_.save();
     if (!token.get().empty()) secrets_.store(kTokenKey, token.get());
-    status.set(wb::i18n::str("config_saved"));
+    status.set(wb::i18n::str(i18n(), "config_saved"));
 }
 
 void SyncVm::append_log_(const std::string& line) {
