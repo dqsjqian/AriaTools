@@ -36,8 +36,11 @@ public:
     }
 
 private:
-    aria::app::ExtensionRegistry<std::string, ViewBuilder> builders_;
+    // Destroy the registry before its handles. This process-wide factory must
+    // not emit removal notifications during static teardown, after thread-local
+    // runtime state may already be gone. Expired weak handles simply release.
     std::unordered_map<std::string, aria::Subscription> registrations_;
+    aria::app::ExtensionRegistry<std::string, ViewBuilder> builders_;
 };
 
 }  // namespace wb::ios
